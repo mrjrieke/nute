@@ -13,6 +13,7 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
+	"nute/mashupsdk/server"
 )
 
 var (
@@ -20,6 +21,7 @@ var (
 )
 
 func main() {
+	server.InitServer()
 	app.Main(func(a app.App) {
 		var glCtx gl.Context
 		var szEvent size.Event

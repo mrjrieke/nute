@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "github.com/mrjrieke/nute/mashupsdk";
+option java_multiple_files = true;
+option java_package = "nute.mashupsdk";
+option java_outer_classname = "MashupSdk";
+
+package mashupsdk;
+
+// The mashup service definition.
+service MashupServer {
+  // Indicates to mashup it is time to shutdown.
+  rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
+}
+
+message MashupEmpty {
+
+}
+
+// The response message containing the any messages to log
+message ShutdownReply {
+  string message = 1;
+}
