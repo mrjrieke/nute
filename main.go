@@ -1,9 +1,12 @@
+//go:build darwin || linux
 // +build darwin linux
 
 package main
 
 // Nute is a basic gomobile app.
 import (
+	"flag"
+
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
@@ -13,7 +16,7 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
-	"nute/mashupsdk/server"
+	"tini.com/nute/mashupsdk/server"
 )
 
 var (
@@ -21,7 +24,10 @@ var (
 )
 
 func main() {
-	server.InitServer()
+	callerCreds := flag.String("CREDS", "", "Credentials of caller")
+	flag.Parse()
+
+	server.InitServer(*callerCreds)
 	app.Main(func(a app.App) {
 		var glCtx gl.Context
 		var szEvent size.Event

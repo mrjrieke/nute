@@ -10,11 +10,19 @@ package mashupsdk;
 // The mashup service definition.
 service MashupServer {
   // Indicates to mashup it is time to shutdown.
+  rpc Shake(MashupCredentials) returns (MashupCredentials) {}
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }
 
 message MashupEmpty {
 
+}
+
+// The response message with mashup credentials
+message MashupCredentials {
+  string authToken = 1;
+  string callerToken = 2;
+  int64 port = 3;
 }
 
 // The response message containing the any messages to log
