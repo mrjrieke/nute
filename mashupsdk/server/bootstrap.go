@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"log"
 	"math/rand"
 	"net"
@@ -32,7 +33,7 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	return &sdk.MashupEmpty{}, nil
 }
 
-func InitServer(creds string) {
+func InitServer(creds string, insecure bool) {
 	// Perform handshake...
 	clientCredentials := sdk.MashupCredentials{}
 	err := json.Unmarshal([]byte(creds), &clientCredentials)
@@ -77,14 +78,15 @@ func InitServer(creds string) {
 
 		// Connect to the server for purposes of mashup api calls.
 		mashupCertPool := x509.NewCertPool()
-		mashupClientCert, err := x509.ParseCertificate(mashupCertBytes)
+		mashupBlock, _ := pem.Decode([]byte(mashupCertBytes))
+		mashupClientCert, err := x509.ParseCertificate(mashupBlock.Bytes)
 		if err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}
 		mashupCertPool.AddCert(mashupClientCert)
 
 		// Send credentials back to client....
-		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(cc.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool})))
+		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(cc.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: insecure})))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
@@ -97,7 +99,10 @@ func InitServer(creds string) {
 		// call before this app exits.
 		mashupContext.Client = sdk.NewMashupServerClient(conn)
 
-		mashupContext.Client.Shake(mashupContext.Context, serverCredentials)
+		_, err = mashupContext.Client.Shake(mashupContext.Context, serverCredentials)
+		if err != nil {
+			log.Fatalf("handshake failure: %v", err)
+		}
 
 		s.Serve(lis)
 

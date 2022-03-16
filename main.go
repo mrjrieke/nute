@@ -23,11 +23,13 @@ var (
 	engine sprite.Engine
 )
 
+// CREDS={\"callerToken\":\"742bc42264f857dc68331cc5c26d0f89474fb499a17ac35d8c84cf8491906b54\",\"port\":46733}
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
+	insecure := flag.Bool("insecure", false, "Skip server validation")
 	flag.Parse()
 
-	server.InitServer(*callerCreds)
+	server.InitServer(*callerCreds, *insecure)
 	app.Main(func(a app.App) {
 		var glCtx gl.Context
 		var szEvent size.Event

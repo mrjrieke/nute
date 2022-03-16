@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"math/rand"
@@ -34,14 +35,16 @@ type MashupHandshakeServer struct {
 	sdk.UnimplementedMashupServerServer
 }
 
+var mashupCertBytes []byte
+
 func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupCredentials) (*sdk.MashupCredentials, error) {
 	serverCredentials = in
-	mashupCertBytes, err := mashupsdk.MashupKey.ReadFile("tls/mashup.crt")
-	if err != nil {
-		log.Fatalf("Couldn't load key: %v", err)
-	}
 
-	mashupClientCert, err := x509.ParseCertificate(mashupCertBytes)
+	if mashupCertBytes == nil {
+		log.Fatalf("Cert not initialized.")
+	}
+	mashupBlock, _ := pem.Decode([]byte(mashupCertBytes))
+	mashupClientCert, err := x509.ParseCertificate(mashupBlock.Bytes)
 	if err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
@@ -51,7 +54,6 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupCrede
 	mashupCertPool.AddCert(mashupClientCert)
 
 	// Connect to it.
-
 	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(serverCredentials.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool})))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -105,9 +107,12 @@ func signalProcessor(mshCtx *sdk.MashupContext) {
 }
 
 func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
+
+	var err error
 	mashupContext = &sdk.MashupContext{Context: context.Background(), MashupGoodies: mashupGoodies}
+
 	// Initialize local server.
-	mashupCertBytes, err := mashupsdk.MashupCert.ReadFile("tls/mashup.crt")
+	mashupCertBytes, err = mashupsdk.MashupCert.ReadFile("tls/mashup.crt")
 	if err != nil {
 		log.Fatalf("Couldn't load cert: %v", err)
 	}
@@ -138,7 +143,10 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 	if err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-	go handshakeServer.Serve(lis)
+	go func() {
+		sdk.RegisterMashupServerServer(handshakeServer, &MashupHandshakeServer{})
+		handshakeServer.Serve(lis)
+	}()
 
 	jsonHandshakeCredentials, err := json.Marshal(handshakeCredentials)
 	if err != nil {
@@ -148,7 +156,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "CREDS="+string(jsonHandshakeCredentials))
 
 	// Start mashup..
-	err = mashupInit(mashupGoodies)
+	//err = mashupInit(mashupGoodies)
 	if err != nil {
 		log.Fatalf("Failure to launch: %v", err)
 	}
