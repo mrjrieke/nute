@@ -5,7 +5,6 @@ go 1.17
 require (
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
 )
 
 require (
@@ -25,6 +24,7 @@ require (
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
 
