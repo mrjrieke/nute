@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"strconv"
+	"time"
 
 	"os"
 
@@ -29,7 +30,13 @@ type MashupServer struct {
 var serverCredentials *sdk.MashupCredentials
 
 func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
-	os.Exit(-1)
+	log.Printf("Shutdown called")
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		os.Exit(-1)
+	}()
+
+	log.Printf("Shutdown started")
 	return &sdk.MashupEmpty{}, nil
 }
 
@@ -40,6 +47,7 @@ func InitServer(creds string, insecure bool) {
 	if err != nil {
 		log.Fatalf("Malformed credentials: %s %v", creds, err)
 	}
+	log.Printf("Startup with insecure: %t\n", insecure)
 
 	go func(cc *sdk.MashupCredentials) {
 		mashupCertBytes, err := mashupsdk.MashupCert.ReadFile("tls/mashup.crt")
@@ -99,16 +107,26 @@ func InitServer(creds string, insecure bool) {
 		// call before this app exits.
 		mashupContext.Client = sdk.NewMashupServerClient(conn)
 
+		go func() {
+			// Async service initiation.
+			log.Printf("Registering server.\n")
+
+			sdk.RegisterMashupServerServer(s, &MashupServer{})
+
+			log.Printf("Starting service.\n")
+			if err := s.Serve(lis); err != nil {
+				log.Fatalf("failed to serve: %v", err)
+			}
+		}()
+
+		log.Printf("Handshake initiated.\n")
+
 		_, err = mashupContext.Client.Shake(mashupContext.Context, serverCredentials)
 		if err != nil {
-			log.Fatalf("handshake failure: %v", err)
+			log.Printf("handshake failure: %v\n", err)
+			panic(err)
 		}
+		log.Printf("Handshake complete.\n")
 
-		s.Serve(lis)
-
-		sdk.RegisterMashupServerServer(s, &MashupServer{})
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
 	}(&clientCredentials)
 }

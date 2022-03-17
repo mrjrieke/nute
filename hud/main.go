@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -17,6 +18,9 @@ type HudContext struct {
 var hudContext HudContext
 
 func main() {
+	insecure := flag.Bool("insecure", false, "Skip server validation")
+	flag.Parse()
+
 	hudLog, err := os.OpenFile("hud.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
@@ -25,7 +29,7 @@ func main() {
 
 	a := app.New()
 	a.Lifecycle().SetOnEnteredForeground(func() {
-		hudContext = HudContext{client.BootstrapInit("./nute", nil, nil)}
+		hudContext = HudContext{client.BootstrapInit("./nute", nil, nil, insecure)}
 	})
 	w := a.NewWindow("Hello World")
 	w.SetContent(widget.NewLabel("Nute Hud."))

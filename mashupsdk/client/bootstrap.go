@@ -27,6 +27,7 @@ var handshakeCredentials *sdk.MashupCredentials
 var serverCredentials *sdk.MashupCredentials
 
 var mashupContext *sdk.MashupContext
+var insecure *bool
 
 var handshakeCompleteChan chan bool
 
@@ -37,6 +38,7 @@ type MashupHandshakeServer struct {
 var mashupCertBytes []byte
 
 func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupCredentials) (*sdk.MashupCredentials, error) {
+	log.Printf("Handshake initiated.\n")
 	serverCredentials = in
 
 	if mashupCertBytes == nil {
@@ -52,21 +54,27 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupCrede
 	mashupCertPool := x509.NewCertPool()
 	mashupCertPool.AddCert(mashupClientCert)
 
+	log.Printf("Initiating connection to server with insecure: %t\n", *insecure)
 	// Connect to it.
-	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(serverCredentials.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool})))
+	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(serverCredentials.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: *insecure})))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+	log.Printf("Connection to server established.\n")
+
 	// Contact the server and print out its response.
 	// User's of this library will benefit in following way:
 	// 1. If current application shuts down, mashup
 	// will also be told to shut down through Shutdown() api
 	// call before this app exits.
 	mashupContext.Client = sdk.NewMashupServerClient(conn)
+	log.Printf("Initiate signal handler.\n")
 
 	signalProcessor(mashupContext)
+	log.Printf("Signal handler initialized.\n")
 
-	handshakeCompleteChan <- true
+	go func() { handshakeCompleteChan <- true }()
+	log.Printf("Handshake complete.\n")
 
 	return &sdk.MashupCredentials{}, nil
 }
@@ -104,7 +112,8 @@ func signalProcessor(mshCtx *sdk.MashupContext) {
 		if err != nil {
 			log.Fatalf("Client shutdown failure: %v", err)
 		}
-
+		log.Printf("Client shutting down.")
+		os.Exit(0)
 	}(mshCtx)
 }
 
@@ -112,6 +121,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 
 	var err error
 	mashupContext = &sdk.MashupContext{Context: context.Background(), MashupGoodies: mashupGoodies}
+	insecure = mashupGoodies["insecure"].(*bool)
 
 	// Initialize local server.
 	mashupCertBytes, err = mashupsdk.MashupCert.ReadFile("tls/mashup.crt")
@@ -169,12 +179,16 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 	return mashupContext
 }
 
-func BootstrapInit(mashupPath string, envParams []string, params []string) *sdk.MashupContext {
+func BootstrapInit(mashupPath string,
+	envParams []string,
+	params []string,
+	insecure *bool) *sdk.MashupContext {
 
 	mashupGoodies := map[string]interface{}{}
 	mashupGoodies["MASHUP_PATH"] = mashupPath
 	mashupGoodies["ENV"] = envParams
 	mashupGoodies["PARAMS"] = params
+	mashupGoodies["insecure"] = insecure
 
 	return initContext(mashupGoodies)
 }
