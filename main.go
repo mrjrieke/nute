@@ -6,6 +6,8 @@ package main
 // Nute is a basic gomobile app.
 import (
 	"flag"
+	"log"
+	"os"
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/key"
@@ -28,6 +30,11 @@ func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	flag.Parse()
+	nuteLog, err := os.OpenFile("nute.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(nuteLog)
 
 	server.InitServer(*callerCreds, *insecure)
 	app.Main(func(a app.App) {

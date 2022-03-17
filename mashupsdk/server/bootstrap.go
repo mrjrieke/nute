@@ -38,7 +38,7 @@ func InitServer(creds string, insecure bool) {
 	clientCredentials := sdk.MashupCredentials{}
 	err := json.Unmarshal([]byte(creds), &clientCredentials)
 	if err != nil {
-		log.Fatalf("Malformatted credentials: %v", err)
+		log.Fatalf("Malformed credentials: %s %v", creds, err)
 	}
 
 	go func(cc *sdk.MashupCredentials) {

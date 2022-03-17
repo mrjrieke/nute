@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"fyne.io/fyne/v2/app"
@@ -16,6 +17,12 @@ type HudContext struct {
 var hudContext HudContext
 
 func main() {
+	hudLog, err := os.OpenFile("hud.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(hudLog)
+
 	a := app.New()
 	a.Lifecycle().SetOnEnteredForeground(func() {
 		hudContext = HudContext{client.BootstrapInit("./nute", nil, nil)}

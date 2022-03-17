@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
-	"fmt"
 	"log"
 	"math/rand"
 	"net"
@@ -85,8 +84,11 @@ func mashupInit(mashupGoodies map[string]interface{}) error {
 			Foreground: false,
 		},
 	}
-	var pid, err = syscall.ForkExec(mashupGoodies["MASHUP_PATH"].(string), mashupGoodies["PARAMS"].([]string), &procAttr)
-	fmt.Println("Spawned proc", pid, err)
+	params := []string{mashupGoodies["MASHUP_PATH"].(string)}
+	params = append(params, mashupGoodies["PARAMS"].([]string)...)
+
+	var pid, err = syscall.ForkExec(mashupGoodies["MASHUP_PATH"].(string), params, &procAttr)
+	log.Println("Spawned proc", pid, err)
 	mashupGoodies["PID"] = pid
 
 	return err
@@ -153,10 +155,11 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 		log.Fatalf("Failure to launch: %v", err)
 	}
 	// Setup the onetime use handshake token...
-	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "CREDS="+string(jsonHandshakeCredentials))
+	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "-CREDS="+string(jsonHandshakeCredentials))
+	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "-insecure=true")
 
 	// Start mashup..
-	//err = mashupInit(mashupGoodies)
+	err = mashupInit(mashupGoodies)
 	if err != nil {
 		log.Fatalf("Failure to launch: %v", err)
 	}
