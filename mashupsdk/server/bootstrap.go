@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"log"
 	"math/rand"
 	"net"
@@ -29,8 +30,12 @@ type MashupServer struct {
 
 var serverCredentials *sdk.MashupCredentials
 
-func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
+func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupCredentials) (*sdk.MashupEmpty, error) {
 	log.Printf("Shutdown called")
+	if in.GetAuthToken() != serverCredentials.AuthToken {
+		return nil, errors.New("Auth failure")
+
+	}
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		os.Exit(-1)
@@ -38,6 +43,17 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 
 	log.Printf("Shutdown started")
 	return &sdk.MashupEmpty{}, nil
+}
+
+func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
+	log.Printf("OnResize called")
+	if in.MashupCredentials.GetAuthToken() != serverCredentials.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	// TODO: check credentials.
+	//	in.MashupCredentials.AuthToken
+
+	return nil, nil
 }
 
 func InitServer(creds string, insecure bool) {

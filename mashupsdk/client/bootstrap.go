@@ -108,7 +108,8 @@ func signalProcessor(mshCtx *sdk.MashupContext) {
 
 	go func(m *sdk.MashupContext) {
 		<-exitSignals
-		_, err := m.Client.Shutdown(m, &sdk.MashupEmpty{})
+		// TODO: Send real credentials.
+		_, err := m.Client.Shutdown(m, &sdk.MashupCredentials{})
 		if err != nil {
 			log.Fatalf("Client shutdown failure: %v", err)
 		}

@@ -11,7 +11,8 @@ package mashupsdk;
 service MashupServer {
   // Indicates to mashup it is time to shutdown.
   rpc Shake(MashupCredentials) returns (MashupCredentials) {}
-  rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
+  rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
+  rpc Shutdown(MashupCredentials) returns (MashupEmpty) {}
 }
 
 message MashupEmpty {
@@ -23,6 +24,19 @@ message MashupCredentials {
   string authToken = 1;
   string callerToken = 2;
   int64 port = 3;
+}
+
+// The query message with display position information.
+message MashupDisplayHint {
+  int64 xpos = 1;
+  int64 ypos = 2;
+  int64 width = 3;
+  int64 height = 4;
+}
+
+message MashupDisplayBundle {
+  MashupCredentials mashupCredentials = 1;
+  MashupDisplayHint mashupDisplayHint = 2;
 }
 
 // The response message containing the any messages to log

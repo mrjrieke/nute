@@ -21,8 +21,9 @@ depend:
 clean:
 	rm -f bin
 
-hud: *.go */*.go */*/*.go
-	$(GO_VARS) $(GO) build -o="$(GOBIN)/hud" -ldflags="$(LD_FLAGS)" $(ROOT)/hud/main.go
+helloworld: */*.go */*/*.go */*/*/*.go
+	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hello" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hello/main.go
+	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/world" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/world/main.go
 
 cleanmsdk:
 	rm mashupsdk/mashupsdk_grpc.pb.go; rm mashupsdk/mashupsdk.pb.go
