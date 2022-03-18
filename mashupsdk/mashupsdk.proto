@@ -10,17 +10,17 @@ package mashupsdk;
 // The mashup service definition.
 service MashupServer {
   // Indicates to mashup it is time to shutdown.
-  rpc Shake(MashupCredentials) returns (MashupCredentials) {}
+  rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
   rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
-  rpc Shutdown(MashupCredentials) returns (MashupEmpty) {}
+  rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }
 
 message MashupEmpty {
-
+  string authToken = 1;
 }
 
 // The response message with mashup credentials
-message MashupCredentials {
+message MashupConnectionConfigs {
   string authToken = 1;
   string callerToken = 2;
   int64 port = 3;
@@ -35,7 +35,7 @@ message MashupDisplayHint {
 }
 
 message MashupDisplayBundle {
-  MashupCredentials mashupCredentials = 1;
+  string authToken = 1;
   MashupDisplayHint mashupDisplayHint = 2;
 }
 

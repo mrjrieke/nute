@@ -40,7 +40,7 @@ func main() {
 	w.Resize(fyne.NewSize(800, 30))
 	w.SetContent(widget.NewLabel("The world of hello"))
 	w.SetCloseIntercept(func() {
-		helloContext.MshContext.Client.Shutdown(helloContext.MshContext, &mashupsdk.MashupCredentials{})
+		helloContext.MshContext.Client.Shutdown(helloContext.MshContext, &mashupsdk.MashupEmpty{AuthToken: "TODO"})
 		os.Exit(0)
 	})
 	w.ShowAndRun()
