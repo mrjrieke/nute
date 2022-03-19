@@ -18,6 +18,7 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
+	sdk "tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/server"
 )
 
@@ -25,21 +26,18 @@ var (
 	engine sprite.Engine
 )
 
-// CREDS={\"callerToken\":\"742bc42264f857dc68331cc5c26d0f89474fb499a17ac35d8c84cf8491906b54\",\"port\":46733}
-func main() {
-	callerCreds := flag.String("CREDS", "", "Credentials of caller")
-	insecure := flag.Bool("insecure", false, "Skip server validation")
-	flag.Parse()
-	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetOutput(worldLog)
+var worldCompleteChan chan bool
 
-	server.InitServer(*callerCreds, *insecure)
+type worldApiHandler struct {
+}
+
+func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	app.Main(func(a app.App) {
 		var glCtx gl.Context
 		var szEvent size.Event
+
+		// App starting... ok to let main exit.
+		worldCompleteChan <- true
 
 		for event := range a.Events() {
 			switch filteredEvent := a.Filter(event).(type) {
@@ -61,13 +59,24 @@ func main() {
 				// Capture a screen touched event.
 			case key.Event:
 				// Capture general keyboard events.
-
 			}
-
 		}
-
 	})
+}
 
+// CREDS={\"callerToken\":\"742bc42264f857dc68331cc5c26d0f89474fb499a17ac35d8c84cf8491906b54\",\"port\":46733}
+func main() {
+	callerCreds := flag.String("CREDS", "", "Credentials of caller")
+	insecure := flag.Bool("insecure", false, "Skip server validation")
+	flag.Parse()
+	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(worldLog)
+
+	server.InitServer(*callerCreds, *insecure, &worldApiHandler{})
+	<-worldCompleteChan
 }
 
 func onStart(glCtx gl.Context) {

@@ -13,7 +13,7 @@ import (
 // server is used to implement server.MashupServer.
 type MashupServer struct {
 	sdk.UnimplementedMashupServerServer
-	onResizeCb func(displayHint *sdk.MashupDisplayHint)
+	mashupApiHandler MashupApiHandler
 }
 
 func GetClientAuthToken() string {
@@ -48,7 +48,9 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	displayHint := in.MashupDisplayHint
 	log.Printf("Received resize: %d %d %d %d\n", displayHint.Xpos, displayHint.Ypos, displayHint.Width, displayHint.Height)
 
-	s.onResizeCb(displayHint)
+	if s.mashupApiHandler != nil {
+		s.mashupApiHandler.OnResize(displayHint)
+	}
 
 	return nil, nil
 }

@@ -24,7 +24,7 @@ var clientConnectionConfigs *sdk.MashupConnectionConfigs
 var serverConnectionConfigs *sdk.MashupConnectionConfigs
 
 // InitServer -- bootstraps the server portion of the sdk for the mashup.
-func InitServer(creds string, insecure bool) {
+func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) {
 	// Perform handshake...
 	handshakeConfigs := &sdk.MashupConnectionConfigs{}
 	err := json.Unmarshal([]byte(creds), handshakeConfigs)
@@ -90,7 +90,7 @@ func InitServer(creds string, insecure bool) {
 			// Async service initiation.
 			log.Printf("Registering server.\n")
 
-			sdk.RegisterMashupServerServer(s, &MashupServer{})
+			sdk.RegisterMashupServerServer(s, &MashupServer{mashupApiHandler: mashupApiHandler})
 
 			log.Printf("Starting service.\n")
 			if err := s.Serve(lis); err != nil {

@@ -15,7 +15,6 @@ func initSignalProcessor(mshCtx *sdk.MashupContext) {
 
 	go func(m *sdk.MashupContext) {
 		<-exitSignals
-		// TODO: Send real credentials.
 		_, err := m.Client.Shutdown(m, &sdk.MashupEmpty{AuthToken: GetServerAuthToken()})
 		if err != nil {
 			log.Fatalf("Possibly using self signed cert.  Consider using -insecure flag for developing.  Client shutdown failure: %v", err)
