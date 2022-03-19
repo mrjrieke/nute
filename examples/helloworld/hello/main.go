@@ -13,7 +13,7 @@ import (
 )
 
 type HelloContext struct {
-	MshContext *mashupsdk.MashupContext
+	MashContext *mashupsdk.MashupContext
 }
 
 var helloContext HelloContext
@@ -33,14 +33,28 @@ func main() {
 		helloContext = HelloContext{client.BootstrapInit("./world", nil, nil, insecure)}
 	})
 	a.Lifecycle().SetOnResized(func(xpos int, ypos int, width int, height int) {
-		// TODO: Notification to world of resize.
+		log.Printf("Received resize: %d %d %d %d\n", xpos, ypos, width, height)
+
+		if helloContext.MashContext != nil {
+			helloContext.MashContext.Client.OnResize(helloContext.MashContext,
+				&mashupsdk.MashupDisplayBundle{
+					AuthToken: client.GetServerAuthToken(),
+					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+						Xpos:   int64(xpos),
+						Ypos:   int64(ypos),
+						Width:  int64(width),
+						Height: int64(height),
+					},
+				})
+
+		}
 	})
 
 	w := a.NewWindow("Hello World")
 	w.Resize(fyne.NewSize(800, 30))
 	w.SetContent(widget.NewLabel("The world of hello"))
 	w.SetCloseIntercept(func() {
-		helloContext.MshContext.Client.Shutdown(helloContext.MshContext, &mashupsdk.MashupEmpty{AuthToken: "TODO"})
+		helloContext.MashContext.Client.Shutdown(helloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 		os.Exit(0)
 	})
 	w.ShowAndRun()

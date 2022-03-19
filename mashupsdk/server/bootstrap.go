@@ -2,77 +2,44 @@ package server
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"log"
-	"math/rand"
 	"net"
 	"strconv"
-	"time"
-
-	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 )
 
-// server is used to implement server.MashupServer.
-type MashupServer struct {
-	sdk.UnimplementedMashupServerServer
-}
+// Server bootstrapping is concerned with establishing connection with
+// mashup, handshaking, and establishing credential sets.  It
+// also sets up signal handling in event of either system
+// shutting down.
 
 var clientConnectionConfigs *sdk.MashupConnectionConfigs
 var serverConnectionConfigs *sdk.MashupConnectionConfigs
 
-func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
-	log.Printf("Shutdown called")
-	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		return nil, errors.New("Auth failure")
-
-	}
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		os.Exit(-1)
-	}()
-
-	log.Printf("Shutdown started")
-	return &sdk.MashupEmpty{}, nil
-}
-
-func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
-	log.Printf("OnResize called")
-	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		return nil, errors.New("Auth failure")
-	}
-	// TODO: check credentials.
-	//	in.MashupCredentials.AuthToken
-
-	return nil, nil
-}
-
+// InitServer -- bootstraps the server portion of the sdk for the mashup.
 func InitServer(creds string, insecure bool) {
 	// Perform handshake...
-	clientConnectionConfigs = &sdk.MashupConnectionConfigs{}
-	err := json.Unmarshal([]byte(creds), clientConnectionConfigs)
+	handshakeConfigs := &sdk.MashupConnectionConfigs{}
+	err := json.Unmarshal([]byte(creds), handshakeConfigs)
 	if err != nil {
 		log.Fatalf("Malformed credentials: %s %v", creds, err)
 	}
 	log.Printf("Startup with insecure: %t\n", insecure)
 
 	go func() {
-		mashupCertBytes, err := mashupsdk.MashupCert.ReadFile("tls/mashup.crt")
+		mashupCertBytes, err := sdk.MashupCert.ReadFile("tls/mashup.crt")
 		if err != nil {
 			log.Fatalf("Couldn't load cert: %v", err)
 		}
 
-		mashupKeyBytes, err := mashupsdk.MashupKey.ReadFile("tls/mashup.key")
+		mashupKeyBytes, err := sdk.MashupKey.ReadFile("tls/mashup.key")
 		if err != nil {
 			log.Fatalf("Couldn't load key: %v", err)
 		}
@@ -89,16 +56,11 @@ func InitServer(creds string, insecure bool) {
 			log.Fatalf("failed to serve: %v", err)
 		}
 
-		data := make([]byte, 10)
-		for i := range data {
-			data[i] = byte(rand.Intn(256))
-		}
-		randomSha256 := sha256.Sum256(data)
-
+		// Initialize the mashup server configuration and auth
+		// token.
 		serverConnectionConfigs = &sdk.MashupConnectionConfigs{
-			AuthToken:   clientConnectionConfigs.CallerToken,                 // client's token.
-			CallerToken: string(hex.EncodeToString([]byte(randomSha256[:]))), // server token.
-			Port:        int64(lis.Addr().(*net.TCPAddr).Port),
+			AuthToken: sdk.GenAuthToken(), // server token.
+			Port:      int64(lis.Addr().(*net.TCPAddr).Port),
 		}
 
 		// Connect to the server for purposes of mashup api calls.
@@ -111,7 +73,7 @@ func InitServer(creds string, insecure bool) {
 		mashupCertPool.AddCert(mashupClientCert)
 
 		// Send credentials back to client....
-		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(clientConnectionConfigs.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: insecure})))
+		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(handshakeConfigs.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: insecure})))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
@@ -138,7 +100,12 @@ func InitServer(creds string, insecure bool) {
 
 		log.Printf("Handshake initiated.\n")
 
-		_, err = mashupContext.Client.Shake(mashupContext.Context, serverConnectionConfigs)
+		callerToken := handshakeConfigs.CallerToken
+		handshakeConfigs.AuthToken = callerToken
+		handshakeConfigs.CallerToken = serverConnectionConfigs.AuthToken
+		handshakeConfigs.Port = serverConnectionConfigs.Port
+
+		clientConnectionConfigs, err = mashupContext.Client.Shake(mashupContext.Context, handshakeConfigs)
 		if err != nil {
 			log.Printf("handshake failure: %v\n", err)
 			panic(err)
