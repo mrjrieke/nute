@@ -22,7 +22,7 @@ clean:
 	rm -f bin
 
 helloworld: */*.go */*/*.go */*/*/*.go
-	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hello" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hello/main.go
+	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellogio" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
 	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/world" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/world/main.go
 
 cleanmsdk:
