@@ -27,7 +27,7 @@ type HelloContext struct {
 	MashContext *mashupsdk.MashupContext
 }
 
-var helloContext HelloContext
+var helloContext *HelloContext
 
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
@@ -39,7 +39,7 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 	go func() {
-		helloContext = HelloContext{client.BootstrapInit("./world", nil, nil, insecure)}
+		helloContext = &HelloContext{client.BootstrapInit("./world", nil, nil, insecure)}
 	}()
 
 	go func() {
@@ -87,7 +87,7 @@ func run(w *app.Window) error {
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, e)
 			if imgSize == nil {
-				if helloContext.MashContext != nil {
+				if helloContext != nil && helloContext.MashContext != nil {
 					helloContext.MashContext.Client.OnResize(helloContext.MashContext,
 						&mashupsdk.MashupDisplayBundle{
 							AuthToken: client.GetServerAuthToken(),
@@ -102,7 +102,7 @@ func run(w *app.Window) error {
 				imgSize = &e.Size
 			} else {
 				if (*imgSize).X != e.Size.X || (*imgSize).Y != e.Size.Y {
-					if helloContext.MashContext != nil {
+					if helloContext != nil && helloContext.MashContext != nil {
 						helloContext.MashContext.Client.OnResize(helloContext.MashContext,
 							&mashupsdk.MashupDisplayBundle{
 								AuthToken: client.GetServerAuthToken(),

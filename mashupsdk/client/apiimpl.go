@@ -33,7 +33,6 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupConne
 	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
-	log.Printf("Handshake initiated.\n")
 	serverConnectionConfigs = &sdk.MashupConnectionConfigs{
 		AuthToken: in.CallerToken,
 		Port:      in.Port,
@@ -71,13 +70,15 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupConne
 	initSignalProcessor(mashupContext)
 	log.Printf("Signal handler initialized.\n")
 
-	go func() { handshakeCompleteChan <- true }()
-	log.Printf("Handshake complete.\n")
+	go func() {
+		handshakeCompleteChan <- true
+	}()
 
 	clientConnectionConfigs = &sdk.MashupConnectionConfigs{
 		AuthToken: sdk.GenAuthToken(), // client token.
 		Port:      handshakeConnectionConfigs.Port,
 	}
+	log.Printf("Handshake complete.\n")
 
 	return clientConnectionConfigs, nil
 }

@@ -55,7 +55,9 @@ func forkMashup(mashupGoodies map[string]interface{}) error {
 }
 
 func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
+	log.Printf("Initializing Mashup.\n")
 
+	handshakeCompleteChan = make(chan bool)
 	var err error
 	mashupContext = &sdk.MashupContext{Context: context.Background(), MashupGoodies: mashupGoodies}
 	insecure = mashupGoodies["insecure"].(*bool)
@@ -117,6 +119,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 	}
 
 	<-handshakeCompleteChan
+	log.Printf("Mashup initialized.\n")
 
 	return mashupContext
 }
