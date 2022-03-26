@@ -1,0 +1,89 @@
+2022/03/22 06:08:50 Startup with insecure: true
+2022/03/22 06:08:50 Handshake initiated.
+2022/03/22 06:08:50 Registering server.
+2022/03/22 06:08:50 Starting service.
+2022/03/22 06:08:50 Handshake complete.
+2022/03/22 06:18:45 Startup with insecure: true
+2022/03/22 06:18:45 Handshake initiated.
+2022/03/22 06:18:45 Registering server.
+2022/03/22 06:18:45 Starting service.
+2022/03/22 06:18:45 Handshake complete.
+2022/03/22 06:19:53 Startup with insecure: true
+2022/03/22 06:19:53 Handshake initiated.
+2022/03/22 06:19:53 Registering server.
+2022/03/22 06:19:53 Starting service.
+2022/03/22 06:19:53 Handshake complete.
+2022/03/22 06:20:37 Startup with insecure: true
+2022/03/22 06:20:37 Handshake initiated.
+2022/03/22 06:20:37 Registering server.
+2022/03/22 06:20:37 Starting service.
+2022/03/22 06:20:37 Handshake complete.
+2022/03/22 06:21:23 Startup with insecure: true
+2022/03/22 06:21:23 Handshake initiated.
+2022/03/22 06:21:23 Registering server.
+2022/03/22 06:21:23 Starting service.
+2022/03/22 06:21:23 Handshake complete.
+2022/03/22 06:23:34 Startup with insecure: true
+2022/03/22 06:23:34 Handshake initiated.
+2022/03/22 06:23:34 Registering server.
+2022/03/22 06:23:34 Starting service.
+2022/03/22 06:23:34 Handshake complete.
+2022/03/22 06:24:45 Startup with insecure: true
+2022/03/22 06:24:45 Handshake initiated.
+2022/03/22 06:24:45 Registering server.
+2022/03/22 06:24:45 Starting service.
+2022/03/22 06:24:45 Handshake complete.
+2022/03/22 06:25:39 Startup with insecure: true
+2022/03/22 06:25:39 Handshake initiated.
+2022/03/22 06:25:39 Registering server.
+2022/03/22 06:25:39 Starting service.
+2022/03/22 06:25:39 Handshake complete.
+2022/03/22 06:27:03 Startup with insecure: true
+2022/03/22 06:27:03 Handshake initiated.
+2022/03/22 06:27:03 Registering server.
+2022/03/22 06:27:03 Starting service.
+2022/03/22 06:27:03 Handshake complete.
+2022/03/22 06:28:18 Startup with insecure: true
+2022/03/22 06:28:18 Handshake initiated.
+2022/03/22 06:28:18 Registering server.
+2022/03/22 06:28:18 Starting service.
+2022/03/22 06:28:18 Handshake complete.
+2022/03/22 06:32:36 Startup with insecure: true
+2022/03/22 06:32:36 Handshake initiated.
+2022/03/22 06:32:36 Registering server.
+2022/03/22 06:32:36 Starting service.
+2022/03/22 06:32:36 Handshake complete.
+2022/03/22 06:54:54 Startup with insecure: true
+2022/03/22 06:54:54 Handshake initiated.
+2022/03/22 06:54:54 Registering server.
+2022/03/22 06:54:54 Starting service.
+2022/03/22 06:54:55 Handshake complete.
+2022/03/22 06:55:37 Startup with insecure: true
+2022/03/22 06:55:37 Handshake initiated.
+2022/03/22 06:55:37 Registering server.
+2022/03/22 06:55:37 Starting service.
+2022/03/22 06:55:37 Handshake complete.
+2022/03/26 06:27:51 Startup with insecure: true
+2022/03/26 06:27:51 Handshake initiated.
+2022/03/26 06:27:51 Registering server.
+2022/03/26 06:27:51 Starting service.
+2022/03/26 06:28:11 handshake failure: rpc error: code = Unavailable desc = connection error: desc = "transport: authentication handshake failed: context deadline exceeded"
+2022/03/26 06:30:45 Startup with insecure: true
+2022/03/26 06:30:45 Handshake initiated.
+2022/03/26 06:30:45 Registering server.
+2022/03/26 06:30:45 Starting service.
+2022/03/26 06:30:54 Handshake complete.
+2022/03/26 06:41:35 Startup with insecure: true
+2022/03/26 06:41:35 Handshake initiated.
+2022/03/26 06:41:35 Registering server.
+2022/03/26 06:41:35 Starting service.
+2022/03/26 06:41:35 Handshake complete.
+2022/03/26 06:41:46 OnResize called
+2022/03/26 06:41:46 Received resize: 0 0 800 600
+2022/03/26 06:51:36 Startup with insecure: true
+2022/03/26 06:51:36 Handshake initiated.
+2022/03/26 06:51:36 Registering server.
+2022/03/26 06:51:36 Starting service.
+2022/03/26 06:51:36 Handshake complete.
+2022/03/26 06:51:42 OnResize called
+2022/03/26 06:51:42 Received resize: 0 0 800 600

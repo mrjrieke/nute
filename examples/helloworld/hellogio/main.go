@@ -20,6 +20,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
+	"gioui.org/unit"
 	"gioui.org/widget/material"
 )
 
@@ -27,7 +28,42 @@ type HelloContext struct {
 	MashContext *mashupsdk.MashupContext
 }
 
-var helloContext *HelloContext
+type HelloApp struct {
+	HelloContext *HelloContext
+	mainWin      *app.Window
+	mainWinDims  *image.Point
+}
+
+func (ha *HelloApp) OnResize(frameEvent *system.FrameEvent) {
+	resize := false
+	if ha.mainWinDims == nil {
+		resize = true
+		ha.mainWinDims = &frameEvent.Size
+	} else {
+		if (*ha.mainWinDims).X != frameEvent.Size.X || (*ha.mainWinDims).Y != frameEvent.Size.Y {
+			resize = true
+		}
+	}
+	if resize {
+		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
+			return
+		}
+
+		if ha.HelloContext.MashContext != nil {
+			ha.HelloContext.MashContext.Client.OnResize(ha.HelloContext.MashContext,
+				&mashupsdk.MashupDisplayBundle{
+					AuthToken: client.GetServerAuthToken(),
+					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+						Xpos:   int64(0),
+						Ypos:   int64(0),
+						Width:  int64(frameEvent.Size.X),
+						Height: int64(frameEvent.Size.Y),
+					},
+				})
+		}
+	}
+
+}
 
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
@@ -38,14 +74,21 @@ func main() {
 		log.Fatal(err)
 	}
 	log.SetOutput(helloLog)
+
+	helloApp := HelloApp{}
 	go func() {
-		helloContext = &HelloContext{client.BootstrapInit("./world", nil, nil, insecure)}
+		helloApp.HelloContext = &HelloContext{client.BootstrapInit("world", nil, nil, insecure)}
 	}()
 
 	go func() {
-		w := app.NewWindow()
+		options := []app.Option{
+			app.Size(unit.Dp(800), unit.Dp(600)),
+			app.Title("Hello World"),
+		}
+		helloApp.mainWin = app.NewWindow(options...)
+		helloApp.mainWin.Center()
 
-		err := run(w)
+		err := run(&helloApp)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -55,12 +98,12 @@ func main() {
 
 }
 
-func run(w *app.Window) error {
+func run(appContext *HelloApp) error {
 	th := material.NewTheme(gofont.Collection())
 	var ops op.Ops
-	var imgSize *image.Point
 	for {
-		e := <-w.Events()
+		e := <-appContext.mainWin.Events()
+		// Event handler for main window.
 		switch e := e.(type) {
 		case app.ConfigEvent:
 			ce := e.Config
@@ -86,36 +129,7 @@ func run(w *app.Window) error {
 			return e.Err
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, e)
-			if imgSize == nil {
-				if helloContext != nil && helloContext.MashContext != nil {
-					helloContext.MashContext.Client.OnResize(helloContext.MashContext,
-						&mashupsdk.MashupDisplayBundle{
-							AuthToken: client.GetServerAuthToken(),
-							MashupDisplayHint: &mashupsdk.MashupDisplayHint{
-								Xpos:   int64(0),
-								Ypos:   int64(0),
-								Width:  int64(e.Size.X),
-								Height: int64(e.Size.Y),
-							},
-						})
-				}
-				imgSize = &e.Size
-			} else {
-				if (*imgSize).X != e.Size.X || (*imgSize).Y != e.Size.Y {
-					if helloContext != nil && helloContext.MashContext != nil {
-						helloContext.MashContext.Client.OnResize(helloContext.MashContext,
-							&mashupsdk.MashupDisplayBundle{
-								AuthToken: client.GetServerAuthToken(),
-								MashupDisplayHint: &mashupsdk.MashupDisplayHint{
-									Xpos:   int64(0),
-									Ypos:   int64(0),
-									Width:  int64(e.Size.X),
-									Height: int64(e.Size.Y),
-								},
-							})
-					}
-				}
-			}
+			appContext.OnResize(&e)
 
 			title := material.H1(th, "Hello, Gio")
 			maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}

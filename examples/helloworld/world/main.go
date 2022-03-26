@@ -6,6 +6,7 @@ package main
 // World is a basic gomobile app.
 import (
 	"flag"
+	"image"
 	"log"
 	"os"
 
@@ -19,6 +20,7 @@ import (
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
 	sdk "tini.com/nute/mashupsdk"
+	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
 )
 
@@ -31,13 +33,19 @@ var worldCompleteChan chan bool
 type worldApiHandler struct {
 }
 
-func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
-	app.Main(func(a app.App) {
+type WorldApp struct {
+	wApiHandler *worldApiHandler
+	mainWin     *app.App
+	mainWinDims *image.Point
+}
+
+var worldApp WorldApp
+
+func (w *WorldApp) InitMainWindow() {
+
+	var mobileWinHandler interface{} = func(a app.App) {
 		var glCtx gl.Context
 		var szEvent size.Event
-
-		// App starting... ok to let main exit.
-		worldCompleteChan <- true
 
 		for event := range a.Events() {
 			switch filteredEvent := a.Filter(event).(type) {
@@ -61,7 +69,18 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 				// Capture general keyboard events.
 			}
 		}
-	})
+	}
+
+	worldApp.mainWin = guiboot.InitMainWindow(guiboot.Gomobile, mobileWinHandler).(*app.App)
+}
+
+func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
+	log.Printf("Received onResize.")
+	if worldApp.mainWin == nil {
+		worldApp.InitMainWindow()
+	} else {
+		(*worldApp.mainWin).Send(size.Event{WidthPx: int(displayHint.Width), HeightPx: int(displayHint.Height)})
+	}
 }
 
 // CREDS={\"callerToken\":\"742bc42264f857dc68331cc5c26d0f89474fb499a17ac35d8c84cf8491906b54\",\"port\":46733}
@@ -75,7 +94,10 @@ func main() {
 	}
 	log.SetOutput(worldLog)
 
-	server.InitServer(*callerCreds, *insecure, &worldApiHandler{})
+	worldApp = WorldApp{wApiHandler: &worldApiHandler{}}
+
+	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+
 	<-worldCompleteChan
 }
 
