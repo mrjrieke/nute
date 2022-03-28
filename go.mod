@@ -5,6 +5,7 @@ go 1.17
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
 	github.com/davecgh/go-spew v1.1.1
+	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
@@ -25,6 +26,7 @@ require (
 	github.com/go-text/typesetting v0.0.0-20220112121102-58fe93c84506 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20211219123610-ec9572f70e60 // indirect
 	github.com/jolestar/go-commons-pool v2.0.0+incompatible // indirect
@@ -38,6 +40,7 @@ require (
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/js/dom v0.0.0-20210725211120-f030747120f2 // indirect
 )
