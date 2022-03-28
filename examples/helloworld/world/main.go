@@ -71,7 +71,7 @@ func (w *WorldApp) InitMainWindow() {
 		}
 	}
 
-	worldApp.mainWin = guiboot.InitMainWindow(guiboot.Gomobile, mobileWinHandler).(*app.App)
+	worldApp.mainWin = guiboot.InitMainWindow(guiboot.Gomobile, nil, mobileWinHandler).(*app.App)
 }
 
 func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
@@ -83,7 +83,6 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	}
 }
 
-// CREDS={\"callerToken\":\"742bc42264f857dc68331cc5c26d0f89474fb499a17ac35d8c84cf8491906b54\",\"port\":46733}
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
