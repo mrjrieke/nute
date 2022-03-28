@@ -23,7 +23,7 @@ clean:
 
 helloworld: */*.go */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellogio" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
-	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/world" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/world/main.go
+	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldg3n/main.go
 
 cleanmsdk:
 	rm mashupsdk/mashupsdk_grpc.pb.go; rm mashupsdk/mashupsdk.pb.go
