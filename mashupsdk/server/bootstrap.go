@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	sdk "tini.com/nute/mashupsdk"
@@ -33,7 +34,7 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 	}
 	log.Printf("Startup with insecure: %t\n", insecure)
 
-	go func() {
+	go func(mapiH MashupApiHandler) {
 		mashupCertBytes, err := sdk.MashupCert.ReadFile("tls/mashup.crt")
 		if err != nil {
 			log.Fatalf("Couldn't load cert: %v", err)
@@ -86,17 +87,18 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 		// call before this app exits.
 		mashupContext.Client = sdk.NewMashupServerClient(conn)
 
-		go func() {
+		go func( mH MashupApiHandler) {
 			// Async service initiation.
-			log.Printf("Registering server.\n")
+			log.Printf("Start Registering server.\n")
 
-			sdk.RegisterMashupServerServer(s, &MashupServer{mashupApiHandler: mashupApiHandler})
+			sdk.RegisterMashupServerServer(s, &MashupServer{mashupApiHandler: mH})
+			log.Printf("Data: " + spew.Sdump(mH)+ "\n")
 
-			log.Printf("Starting service.\n")
+			log.Printf("My Starting service.\n")
 			if err := s.Serve(lis); err != nil {
 				log.Fatalf("failed to serve: %v", err)
 			}
-		}()
+		}(mapiH)
 
 		log.Printf("Handshake initiated.\n")
 
@@ -112,5 +114,5 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 		}
 		log.Printf("Handshake complete.\n")
 
-	}()
+	}(mashupApiHandler)
 }

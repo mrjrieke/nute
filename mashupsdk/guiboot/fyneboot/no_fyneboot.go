@@ -3,6 +3,5 @@
 
 package fyneboot
 
-func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interface{} {
-	return nil
+func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 }

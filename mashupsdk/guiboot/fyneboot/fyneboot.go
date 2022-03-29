@@ -9,12 +9,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interface{} {
+func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 	a := app.New()
 
 	fyneInitHandler := initHandler.(func(app.App) fyne.Window)
 	w := fyneInitHandler(app)
 
 	w.ShowAndRun()
-
 }

@@ -5,19 +5,21 @@ package g3nboot
 
 import (
 	"time"
+	"log"
 
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/renderer"
 )
 
 func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interface{} {
+	log.Printf("G3n Sdk Boot init")
 	a := app.App()
 
-	g3nInit := initHandler.(func(a app.App))
+	g3nInit := initHandler.(func(a *app.Application))
 	g3nInit(a)
 	g3nRuntimeHandler := runtimeHandler.(func(renderer *renderer.Renderer, deltaTime time.Duration))
 
-	// Run the application
+	// Run the application -- this will not return.
 	a.Run(g3nRuntimeHandler)
 	return a
 }

@@ -16,18 +16,17 @@ const (
 	Gomobile
 )
 
-func InitMainWindow(guiType GuiProvider, initHandler interface{}, runtimeHandle interface{}) interface{} {
+func InitMainWindow(guiType GuiProvider, initHandler interface{}, runtimeHandle interface{}) {
 
 	switch guiType {
 	case Fyne:
-		return fyneboot.InitMainWindow(initHandler, runtimeHandle)
+		fyneboot.InitMainWindow(initHandler, runtimeHandle)
 	case G3n:
-		return g3nboot.InitMainWindow(initHandler, runtimeHandle)
+		g3nboot.InitMainWindow(initHandler, runtimeHandle)
 	case Gio:
-		return gioboot.InitMainWindow(initHandler, runtimeHandle)
+		gioboot.InitMainWindow(initHandler, runtimeHandle)
 	case Gomobile:
-		return gomobileboot.InitMainWindow(initHandler, runtimeHandle)
+		gomobileboot.InitMainWindow(initHandler, runtimeHandle)
 	default:
-		return nil
 	}
 }

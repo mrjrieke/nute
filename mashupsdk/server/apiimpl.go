@@ -49,6 +49,7 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	log.Printf("Received resize: %d %d %d %d\n", displayHint.Xpos, displayHint.Ypos, displayHint.Width, displayHint.Height)
 
 	if s.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
 		s.mashupApiHandler.OnResize(displayHint)
 	}
 

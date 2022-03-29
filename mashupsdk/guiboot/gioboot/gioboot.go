@@ -3,7 +3,6 @@
 
 package gioboot
 
-func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interface{} {
-	// TODO: implement
-	return nil
+func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
+	// TODO: implement.
 }

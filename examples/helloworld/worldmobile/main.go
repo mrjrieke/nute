@@ -71,7 +71,7 @@ func (w *WorldApp) InitMainWindow() {
 		}
 	}
 
-	worldApp.mainWin = guiboot.InitMainWindow(guiboot.Gomobile, nil, mobileWinHandler).(*app.App)
+	guiboot.InitMainWindow(guiboot.Gomobile, nil, mobileWinHandler)
 }
 
 func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {

@@ -77,7 +77,7 @@ func main() {
 
 	helloApp := HelloApp{}
 	go func() {
-		helloApp.HelloContext = &HelloContext{client.BootstrapInit("world", nil, nil, insecure)}
+		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
 	}()
 
 	go func() {
