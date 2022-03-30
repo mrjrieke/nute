@@ -3,12 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"image"
 	"image/color"
 	"log"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
@@ -30,18 +28,31 @@ type HelloContext struct {
 }
 
 type HelloApp struct {
-	HelloContext *HelloContext
-	mainWin      *app.Window
-	mainWinDims  *image.Point
+	HelloContext   *HelloContext
+	mainWin        *app.Window
+	mainWinDisplay *mashupsdk.MashupDisplayHint
 }
 
-func (ha *HelloApp) OnResize(frameEvent *system.FrameEvent) {
+func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := false
-	if ha.mainWinDims == nil {
+	if ha.mainWinDisplay == nil {
 		resize = true
-		ha.mainWinDims = &frameEvent.Size
+		ha.mainWinDisplay = displayHint
 	} else {
-		if (*ha.mainWinDims).X != frameEvent.Size.X || (*ha.mainWinDims).Y != frameEvent.Size.Y {
+		if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
+			ha.mainWinDisplay.Xpos = displayHint.Xpos
+			resize = true
+		}
+		if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
+			ha.mainWinDisplay.Ypos = displayHint.Ypos
+			resize = true
+		}
+		if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
+			ha.mainWinDisplay.Width = displayHint.Width
+			resize = true
+		}
+		if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height {
+			ha.mainWinDisplay.Height = displayHint.Height
 			resize = true
 		}
 	}
@@ -53,13 +64,8 @@ func (ha *HelloApp) OnResize(frameEvent *system.FrameEvent) {
 		if ha.HelloContext.MashContext != nil {
 			ha.HelloContext.MashContext.Client.OnResize(ha.HelloContext.MashContext,
 				&mashupsdk.MashupDisplayBundle{
-					AuthToken: client.GetServerAuthToken(),
-					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
-						Xpos:   int64(0),
-						Ypos:   int64(0),
-						Width:  int64(frameEvent.Size.X),
-						Height: int64(frameEvent.Size.Y),
-					},
+					AuthToken:         client.GetServerAuthToken(),
+					MashupDisplayHint: ha.mainWinDisplay,
 				})
 		}
 	}
@@ -101,30 +107,43 @@ func main() {
 			// Event handler for main window.
 			switch e := e.(type) {
 			case app.ConfigEvent:
-				ce := e.Config
-				spew.Dump(ce)
+				//ce := e.Config
+				//spew.Dump(ce)
 
 			case app.X11ViewEvent:
-				display := e.Display
-				spew.Dump(display)
+				//display := e.Display
+				//spew.Dump(display)
 
 			case system.StageEvent:
-				stage := e.Stage
-				spew.Dump(stage)
+				//stage := e.Stage
+				//spew.Dump(stage)
 
 			case key.FocusEvent:
-				fe := e.Focus
-				spew.Dump(fe)
+				//fe := e.Focus
+				//spew.Dump(fe)
 
 			case pointer.Event:
-				pos := e.Position
-				spew.Dump(pos)
+				//pos := e.Position
+				//spew.Dump(pos)
 
 			case system.DestroyEvent:
 				return
+			case system.PositionEvent:
+				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+					Xpos:   int64(e.X),
+					Ypos:   int64(e.Y),
+					Width:  int64(0),
+					Height: int64(0),
+				})
+
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
-				helloApp.OnResize(&e)
+				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+					Xpos:   int64(helloApp.mainWinDisplay.Xpos),
+					Ypos:   int64(helloApp.mainWinDisplay.Ypos),
+					Width:  int64(e.Size.X),
+					Height: int64(e.Size.Y),
+				})
 
 				title := material.H1(th, "Hello, Gio")
 				maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}

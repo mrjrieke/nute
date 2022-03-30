@@ -18,6 +18,5 @@ func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 
 	// Run the application -- this will not return.
 	go gioRuntimeHandler()
-
 	app.Main()
 }
