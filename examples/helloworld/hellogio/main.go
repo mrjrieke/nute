@@ -11,6 +11,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
+	"tini.com/nute/mashupsdk/guiboot"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -76,70 +77,66 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp := HelloApp{}
+
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
 	}()
 
-	go func() {
+	initHandler := func() {
 		options := []app.Option{
 			app.Size(unit.Dp(800), unit.Dp(600)),
-			app.Title("Hello World"),
+			app.Title("Hello"),
 		}
 		helloApp.mainWin = app.NewWindow(options...)
 		helloApp.mainWin.Center()
+	}
 
-		err := run(&helloApp)
-		if err != nil {
-			log.Fatal(err)
-		}
-		os.Exit(0)
-	}()
-	app.Main()
+	runtimeHandler := func() {
+		th := material.NewTheme(gofont.Collection())
+		var ops op.Ops
+		for {
+			e := <-helloApp.mainWin.Events()
+			// Event handler for main window.
+			switch e := e.(type) {
+			case app.ConfigEvent:
+				ce := e.Config
+				spew.Dump(ce)
 
-}
+			case app.X11ViewEvent:
+				display := e.Display
+				spew.Dump(display)
 
-func run(appContext *HelloApp) error {
-	th := material.NewTheme(gofont.Collection())
-	var ops op.Ops
-	for {
-		e := <-appContext.mainWin.Events()
-		// Event handler for main window.
-		switch e := e.(type) {
-		case app.ConfigEvent:
-			ce := e.Config
-			spew.Dump(ce)
+			case system.StageEvent:
+				stage := e.Stage
+				spew.Dump(stage)
 
-		case app.X11ViewEvent:
-			display := e.Display
-			spew.Dump(display)
+			case key.FocusEvent:
+				fe := e.Focus
+				spew.Dump(fe)
 
-		case system.StageEvent:
-			stage := e.Stage
-			spew.Dump(stage)
+			case pointer.Event:
+				pos := e.Position
+				spew.Dump(pos)
 
-		case key.FocusEvent:
-			fe := e.Focus
-			spew.Dump(fe)
+			case system.DestroyEvent:
+				return
+			case system.FrameEvent:
+				gtx := layout.NewContext(&ops, e)
+				helloApp.OnResize(&e)
 
-		case pointer.Event:
-			pos := e.Position
-			spew.Dump(pos)
+				title := material.H1(th, "Hello, Gio")
+				maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}
+				title.Color = maroon
+				title.Alignment = text.Middle
+				title.Layout(gtx)
 
-		case system.DestroyEvent:
-			return e.Err
-		case system.FrameEvent:
-			gtx := layout.NewContext(&ops, e)
-			appContext.OnResize(&e)
-
-			title := material.H1(th, "Hello, Gio")
-			maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}
-			title.Color = maroon
-			title.Alignment = text.Middle
-			title.Layout(gtx)
-
-			e.Frame(gtx.Ops)
-		default:
-			fmt.Println("In here.")
+				e.Frame(gtx.Ops)
+			default:
+				fmt.Println("In here.")
+			}
 		}
 	}
+
+	guiboot.InitMainWindow(guiboot.Gio, initHandler, runtimeHandler)
+
 }

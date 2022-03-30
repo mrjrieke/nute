@@ -4,14 +4,14 @@
 package g3nboot
 
 import (
-	"time"
 	"log"
+	"time"
 
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/renderer"
 )
 
-func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interface{} {
+func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 	log.Printf("G3n Sdk Boot init")
 	a := app.App()
 
@@ -21,5 +21,4 @@ func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) interfa
 
 	// Run the application -- this will not return.
 	a.Run(g3nRuntimeHandler)
-	return a
 }

@@ -38,8 +38,8 @@ type WorldApp struct {
 	wApiHandler *worldApiHandler
 	mainWinDims *image.Point
 	mainWin     *app.Application
-	scene *core.Node
-	cam *camera.Camera
+	scene       *core.Node
+	cam         *camera.Camera
 }
 
 var worldApp WorldApp
@@ -48,7 +48,7 @@ func (w *WorldApp) InitMainWindow() {
 	log.Printf("Initializing mainWin.")
 
 	initHandler := func(a *app.Application) {
-	    log.Printf("InitHandler.")
+		log.Printf("InitHandler.")
 
 		if w.mainWin == nil {
 			w.mainWin = a
@@ -103,13 +103,13 @@ func (w *WorldApp) InitMainWindow() {
 
 		// Set background color to gray
 		a.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
-	    log.Printf("InitHandler complete.")
+		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		worldApp.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
 	}
-	
+
 	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
 }
 
