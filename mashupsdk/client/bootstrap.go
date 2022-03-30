@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os/exec"
 	"syscall"
 
 	"google.golang.org/grpc"
@@ -46,12 +47,19 @@ func forkMashup(mashupGoodies map[string]interface{}) error {
 	}
 	params := []string{mashupGoodies["MASHUP_PATH"].(string)}
 	params = append(params, mashupGoodies["PARAMS"].([]string)...)
+	mashupPath, lookupErr := exec.LookPath(mashupGoodies["MASHUP_PATH"].(string))
+	if lookupErr != nil {
+		log.Fatalf("Couldn't exec mashup: %v", lookupErr)
+	}
 
-	var pid, err = syscall.ForkExec(mashupGoodies["MASHUP_PATH"].(string), params, &procAttr)
-	log.Println("Spawned proc", pid, err)
+	var pid, forkErr = syscall.ForkExec(mashupPath, params, &procAttr)
+	if forkErr != nil {
+		log.Fatalf("Couldn't exec mashup: %v", forkErr)
+	}
+	log.Println("Spawned proc", pid)
 	mashupGoodies["PID"] = pid
 
-	return err
+	return forkErr
 }
 
 func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {

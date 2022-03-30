@@ -82,6 +82,7 @@ func main() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
 	}()
 
+	// Sync initialization.
 	initHandler := func() {
 		options := []app.Option{
 			app.Size(unit.Dp(800), unit.Dp(600)),
@@ -91,6 +92,7 @@ func main() {
 		helloApp.mainWin.Center()
 	}
 
+	// Async handler.
 	runtimeHandler := func() {
 		th := material.NewTheme(gofont.Collection())
 		var ops op.Ops
@@ -138,5 +140,4 @@ func main() {
 	}
 
 	guiboot.InitMainWindow(guiboot.Gio, initHandler, runtimeHandler)
-
 }
