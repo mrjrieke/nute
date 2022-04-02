@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"image/color"
 	"log"
 	"os"
@@ -31,6 +30,7 @@ type HelloApp struct {
 	HelloContext   *HelloContext
 	mainWin        *app.Window
 	mainWinDisplay *mashupsdk.MashupDisplayHint
+	yOffset        int
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -52,7 +52,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 			resize = true
 		}
 		if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height {
-			ha.mainWinDisplay.Height = displayHint.Height
+			ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
 			resize = true
 		}
 	}
@@ -107,12 +107,17 @@ func main() {
 			// Event handler for main window.
 			switch e := e.(type) {
 			case app.ConfigEvent:
-				//ce := e.Config
-				//spew.Dump(ce)
+				ce := e.Config
+				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+					Xpos:   int64(ce.Position.X),
+					Ypos:   int64(ce.Position.Y),
+					Width:  int64(ce.Size.X),
+					Height: int64(ce.Size.Y),
+				})
 
 			case app.X11ViewEvent:
-				//display := e.Display
-				//spew.Dump(display)
+				// display := e.Display
+				// spew.Dump(display)
 
 			case system.StageEvent:
 				//stage := e.Stage
@@ -123,6 +128,7 @@ func main() {
 				//spew.Dump(fe)
 
 			case pointer.Event:
+				// Position of like a cursor.
 				//pos := e.Position
 				//spew.Dump(pos)
 
@@ -132,9 +138,12 @@ func main() {
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(e.X),
 					Ypos:   int64(e.Y),
-					Width:  int64(0),
-					Height: int64(0),
+					Width:  int64(e.Width),
+					Height: int64(e.Height),
 				})
+				if e.YOffset != 0 {
+					helloApp.yOffset = e.YOffset
+				}
 
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
@@ -152,8 +161,6 @@ func main() {
 				title.Layout(gtx)
 
 				e.Frame(gtx.Ops)
-			default:
-				fmt.Println("In here.")
 			}
 		}
 	}
