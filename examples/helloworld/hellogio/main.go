@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
@@ -30,6 +32,7 @@ type HelloApp struct {
 	HelloContext   *HelloContext
 	mainWin        *app.Window
 	mainWinDisplay *mashupsdk.MashupDisplayHint
+	settled        int
 	yOffset        int
 }
 
@@ -37,25 +40,32 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := false
 	if ha.mainWinDisplay == nil {
 		resize = true
-		ha.mainWinDisplay = displayHint
-	} else {
-		if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
-			ha.mainWinDisplay.Xpos = displayHint.Xpos
-			resize = true
-		}
-		if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
-			ha.mainWinDisplay.Ypos = displayHint.Ypos
-			resize = true
-		}
-		if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
-			ha.mainWinDisplay.Width = displayHint.Width
-			resize = true
-		}
-		if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height {
-			ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
-			resize = true
-		}
+		ha.mainWinDisplay = &mashupsdk.MashupDisplayHint{}
 	}
+
+	if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
+		ha.mainWinDisplay.Xpos = displayHint.Xpos
+		resize = true
+	}
+	if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
+		ha.mainWinDisplay.Ypos = displayHint.Ypos
+		resize = true
+	}
+	if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
+		ha.mainWinDisplay.Width = displayHint.Width
+		resize = true
+	}
+	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height {
+		ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
+		resize = true
+	}
+
+	if ha.settled != 15 {
+		return
+	}
+	fmt.Println("Through")
+	spew.Dump(ha.mainWinDisplay)
+
 	if resize {
 		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
 			return
@@ -86,6 +96,7 @@ func main() {
 
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+		helloApp.settled |= 8
 	}()
 
 	// Sync initialization.
@@ -114,6 +125,7 @@ func main() {
 					Width:  int64(ce.Size.X),
 					Height: int64(ce.Size.Y),
 				})
+				helloApp.settled |= 1
 
 			case app.X11ViewEvent:
 				// display := e.Display
@@ -144,6 +156,7 @@ func main() {
 				if e.YOffset != 0 {
 					helloApp.yOffset = e.YOffset
 				}
+				helloApp.settled |= 2
 
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
@@ -153,6 +166,7 @@ func main() {
 					Width:  int64(e.Size.X),
 					Height: int64(e.Size.Y),
 				})
+				helloApp.settled |= 4
 
 				title := material.H1(th, "Hello, Gio")
 				maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}
