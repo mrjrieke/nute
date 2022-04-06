@@ -22,6 +22,7 @@ require (
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
 	github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 // indirect
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
+	github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec // indirect
 	github.com/go-text/typesetting v0.0.0-20220112121102-58fe93c84506 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
@@ -55,3 +56,5 @@ require (
 replace fyne.io/fyne/v2 => ../../fyne
 
 replace gioui.org => ../../gio
+
+replace github.com/g3n/engine => ../../g3n/engine

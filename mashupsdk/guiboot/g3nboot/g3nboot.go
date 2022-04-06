@@ -13,7 +13,7 @@ import (
 
 func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 	log.Printf("G3n Sdk Boot init")
-	a := app.App()
+	a := new(app.Application)
 
 	g3nInit := initHandler.(func(a *app.Application))
 	g3nInit(a)

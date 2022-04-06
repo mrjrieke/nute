@@ -2,12 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"image/color"
 	"log"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
@@ -43,6 +41,10 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		ha.mainWinDisplay = &mashupsdk.MashupDisplayHint{}
 	}
 
+	if displayHint == nil {
+		return
+	}
+
 	if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
 		ha.mainWinDisplay.Xpos = displayHint.Xpos
 		resize = true
@@ -55,16 +57,17 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		ha.mainWinDisplay.Width = displayHint.Width
 		resize = true
 	}
-	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height {
+	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height+int64(ha.yOffset) {
 		ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
 		resize = true
 	}
 
-	if ha.settled != 15 {
+	if ha.settled < 15 {
 		return
+	} else if ha.settled == 15 {
+		resize = true
+		ha.settled = 31
 	}
-	fmt.Println("Through")
-	spew.Dump(ha.mainWinDisplay)
 
 	if resize {
 		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
@@ -80,6 +83,11 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		}
 	}
 
+}
+func Center() app.Option {
+	return func(_ unit.Metric, cnf *app.Config) {
+		cnf.Center = true
+	}
 }
 
 func main() {
@@ -97,6 +105,7 @@ func main() {
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
 		helloApp.settled |= 8
+		helloApp.OnResize(helloApp.mainWinDisplay)
 	}()
 
 	// Sync initialization.
@@ -104,6 +113,7 @@ func main() {
 		options := []app.Option{
 			app.Size(unit.Dp(800), unit.Dp(600)),
 			app.Title("Hello"),
+			Center(),
 		}
 		helloApp.mainWin = app.NewWindow(options...)
 		helloApp.mainWin.Center()
@@ -119,13 +129,30 @@ func main() {
 			switch e := e.(type) {
 			case app.ConfigEvent:
 				ce := e.Config
+
+				if helloApp.settled > 15 || (ce.Center && (helloApp.settled&1) == 0) {
+					if ce.YOffset != 0 {
+						helloApp.yOffset = ce.YOffset
+					}
+					helloApp.settled |= 1
+					helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+						Xpos:   int64(ce.Position.X),
+						Ypos:   int64(ce.Position.Y),
+						Width:  int64(ce.Size.X),
+						Height: int64(ce.Size.Y),
+					})
+				}
+			case system.PositionEvent:
+				if e.YOffset != 0 {
+					helloApp.yOffset = e.YOffset
+				}
+				helloApp.settled |= 2
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
-					Xpos:   int64(ce.Position.X),
-					Ypos:   int64(ce.Position.Y),
-					Width:  int64(ce.Size.X),
-					Height: int64(ce.Size.Y),
+					Xpos:   int64(e.X),
+					Ypos:   int64(e.Y),
+					Width:  int64(e.Width),
+					Height: int64(e.Height),
 				})
-				helloApp.settled |= 1
 
 			case app.X11ViewEvent:
 				// display := e.Display
@@ -146,27 +173,16 @@ func main() {
 
 			case system.DestroyEvent:
 				return
-			case system.PositionEvent:
-				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
-					Xpos:   int64(e.X),
-					Ypos:   int64(e.Y),
-					Width:  int64(e.Width),
-					Height: int64(e.Height),
-				})
-				if e.YOffset != 0 {
-					helloApp.yOffset = e.YOffset
-				}
-				helloApp.settled |= 2
 
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
+				helloApp.settled |= 4
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(helloApp.mainWinDisplay.Xpos),
 					Ypos:   int64(helloApp.mainWinDisplay.Ypos),
 					Width:  int64(e.Size.X),
 					Height: int64(e.Size.Y),
 				})
-				helloApp.settled |= 4
 
 				title := material.H1(th, "Hello, Gio")
 				maroon := color.NRGBA{R: 127, G: 0, B: 0, A: 255}
