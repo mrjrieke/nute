@@ -6,7 +6,6 @@ package main
 // World is a basic gomobile app.
 import (
 	"flag"
-	"image"
 	"log"
 	"os"
 	"time"
@@ -35,11 +34,12 @@ type worldApiHandler struct {
 }
 
 type WorldApp struct {
-	wApiHandler *worldApiHandler
-	mainWinDims *image.Point
-	mainWin     *app.Application
-	scene       *core.Node
-	cam         *camera.Camera
+	wApiHandler         *worldApiHandler
+	displaySetupChan    chan *sdk.MashupDisplayHint
+	displayPositionChan chan *sdk.MashupDisplayHint
+	mainWin             *app.Application
+	scene               *core.Node
+	cam                 *camera.Camera
 }
 
 var worldApp WorldApp
@@ -53,6 +53,8 @@ func (w *WorldApp) InitMainWindow() {
 		if w.mainWin == nil {
 			w.mainWin = a
 		}
+		displayHint := <-worldApp.displaySetupChan
+		app.AppCustom(a, "Hello world G3n", int(displayHint.Width), int(displayHint.Height), int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
 		w.scene = core.NewNode()
 
 		// Set the scene to be managed by the gui manager
@@ -103,6 +105,15 @@ func (w *WorldApp) InitMainWindow() {
 
 		// Set background color to gray
 		a.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
+		go func() {
+			log.Println("Watching position events.")
+			for displayHint := range worldApp.displayPositionChan {
+				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+				(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+				(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+			}
+			log.Println("Exiting disply chan.")
+		}()
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
@@ -116,10 +127,11 @@ func (w *WorldApp) InitMainWindow() {
 func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-		(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
-		(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+		worldApp.displayPositionChan <- displayHint
 	} else {
 		log.Printf("G3n Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+		worldApp.displaySetupChan <- displayHint
+		worldApp.displayPositionChan <- displayHint
 	}
 }
 
@@ -133,12 +145,16 @@ func main() {
 	}
 	log.SetOutput(worldLog)
 
-	worldApp = WorldApp{wApiHandler: &worldApiHandler{}}
+	worldApp = WorldApp{
+		wApiHandler:         &worldApiHandler{},
+		displaySetupChan:    make(chan *sdk.MashupDisplayHint, 1),
+		displayPositionChan: make(chan *sdk.MashupDisplayHint, 1),
+	}
 
 	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
 
 	// Initialize the main window.
-	worldApp.InitMainWindow()
+	go worldApp.InitMainWindow()
 
 	<-worldCompleteChan
 }
