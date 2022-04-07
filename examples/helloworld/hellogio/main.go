@@ -82,8 +82,8 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 				})
 		}
 	}
-
 }
+
 func Center() app.Option {
 	return func(_ unit.Metric, cnf *app.Config) {
 		cnf.Center = true

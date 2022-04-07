@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	fyne.io/systray v1.1.1-0.20220307102710-0121a6d9ce01 // indirect
+	fyne.io/systray v1.9.1-0.20220331100914-9177bf851614 // indirect
 	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
 	gioui.org/shader v1.0.6 // indirect
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
