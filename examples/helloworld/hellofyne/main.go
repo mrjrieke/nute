@@ -91,8 +91,10 @@ func main() {
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
-			helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
-			helloApp.settled |= 8
+			if helloApp.HelloContext == nil {
+				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+				helloApp.settled |= 8
+			}
 			helloApp.OnResize(helloApp.mainWinDisplay)
 		})
 		a.Lifecycle().SetOnResized(func(xpos int, ypos int, width int, height int) {
