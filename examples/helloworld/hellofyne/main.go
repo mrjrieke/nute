@@ -119,7 +119,7 @@ func main() {
 		helloApp.mainWin.Resize(fyne.NewSize(800, 30))
 		helloApp.mainWin.SetContent(widget.NewLabel("The world of hello"))
 		helloApp.mainWin.SetCloseIntercept(func() {
-			helloContext.MashContext.Client.Shutdown(helloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+			helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			os.Exit(0)
 		})
 	}
