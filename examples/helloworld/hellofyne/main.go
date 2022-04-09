@@ -42,7 +42,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		resize = true
 	}
 	if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
-		ha.mainWinDisplay.Ypos = displayHint.Ypos
+		ha.mainWinDisplay.Ypos = displayHint.Ypos + int64(ha.yOffset)
 		resize = true
 	}
 	if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
@@ -50,7 +50,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		resize = true
 	}
 	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height+int64(ha.yOffset) {
-		ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
+		ha.mainWinDisplay.Height = displayHint.Height
 		resize = true
 	}
 
@@ -97,11 +97,15 @@ func main() {
 			}
 			helloApp.OnResize(helloApp.mainWinDisplay)
 		})
-		a.Lifecycle().SetOnResized(func(xpos int, ypos int, width int, height int) {
-			log.Printf("Received resize: %d %d %d %d\n", xpos, ypos, width, height)
+		a.Lifecycle().SetOnResized(func(xpos int, ypos int, yoffset int, width int, height int) {
+			log.Printf("Received resize: %d %d %d %d %d\n", xpos, ypos, yoffset, width, height)
 			helloApp.settled |= 1
 			helloApp.settled |= 2
 			helloApp.settled |= 4
+
+			if helloApp.yOffset == 0 {
+				helloApp.yOffset = yoffset
+			}
 
 			helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 				Xpos:   int64(xpos),
