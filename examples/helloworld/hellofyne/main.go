@@ -104,7 +104,7 @@ func main() {
 			helloApp.settled |= 4
 
 			if helloApp.yOffset == 0 {
-				helloApp.yOffset = yoffset
+				helloApp.yOffset = yoffset + 3
 			}
 
 			helloApp.OnResize(&mashupsdk.MashupDisplayHint{

@@ -132,7 +132,7 @@ func main() {
 
 				if helloApp.settled > 15 || (ce.Center && (helloApp.settled&1) == 0) {
 					if ce.YOffset != 0 {
-						helloApp.yOffset = ce.YOffset
+						helloApp.yOffset = ce.YOffset + 3
 					}
 					helloApp.settled |= 1
 					helloApp.OnResize(&mashupsdk.MashupDisplayHint{
@@ -144,7 +144,7 @@ func main() {
 				}
 			case system.PositionEvent:
 				if e.YOffset != 0 {
-					helloApp.yOffset = e.YOffset
+					helloApp.yOffset = e.YOffset + 3
 				}
 				helloApp.settled |= 2
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
