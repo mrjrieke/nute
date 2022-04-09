@@ -1,24 +1,12 @@
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
+*.log
+bin/*
+.vscode/
 
-# Folders
-_obj
-_test
+examples/helloworld/bin/*
+examples/helloworld/hellofyne/*.log
+examples/helloworld/hellogio/*.log
 
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
-
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
-
-_testmain.go
-
-*.exe
-*.test
-*.prof
+mashupsdk/mashupsdk.pb.go
+mashupsdk/mashupsdk_grpc.pb.go
+mashupsdk/tls/mashup.crt
+mashupsdk/tls/mashup.key

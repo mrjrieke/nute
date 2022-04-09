@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option go_package = "github.com/mrjrieke/nute/mashupsdk";
+option java_multiple_files = true;
+option java_package = "nute.mashupsdk";
+option java_outer_classname = "MashupSdk";
+
+package mashupsdk;
+
+// The mashup service definition.
+service MashupServer {
+  // Indicates to mashup it is time to shutdown.
+  rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
+  rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
+  rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
+}
+
+message MashupEmpty {
+  string authToken = 1;
+}
+
+// The response message with mashup credentials
+message MashupConnectionConfigs {
+  string authToken = 1;
+  string callerToken = 2;
+  int64 port = 3;
+}
+
+// The query message with display position information.
+message MashupDisplayHint {
+  int64 xpos = 1;
+  int64 ypos = 2;
+  int64 width = 3;
+  int64 height = 4;
+}
+
+message MashupDisplayBundle {
+  string authToken = 1;
+  MashupDisplayHint mashupDisplayHint = 2;
+}
+
+// The response message containing the any messages to log
+message ShutdownReply {
+  string message = 1;
+}
