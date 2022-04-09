@@ -172,6 +172,7 @@ func main() {
 				//spew.Dump(pos)
 
 			case system.DestroyEvent:
+				helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 				return
 
 			case system.FrameEvent:
@@ -192,6 +193,7 @@ func main() {
 
 				e.Frame(gtx.Ops)
 			}
+
 		}
 	}
 
