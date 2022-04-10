@@ -3,9 +3,9 @@ module tini.com/nute
 go 1.17
 
 require (
-	gioui.org
+	gioui.org v0.0.0-20220318070519-8833a6738a3b
 	github.com/davecgh/go-spew v1.1.1
-	github.com/g3n/engine
+	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
@@ -44,7 +44,7 @@ require (
 )
 
 require (
-	fyne.io/fyne/v2
+	fyne.io/fyne/v2 v2
 	golang.org/x/exp v0.0.0-20210722180016-6781d3edade3 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
@@ -54,6 +54,6 @@ replace fyne.io/fyne/v2 => github.com/mrjrieke/fyne mashup_v1
 
 replace gioui.org => github.com/mrjrieke/gio mashup_v1
 
-replace github.com/fyne-io/glfw-js => github.com/mrjrieke/glfw-js@ ashup_v1
+replace github.com/fyne-io/glfw-js => github.com/mrjrieke/glfw-js mashup_v1
 
 replace github.com/g3n/engine => github.com/mrjrieke/engine mashup_v1
