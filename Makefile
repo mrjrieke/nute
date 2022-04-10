@@ -29,9 +29,10 @@ helloworldfyne: */*.go */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/hellofyne" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellofyne/main.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldg3n/main.go
 
-helloworldmobile: */*.go */*/*.go */*/*/*.go
-	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellogio" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
-	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldmobile/main.go
+# In disrepair...
+# helloworldmobile: */*.go */*/*.go */*/*/*.go
+#	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellomobile" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
+#	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldmobile/main.go
 
 cleanmsdk:
 	rm mashupsdk/mashupsdk_grpc.pb.go; rm mashupsdk/mashupsdk.pb.go
