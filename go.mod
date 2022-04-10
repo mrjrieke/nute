@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
-	github.com/davecgh/go-spew v1.1.1
 	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.45.0
@@ -17,6 +16,7 @@ require (
 	gioui.org/shader v1.0.6 // indirect
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
 	github.com/benoitkugler/textlayout v0.0.10 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.0.0-20181227131451-3dcfdacbaaf3 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
@@ -50,8 +50,10 @@ require (
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 )
 
-replace fyne.io/fyne/v2 => ../../fyne
+replace fyne.io/fyne/v2 v2.1.3 => github.com/mrjrieke/fyne/v2 v2.1.3-0
 
-replace gioui.org => ../../gio
+replace gioui.org v0.0.0-20220318070519-8833a6738a3b => github.com/mrjrieke/gio v0.0.0-20220406132257-ec1380c11ef0
 
-replace github.com/g3n/engine => ../../g3n/engine
+replace github.com/g3n/engine v0.2.0 => github.com/mrjrieke/engine v0.2.1-0.20220406131816-8d6b6bcadc77
+
+replace github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 => github.com/mrjrieke/glfw-js v0.0.0-20220409154018-95a896685cdb
