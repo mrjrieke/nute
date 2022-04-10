@@ -10,7 +10,6 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	sdk "tini.com/nute/mashupsdk"
@@ -92,7 +91,6 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 			log.Printf("Start Registering server.\n")
 
 			sdk.RegisterMashupServerServer(s, &MashupServer{mashupApiHandler: mH})
-			log.Printf("Data: " + spew.Sdump(mH)+ "\n")
 
 			log.Printf("My Starting service.\n")
 			if err := s.Serve(lis); err != nil {

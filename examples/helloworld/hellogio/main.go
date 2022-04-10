@@ -156,20 +156,16 @@ func main() {
 
 			case app.X11ViewEvent:
 				// display := e.Display
-				// spew.Dump(display)
 
 			case system.StageEvent:
 				//stage := e.Stage
-				//spew.Dump(stage)
 
 			case key.FocusEvent:
 				//fe := e.Focus
-				//spew.Dump(fe)
 
 			case pointer.Event:
 				// Position of like a cursor.
 				//pos := e.Position
-				//spew.Dump(pos)
 
 			case system.DestroyEvent:
 				helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})

@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
-	github.com/davecgh/go-spew v1.1.1
 	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.45.0
@@ -17,6 +16,7 @@ require (
 	gioui.org/shader v1.0.6 // indirect
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
 	github.com/benoitkugler/textlayout v0.0.10 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.0.0-20181227131451-3dcfdacbaaf3 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
