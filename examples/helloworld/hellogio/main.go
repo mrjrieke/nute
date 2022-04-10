@@ -111,7 +111,7 @@ func main() {
 	// Sync initialization.
 	initHandler := func() {
 		options := []app.Option{
-			app.Size(unit.Dp(800), unit.Dp(600)),
+			app.Size(unit.Dp(800), unit.Dp(100)),
 			app.Title("Hello"),
 			Center(),
 		}
