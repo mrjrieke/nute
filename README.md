@@ -3,6 +3,12 @@
 To run nute, use the following commands:
 go mod download
 
+Build common components:
+make mashupsdk
+
+Generate self signed certs:
+./mashupsdk/tls/certs_gen.sh
+
 Run Hello world gio:
 make helloworldgio
 
