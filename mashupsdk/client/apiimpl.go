@@ -82,3 +82,13 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupConne
 
 	return clientConnectionConfigs, nil
 }
+
+func (mhs *MashupHandshakeServer) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
+	log.Printf("UpsertMashupSocietyState called")
+	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	// TODO: Implement.
+
+	return nil, nil
+}
