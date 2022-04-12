@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
@@ -116,8 +117,17 @@ func main() {
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
 
-		helloApp.mainWin.Resize(fyne.NewSize(800, 30))
-		helloApp.mainWin.SetContent(widget.NewLabel("The world of hello"))
+		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
+
+		torusMenu := container.NewAppTabs(
+			container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
+			container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
+			container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
+			container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+		)
+		torusMenu.SetTabLocation(container.TabLocationTop)
+
+		helloApp.mainWin.SetContent(torusMenu)
 		helloApp.mainWin.SetCloseIntercept(func() {
 			helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			os.Exit(0)

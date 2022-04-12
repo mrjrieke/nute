@@ -54,8 +54,8 @@ message MashupDetailedCitizen {
   string description = 4;
   string genre = 5;
   string subgenre = 6;
-  repeated int64 parentobjects = 7;
-  repeated int64 childobjects = 8;
+  repeated int64 parentids = 7;
+  repeated int64 childids = 8;
 }
 
 message MashupSocietyBundle {
