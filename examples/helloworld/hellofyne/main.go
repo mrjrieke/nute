@@ -25,6 +25,8 @@ type HelloApp struct {
 	mainWinDisplay *mashupsdk.MashupDisplayHint
 	settled        int
 	yOffset        int
+	Citizens       []*mashupsdk.MashupDetailedCitizen
+	CitizenState   *mashupsdk.MashupSocietyStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -87,13 +89,67 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 
-	helloApp := HelloApp{}
+	helloApp := HelloApp{
+		Citizens: []*mashupsdk.MashupDetailedCitizen{
+			&mashupsdk.MashupDetailedCitizen{
+				Id:          1,
+				State:       mashupsdk.Init,
+				Name:        "Inside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedCitizen{
+				Id:          2,
+				State:       mashupsdk.Init,
+				Name:        "Outside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Exo",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedCitizen{
+				Id:          3,
+				State:       mashupsdk.Init,
+				Name:        "It",
+				Description: "",
+				Genre:       "Solid",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    []int64{4},
+			},
+			&mashupsdk.MashupDetailedCitizen{
+				Id:          4,
+				State:       mashupsdk.Init,
+				Name:        "Up-Side-Down",
+				Description: "",
+				Genre:       "Attitude",
+				Subgenre:    "",
+				Parentids:   []int64{3},
+				Childids:    nil,
+			},
+		},
+	}
 
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
 			if helloApp.HelloContext == nil {
 				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+
+				var upsertErr error
+				// Connection with mashup fully established.  Initialize mashup society.
+				helloApp.CitizenState, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupSociety(helloApp.HelloContext.MashContext, &mashupsdk.MashupSocietyBundle{
+					AuthToken:   client.GetServerAuthToken(),
+					Mashobjects: helloApp.Citizens,
+				})
+				if upsertErr != nil {
+					log.Printf("Citizen state initialization failure: %s\n", upsertErr.Error())
+				}
+
 				helloApp.settled |= 8
 			}
 			helloApp.OnResize(helloApp.mainWinDisplay)
@@ -116,7 +172,6 @@ func main() {
 			})
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
-
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
 
 		torusMenu := container.NewAppTabs(

@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"errors"
 	"flag"
 	"image"
 	"log"
@@ -81,6 +82,11 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	} else {
 		(*worldApp.mainWin).Send(size.Event{WidthPx: int(displayHint.Width), HeightPx: int(displayHint.Height)})
 	}
+}
+
+func (c *worldApiHandler) UpsertMashupSociety(societyBundle *sdk.MashupSocietyBundle) (*sdk.MashupSocietyStateBundle, error) {
+	// Not implemented.
+	return nil, errors.New("Could capture items.")
 }
 
 func main() {

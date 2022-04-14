@@ -112,7 +112,7 @@ func main() {
 	initHandler := func() {
 		options := []app.Option{
 			app.Size(unit.Dp(800), unit.Dp(100)),
-			app.Title("Hello"),
+			app.Title("Hello Gio World"),
 			Center(),
 		}
 		helloApp.mainWin = app.NewWindow(options...)

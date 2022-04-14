@@ -8,4 +8,5 @@ import (
 // other mashups.
 type MashupApiHandler interface {
 	OnResize(displayHint *sdk.MashupDisplayHint)
+	UpsertMashupSociety(societyBundle *sdk.MashupSocietyBundle) (*sdk.MashupSocietyStateBundle, error)
 }

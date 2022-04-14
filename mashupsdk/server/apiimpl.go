@@ -58,13 +58,15 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	return nil, nil
 }
 
-func (mhs *MashupServer) UpsertMashupSociety(ctx context.Context, in *sdk.MashupSocietyBundle) (*sdk.MashupSocietyStateBundle, error) {
+func (s *MashupServer) UpsertMashupSociety(ctx context.Context, in *sdk.MashupSocietyBundle) (*sdk.MashupSocietyStateBundle, error) {
 	log.Printf("UpsertMashupSociety called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
-	// TODO: Implement.
-
+	if s.mashupApiHandler != nil {
+		log.Printf("UpsertMashupSociety Delegate to api handler.")
+		return s.mashupApiHandler.UpsertMashupSociety(in)
+	}
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupSociety not implemented")
 }
 

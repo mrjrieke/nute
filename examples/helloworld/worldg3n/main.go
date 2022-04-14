@@ -23,7 +23,7 @@ import (
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
-	sdk "tini.com/nute/mashupsdk"
+	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
 )
@@ -35,11 +35,13 @@ type worldApiHandler struct {
 
 type WorldApp struct {
 	wApiHandler         *worldApiHandler
-	displaySetupChan    chan *sdk.MashupDisplayHint
-	displayPositionChan chan *sdk.MashupDisplayHint
+	displaySetupChan    chan *mashupsdk.MashupDisplayHint
+	displayPositionChan chan *mashupsdk.MashupDisplayHint
 	mainWin             *app.Application
 	scene               *core.Node
 	cam                 *camera.Camera
+	Citizens            []*mashupsdk.MashupDetailedCitizen
+	CitizenState        mashupsdk.MashupSocietyStateBundle
 }
 
 var worldApp WorldApp
@@ -124,7 +126,7 @@ func (w *WorldApp) InitMainWindow() {
 	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
 }
 
-func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
+func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
@@ -133,6 +135,25 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 		worldApp.displaySetupChan <- displayHint
 		worldApp.displayPositionChan <- displayHint
 	}
+}
+
+func (c *worldApiHandler) UpsertMashupSociety(societyBundle *mashupsdk.MashupSocietyBundle) (*mashupsdk.MashupSocietyStateBundle, error) {
+	log.Printf("G3n Received UpsertMashupSociety\n")
+	worldApp.Citizens = societyBundle.Mashobjects
+	worldApp.CitizenState = mashupsdk.MashupSocietyStateBundle{
+		Mashobjects: make([]*mashupsdk.MashupCitizenState, len(worldApp.Citizens)),
+	}
+
+	for _, citizen := range worldApp.Citizens {
+		citizen.State = mashupsdk.Rest
+		worldApp.CitizenState.Mashobjects = append(worldApp.CitizenState.Mashobjects, &mashupsdk.MashupCitizenState{
+			Id:    citizen.Id,
+			State: mashupsdk.Rest,
+		})
+	}
+
+	log.Printf("G3n UpsertMashupSociety updated\n")
+	return &worldApp.CitizenState, nil
 }
 
 func main() {
@@ -147,8 +168,8 @@ func main() {
 
 	worldApp = WorldApp{
 		wApiHandler:         &worldApiHandler{},
-		displaySetupChan:    make(chan *sdk.MashupDisplayHint, 1),
-		displayPositionChan: make(chan *sdk.MashupDisplayHint, 1),
+		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
+		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
 
 	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
