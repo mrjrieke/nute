@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 )
 
@@ -24,7 +25,7 @@ var clientConnectionConfigs *sdk.MashupConnectionConfigs
 var serverConnectionConfigs *sdk.MashupConnectionConfigs
 
 // InitServer -- bootstraps the server portion of the sdk for the mashup.
-func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) {
+func InitServer(creds string, insecure bool, mashupApiHandler mashupsdk.MashupApiHandler) {
 	// Perform handshake...
 	handshakeConfigs := &sdk.MashupConnectionConfigs{}
 	err := json.Unmarshal([]byte(creds), handshakeConfigs)
@@ -33,7 +34,7 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 	}
 	log.Printf("Startup with insecure: %t\n", insecure)
 
-	go func(mapiH MashupApiHandler) {
+	go func(mapiH mashupsdk.MashupApiHandler) {
 		mashupCertBytes, err := sdk.MashupCert.ReadFile("tls/mashup.crt")
 		if err != nil {
 			log.Fatalf("Couldn't load cert: %v", err)
@@ -86,7 +87,7 @@ func InitServer(creds string, insecure bool, mashupApiHandler MashupApiHandler) 
 		// call before this app exits.
 		mashupContext.Client = sdk.NewMashupServerClient(conn)
 
-		go func( mH MashupApiHandler) {
+		go func(mH mashupsdk.MashupApiHandler) {
 			// Async service initiation.
 			log.Printf("Start Registering server.\n")
 

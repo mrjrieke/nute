@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -154,6 +155,12 @@ func (c *worldApiHandler) UpsertMashupSociety(societyBundle *mashupsdk.MashupSoc
 
 	log.Printf("G3n UpsertMashupSociety updated\n")
 	return &worldApp.CitizenState, nil
+}
+
+func (c *worldApiHandler) UpsertMashupSocietyState(societyStateBundle *mashupsdk.MashupSocietyStateBundle) (*mashupsdk.MashupSocietyStateBundle, error) {
+	// Not implemented.
+	log.Printf("G3n UpsertMashupSocietyState called\n")
+	return nil, errors.New("Could capture items.")
 }
 
 func main() {

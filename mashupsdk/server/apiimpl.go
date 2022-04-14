@@ -9,13 +9,14 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 )
 
 // server is used to implement server.MashupServer.
 type MashupServer struct {
 	sdk.UnimplementedMashupServerServer
-	mashupApiHandler MashupApiHandler
+	mashupApiHandler mashupsdk.MashupApiHandler
 }
 
 func GetClientAuthToken() string {
@@ -70,12 +71,14 @@ func (s *MashupServer) UpsertMashupSociety(ctx context.Context, in *sdk.MashupSo
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupSociety not implemented")
 }
 
-func (mhs *MashupServer) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
+func (s *MashupServer) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
 	log.Printf("UpsertMashupSocietyState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
-	// TODO: Implement.
-
+	if s.mashupApiHandler != nil {
+		log.Printf("UpsertMashupSociety Delegate to api handler.")
+		return s.mashupApiHandler.UpsertMashupSocietyState(in)
+	}
 	return nil, nil
 }

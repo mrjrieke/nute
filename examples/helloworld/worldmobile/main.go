@@ -89,6 +89,11 @@ func (c *worldApiHandler) UpsertMashupSociety(societyBundle *sdk.MashupSocietyBu
 	return nil, errors.New("Could capture items.")
 }
 
+func (c *worldApiHandler) UpsertMashupSocietyState(societyStateBundle *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
+	// Not implemented.
+	return nil, errors.New("Could capture items.")
+}
+
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")

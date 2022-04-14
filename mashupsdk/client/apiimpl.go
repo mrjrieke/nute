@@ -11,11 +11,13 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 )
 
-type MashupHandshakeServer struct {
+type MashupClient struct {
 	sdk.UnimplementedMashupServerServer
+	mashupApiHandler mashupsdk.MashupApiHandler
 }
 
 func GetServerAuthToken() string {
@@ -28,7 +30,7 @@ func GetServerAuthToken() string {
 
 // Shake - Implementation of the handshake.  During the callback from
 // the mashup, construct new more permanent set of credentials to be shared.
-func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupConnectionConfigs) (*sdk.MashupConnectionConfigs, error) {
+func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfigs) (*sdk.MashupConnectionConfigs, error) {
 	log.Printf("Shake called")
 	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
@@ -83,12 +85,14 @@ func (mhs *MashupHandshakeServer) Shake(ctx context.Context, in *sdk.MashupConne
 	return clientConnectionConfigs, nil
 }
 
-func (mhs *MashupHandshakeServer) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
+func (c *MashupClient) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
 	log.Printf("UpsertMashupSocietyState called")
 	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
-	// TODO: Implement.
-
+	if c.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
+		c.mashupApiHandler.UpsertMashupSocietyState(in)
+	}
 	return nil, nil
 }

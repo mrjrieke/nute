@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"log"
 	"os"
@@ -78,6 +79,9 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		}
 	}
 }
+
+//go:embed gophericon.png
+var gopherIcon embed.FS
 
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
@@ -172,6 +176,9 @@ func main() {
 			})
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
+		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
+
+		helloApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
 
 		torusMenu := container.NewAppTabs(
