@@ -11,6 +11,6 @@ const (
 // other mashups.
 type MashupApiHandler interface {
 	OnResize(displayHint *MashupDisplayHint)
-	UpsertMashupSociety(societyBundle *MashupSocietyBundle) (*MashupSocietyStateBundle, error)
-	UpsertMashupSocietyState(societyStateBundle *MashupSocietyStateBundle) (*MashupSocietyStateBundle, error)
+	UpsertMashupDetailedElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
+	UpsertMashupElementState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 }

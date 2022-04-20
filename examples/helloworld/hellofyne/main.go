@@ -21,13 +21,13 @@ type HelloContext struct {
 var helloContext HelloContext
 
 type HelloApp struct {
-	HelloContext   *HelloContext
-	mainWin        fyne.Window
-	mainWinDisplay *mashupsdk.MashupDisplayHint
-	settled        int
-	yOffset        int
-	Citizens       []*mashupsdk.MashupDetailedCitizen
-	CitizenState   *mashupsdk.MashupSocietyStateBundle
+	HelloContext     *HelloContext
+	mainWin          fyne.Window
+	mainWinDisplay   *mashupsdk.MashupDisplayHint
+	settled          int
+	yOffset          int
+	DetailedElements []*mashupsdk.MashupDetailedElement
+	ElementStates    *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -94,8 +94,8 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp := HelloApp{
-		Citizens: []*mashupsdk.MashupDetailedCitizen{
-			&mashupsdk.MashupDetailedCitizen{
+		DetailedElements: []*mashupsdk.MashupDetailedElement{
+			&mashupsdk.MashupDetailedElement{
 				Id:          1,
 				State:       mashupsdk.Init,
 				Name:        "Inside",
@@ -105,7 +105,7 @@ func main() {
 				Parentids:   nil,
 				Childids:    nil,
 			},
-			&mashupsdk.MashupDetailedCitizen{
+			&mashupsdk.MashupDetailedElement{
 				Id:          2,
 				State:       mashupsdk.Init,
 				Name:        "Outside",
@@ -115,7 +115,7 @@ func main() {
 				Parentids:   nil,
 				Childids:    nil,
 			},
-			&mashupsdk.MashupDetailedCitizen{
+			&mashupsdk.MashupDetailedElement{
 				Id:          3,
 				State:       mashupsdk.Init,
 				Name:        "It",
@@ -125,7 +125,7 @@ func main() {
 				Parentids:   nil,
 				Childids:    []int64{4},
 			},
-			&mashupsdk.MashupDetailedCitizen{
+			&mashupsdk.MashupDetailedElement{
 				Id:          4,
 				State:       mashupsdk.Init,
 				Name:        "Up-Side-Down",
@@ -146,9 +146,9 @@ func main() {
 
 				var upsertErr error
 				// Connection with mashup fully established.  Initialize mashup society.
-				helloApp.CitizenState, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupSociety(helloApp.HelloContext.MashContext, &mashupsdk.MashupSocietyBundle{
+				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupSociety(helloApp.HelloContext.MashContext, &mashupsdk.MashupDetailedElementBundle{
 					AuthToken:   client.GetServerAuthToken(),
-					Mashobjects: helloApp.Citizens,
+					Mashobjects: helloApp.DetailedElements,
 				})
 				if upsertErr != nil {
 					log.Printf("Citizen state initialization failure: %s\n", upsertErr.Error())

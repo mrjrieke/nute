@@ -12,8 +12,8 @@ service MashupServer {
   // Indicates to mashup it is time to shutdown.
   rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
   rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
-  rpc UpsertMashupSociety(MashupSocietyBundle) returns (MashupSocietyStateBundle) {}
-  rpc UpsertMashupSocietyState(MashupSocietyStateBundle) returns (MashupSocietyStateBundle) {}
+  rpc UpsertMashupSociety(MashupDetailedElementBundle) returns (MashupElementStateBundle) {}
+  rpc UpsertMashupSocietyState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
 
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }
@@ -47,7 +47,7 @@ message ShutdownReply {
   string message = 1;
 }
 
-message MashupDetailedCitizen {
+message MashupDetailedElement {
   int64 id = 1;
   int64 state = 2;
   string name = 3;
@@ -58,17 +58,17 @@ message MashupDetailedCitizen {
   repeated int64 childids = 8;
 }
 
-message MashupSocietyBundle {
+message MashupDetailedElementBundle {
   string authToken = 1;
-  repeated MashupDetailedCitizen mashobjects = 2;
+  repeated MashupDetailedElement mashobjects = 2;
 }
 
-message MashupCitizenState {
+message MashupElementState {
   int64 id = 1;
   int64 state = 2;
 }
 
-message MashupSocietyStateBundle {
+message MashupElementStateBundle {
   string authToken = 1;
-  repeated MashupCitizenState mashobjects = 2;
+  repeated MashupElementState mashobjects = 2;
 }

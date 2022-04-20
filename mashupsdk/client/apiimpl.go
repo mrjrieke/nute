@@ -85,14 +85,14 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 	return clientConnectionConfigs, nil
 }
 
-func (c *MashupClient) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupSocietyStateBundle) (*sdk.MashupSocietyStateBundle, error) {
+func (c *MashupClient) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupSocietyState called")
 	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		c.mashupApiHandler.UpsertMashupSocietyState(in)
+		c.mashupApiHandler.UpsertMashupElementState(in)
 	}
 	return nil, nil
 }

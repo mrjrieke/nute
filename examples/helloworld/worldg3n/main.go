@@ -41,8 +41,8 @@ type WorldApp struct {
 	mainWin             *app.Application
 	scene               *core.Node
 	cam                 *camera.Camera
-	Citizens            []*mashupsdk.MashupDetailedCitizen
-	CitizenState        mashupsdk.MashupSocietyStateBundle
+	Citizens            []*mashupsdk.MashupDetailedElement
+	CitizenState        mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -138,16 +138,16 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
-func (c *worldApiHandler) UpsertMashupSociety(societyBundle *mashupsdk.MashupSocietyBundle) (*mashupsdk.MashupSocietyStateBundle, error) {
-	log.Printf("G3n Received UpsertMashupSociety\n")
-	worldApp.Citizens = societyBundle.Mashobjects
-	worldApp.CitizenState = mashupsdk.MashupSocietyStateBundle{
-		Mashobjects: make([]*mashupsdk.MashupCitizenState, len(worldApp.Citizens)),
+func (c *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("G3n Received UpsertMashupDetailedElements\n")
+	worldApp.Citizens = detailedElementBundle.Mashobjects
+	worldApp.CitizenState = mashupsdk.MashupElementStateBundle{
+		Mashobjects: make([]*mashupsdk.MashupElementState, len(worldApp.Citizens)),
 	}
 
 	for _, citizen := range worldApp.Citizens {
 		citizen.State = mashupsdk.Rest
-		worldApp.CitizenState.Mashobjects = append(worldApp.CitizenState.Mashobjects, &mashupsdk.MashupCitizenState{
+		worldApp.CitizenState.Mashobjects = append(worldApp.CitizenState.Mashobjects, &mashupsdk.MashupElementState{
 			Id:    citizen.Id,
 			State: mashupsdk.Rest,
 		})
@@ -157,10 +157,10 @@ func (c *worldApiHandler) UpsertMashupSociety(societyBundle *mashupsdk.MashupSoc
 	return &worldApp.CitizenState, nil
 }
 
-func (c *worldApiHandler) UpsertMashupSocietyState(societyStateBundle *mashupsdk.MashupSocietyStateBundle) (*mashupsdk.MashupSocietyStateBundle, error) {
+func (c *worldApiHandler) UpsertMashupElementState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	// Not implemented.
-	log.Printf("G3n UpsertMashupSocietyState called\n")
-	return nil, errors.New("Could capture items.")
+	log.Printf("G3n UpsertMashupElementState called\n")
+	return nil, errors.New("Could not capture items.")
 }
 
 func main() {
@@ -179,7 +179,13 @@ func main() {
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
 
-	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+	if *callerCreds != "" {
+		server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+	} else {
+		go func() {
+			worldApp.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}
+		}()
+	}
 
 	// Initialize the main window.
 	go worldApp.InitMainWindow()
