@@ -151,7 +151,7 @@ func main() {
 					Mashobjects: helloApp.DetailedElements,
 				})
 				if upsertErr != nil {
-					log.Printf("Citizen state initialization failure: %s\n", upsertErr.Error())
+					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}
 
 				helloApp.settled |= 8

@@ -41,8 +41,8 @@ type WorldApp struct {
 	mainWin             *app.Application
 	scene               *core.Node
 	cam                 *camera.Camera
-	Citizens            []*mashupsdk.MashupDetailedElement
-	CitizenState        mashupsdk.MashupElementStateBundle
+	Elements            []*mashupsdk.MashupDetailedElement
+	ElementsStates      mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -140,21 +140,21 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 
 func (c *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupDetailedElements\n")
-	worldApp.Citizens = detailedElementBundle.Mashobjects
-	worldApp.CitizenState = mashupsdk.MashupElementStateBundle{
-		Mashobjects: make([]*mashupsdk.MashupElementState, len(worldApp.Citizens)),
+	worldApp.Elements = detailedElementBundle.Mashobjects
+	worldApp.ElementsStates = mashupsdk.MashupElementStateBundle{
+		Mashobjects: make([]*mashupsdk.MashupElementState, len(worldApp.Elements)),
 	}
 
-	for _, citizen := range worldApp.Citizens {
-		citizen.State = mashupsdk.Rest
-		worldApp.CitizenState.Mashobjects = append(worldApp.CitizenState.Mashobjects, &mashupsdk.MashupElementState{
-			Id:    citizen.Id,
+	for _, detailedElement := range worldApp.Elements {
+		detailedElement.State = mashupsdk.Rest
+		worldApp.ElementsStates.Mashobjects = append(worldApp.ElementsStates.Mashobjects, &mashupsdk.MashupElementState{
+			Id:    detailedElement.Id,
 			State: mashupsdk.Rest,
 		})
 	}
 
 	log.Printf("G3n UpsertMashupSociety updated\n")
-	return &worldApp.CitizenState, nil
+	return &worldApp.ElementsStates, nil
 }
 
 func (c *worldApiHandler) UpsertMashupElementState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
