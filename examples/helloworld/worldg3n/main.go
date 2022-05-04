@@ -7,6 +7,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
+	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
@@ -46,6 +48,33 @@ type WorldApp struct {
 }
 
 var worldApp WorldApp
+
+func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INode, []collision.Intersect) {
+	// Ignore invisible nodes and their descendants
+	if !inode.Visible() {
+		return nil, nil
+	}
+
+	if _, ok := inode.(gui.IPanel); ok {
+		// TODO: Do we care about these types at all?
+	} else if igr, ok := inode.(graphic.IGraphic); ok {
+		if igr.Renderable() {
+			if _, meshOk := inode.(*graphic.Mesh); meshOk {
+				return inode, caster.IntersectObject(inode, false)
+			}
+		}
+		// Ignore everything else.
+	}
+
+	if inode.Children() != nil {
+		for _, ichild := range inode.Children() {
+			if n, intersections := w.Cast(ichild, caster); n != nil {
+				return n, intersections
+			}
+		}
+	}
+	return nil, nil
+}
 
 func (w *WorldApp) InitMainWindow() {
 	log.Printf("Initializing mainWin.")
@@ -86,6 +115,7 @@ func (w *WorldApp) InitMainWindow() {
 		geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 		mat := material.NewStandard(math32.NewColor("DarkBlue"))
 		mesh := graphic.NewMesh(geom, mat)
+		mesh.SetLoaderID("torus")
 		w.scene.Add(mesh)
 
 		// Create and add a button to the scene
@@ -96,6 +126,25 @@ func (w *WorldApp) InitMainWindow() {
 			mat.SetColor(math32.NewColor("DarkRed"))
 		})
 		w.scene.Add(btn)
+
+		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
+			mev := ev.(*window.MouseEvent)
+			g3Width, g3Height := worldApp.mainWin.GetSize()
+
+			xPosNdc := 2*(mev.Xpos/float32(g3Width)) - 1
+			yPosNdc := -2*(mev.Ypos/float32(g3Height)) + 1
+			caster := collision.NewRaycaster(&math32.Vector3{}, &math32.Vector3{})
+			caster.SetFromCamera(worldApp.cam, xPosNdc, yPosNdc)
+
+			if worldApp.scene.Visible() {
+				n, intersections := worldApp.Cast(worldApp.scene, caster)
+				if len(intersections) != 0 {
+					// TODO: Interact!
+					fmt.Println(n.GetNode().LoaderID())
+				}
+			}
+
+		})
 
 		// Create and add lights to the scene
 		w.scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
