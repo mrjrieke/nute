@@ -14,3 +14,7 @@ type MashupApiHandler interface {
 	UpsertMashupDetailedElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
 	UpsertMashupElementState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 }
+
+type MashupContextInitHandler interface {
+	RegisterContext(*MashupContext)
+}

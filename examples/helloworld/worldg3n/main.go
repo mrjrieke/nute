@@ -36,15 +36,21 @@ var worldCompleteChan chan bool
 type worldApiHandler struct {
 }
 
+type worldClientInitHandler struct {
+}
+
 type WorldApp struct {
 	wApiHandler         *worldApiHandler
+	wClientInitHandler  *worldClientInitHandler
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
 	mainWin             *app.Application
 	scene               *core.Node
 	cam                 *camera.Camera
-	Elements            []*mashupsdk.MashupDetailedElement
-	ElementsStates      mashupsdk.MashupElementStateBundle
+
+	mashupContext  *mashupsdk.MashupContext // Needed for callbacks to other mashups
+	Elements       []*mashupsdk.MashupDetailedElement
+	ElementsStates mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -141,6 +147,7 @@ func (w *WorldApp) InitMainWindow() {
 				if len(intersections) != 0 {
 					// TODO: Interact!
 					fmt.Println(n.GetNode().LoaderID())
+					worldApp.mashupContext.Client.UpsertMashupElementState(nil, nil)
 				}
 			}
 
@@ -176,6 +183,10 @@ func (w *WorldApp) InitMainWindow() {
 	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
 }
 
+func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContext) {
+	worldApp.mashupContext = context
+}
+
 func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
@@ -187,7 +198,7 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
-func (c *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (w *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupDetailedElements\n")
 	worldApp.Elements = detailedElementBundle.Mashobjects
 	worldApp.ElementsStates = mashupsdk.MashupElementStateBundle{
@@ -206,7 +217,7 @@ func (c *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *ma
 	return &worldApp.ElementsStates, nil
 }
 
-func (c *worldApiHandler) UpsertMashupElementState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (w *worldApiHandler) UpsertMashupElementState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	// Not implemented.
 	log.Printf("G3n UpsertMashupElementState called\n")
 	return nil, errors.New("Could not capture items.")
@@ -229,7 +240,7 @@ func main() {
 	}
 
 	if *callerCreds != "" {
-		server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+		server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler, worldApp.wClientInitHandler)
 	} else {
 		go func() {
 			worldApp.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}

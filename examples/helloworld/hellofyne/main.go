@@ -146,7 +146,7 @@ func main() {
 
 				var upsertErr error
 				// Connection with mashup fully established.  Initialize mashup society.
-				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupSociety(helloApp.HelloContext.MashContext, &mashupsdk.MashupDetailedElementBundle{
+				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElement(helloApp.HelloContext.MashContext, &mashupsdk.MashupDetailedElementBundle{
 					AuthToken:   client.GetServerAuthToken(),
 					Mashobjects: helloApp.DetailedElements,
 				})
