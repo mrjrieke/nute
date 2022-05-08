@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"errors"
 	"flag"
 	"image"
 	"log"
@@ -19,6 +20,7 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
+	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
@@ -31,6 +33,9 @@ var (
 var worldCompleteChan chan bool
 
 type worldApiHandler struct {
+}
+
+type worldClientInitHandler struct {
 }
 
 type WorldApp struct {
@@ -74,6 +79,10 @@ func (w *WorldApp) InitMainWindow() {
 	guiboot.InitMainWindow(guiboot.Gomobile, nil, mobileWinHandler)
 }
 
+func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContext) {
+	// TODO: implement something meaningful.
+}
+
 func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	log.Printf("Received onResize.")
 	if worldApp.mainWin == nil {
@@ -81,6 +90,16 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	} else {
 		(*worldApp.mainWin).Send(size.Event{WidthPx: int(displayHint.Width), HeightPx: int(displayHint.Height)})
 	}
+}
+
+func (c *worldApiHandler) UpsertMashupElements(detailedElementBundle *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
+	// Not implemented.
+	return nil, errors.New("Could capture items.")
+}
+
+func (c *worldApiHandler) UpsertMashupElementsState(elementStateBundle *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
+	// Not implemented.
+	return nil, errors.New("Could capture items.")
 }
 
 func main() {
@@ -95,7 +114,7 @@ func main() {
 
 	worldApp = WorldApp{wApiHandler: &worldApiHandler{}}
 
-	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler, nil)
 
 	<-worldCompleteChan
 }
