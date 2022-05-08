@@ -241,6 +241,7 @@ func main() {
 
 	worldApp = WorldApp{
 		wApiHandler:         &worldApiHandler{},
+		elementIndex:        map[string]*mashupsdk.MashupDetailedElement{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
