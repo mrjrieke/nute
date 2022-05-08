@@ -201,8 +201,8 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
-func (w *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("G3n Received UpsertMashupDetailedElements\n")
+func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("G3n Received UpsertMashupElements\n")
 	worldApp.Elements = detailedElementBundle.Mashobjects
 	for _, e := range worldApp.Elements {
 		worldApp.elementIndex[e.GetName()] = e
@@ -219,13 +219,13 @@ func (w *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *ma
 		})
 	}
 
-	log.Printf("G3n UpsertMashupSociety updated\n")
+	log.Printf("G3n UpsertMashupElements updated\n")
 	return &worldApp.ElementsStates, nil
 }
 
-func (w *worldApiHandler) UpsertMashupElementState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (w *worldApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	// Not implemented.
-	log.Printf("G3n UpsertMashupElementState called\n")
+	log.Printf("G3n UpsertMashupElementsState called\n")
 	return nil, errors.New("Could not capture items.")
 }
 

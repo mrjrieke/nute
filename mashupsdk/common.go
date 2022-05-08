@@ -11,8 +11,8 @@ const (
 // other mashups.
 type MashupApiHandler interface {
 	OnResize(displayHint *MashupDisplayHint)
-	UpsertMashupDetailedElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
-	UpsertMashupElementState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
+	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
+	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 }
 
 type MashupContextInitHandler interface {

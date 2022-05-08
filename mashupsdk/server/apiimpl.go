@@ -59,26 +59,26 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	return nil, nil
 }
 
-func (s *MashupServer) UpsertMashupSociety(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
-	log.Printf("UpsertMashupSociety called")
+func (s *MashupServer) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
+	log.Printf("UpsertMashupElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
-		log.Printf("UpsertMashupSociety Delegate to api handler.")
-		return s.mashupApiHandler.UpsertMashupDetailedElements(in)
+		log.Printf("UpsertMashupElements Delegate to api handler.")
+		return s.mashupApiHandler.UpsertMashupElements(in)
 	}
-	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupSociety not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupElements not implemented")
 }
 
-func (s *MashupServer) UpsertMashupSocietyState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
-	log.Printf("UpsertMashupSocietyState called")
+func (s *MashupServer) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
+	log.Printf("UpsertMashupElementsState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
-		log.Printf("UpsertMashupSociety Delegate to api handler.")
-		return s.mashupApiHandler.UpsertMashupElementState(in)
+		log.Printf("UpsertMashupElementsState Delegate to api handler.")
+		return s.mashupApiHandler.UpsertMashupElementsState(in)
 	}
 	return nil, nil
 }
