@@ -7,7 +7,6 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -49,6 +48,7 @@ type WorldApp struct {
 	cam                 *camera.Camera
 
 	mashupContext  *mashupsdk.MashupContext // Needed for callbacks to other mashups
+	elementIndex   map[string]*mashupsdk.MashupDetailedElement
 	Elements       []*mashupsdk.MashupDetailedElement
 	ElementsStates mashupsdk.MashupElementStateBundle
 }
@@ -143,11 +143,14 @@ func (w *WorldApp) InitMainWindow() {
 			caster.SetFromCamera(worldApp.cam, xPosNdc, yPosNdc)
 
 			if worldApp.scene.Visible() {
-				n, intersections := worldApp.Cast(worldApp.scene, caster)
+				_, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
 					// TODO: Interact!
-					fmt.Println(n.GetNode().LoaderID())
-					worldApp.mashupContext.Client.UpsertMashupElementState(nil, nil)
+					//me := worldApp.elementIndex[n.GetNode().LoaderID()]
+					elementStateBundle := mashupsdk.MashupElementStateBundle{}
+
+					// TODO: Make a bundle...
+					worldApp.mashupContext.Client.UpsertMashupElementState(worldApp.mashupContext, &elementStateBundle, nil)
 				}
 			}
 
@@ -201,6 +204,9 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 func (w *worldApiHandler) UpsertMashupDetailedElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupDetailedElements\n")
 	worldApp.Elements = detailedElementBundle.Mashobjects
+	for _, e := range worldApp.Elements {
+		worldApp.elementIndex[e.GetName()] = e
+	}
 	worldApp.ElementsStates = mashupsdk.MashupElementStateBundle{
 		Mashobjects: make([]*mashupsdk.MashupElementState, len(worldApp.Elements)),
 	}
