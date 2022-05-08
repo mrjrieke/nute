@@ -146,6 +146,7 @@ func (w *WorldApp) InitMainWindow() {
 				_, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
 					// TODO: Interact!
+					// Need to feed back state to other app.
 					//me := worldApp.elementIndex[n.GetNode().LoaderID()]
 					elementStateBundle := mashupsdk.MashupElementStateBundle{}
 
