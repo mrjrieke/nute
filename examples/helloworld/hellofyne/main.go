@@ -146,10 +146,11 @@ func main() {
 
 				var upsertErr error
 				// Connection with mashup fully established.  Initialize mashup society.
-				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElement(helloApp.HelloContext.MashContext, &mashupsdk.MashupDetailedElementBundle{
+				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElements(helloApp.HelloContext.MashContext, &mashupsdk.MashupDetailedElementBundle{
 					AuthToken:   client.GetServerAuthToken(),
 					Mashobjects: helloApp.DetailedElements,
 				})
+
 				if upsertErr != nil {
 					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}

@@ -12,8 +12,8 @@ service MashupServer {
   // Indicates to mashup it is time to shutdown.
   rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
   rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
-  rpc UpsertMashupElement(MashupDetailedElementBundle) returns (MashupElementStateBundle) {}
-  rpc UpsertMashupElementState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
+  rpc UpsertMashupElements(MashupDetailedElementBundle) returns (MashupElementStateBundle) {}
+  rpc UpsertMashupElementsState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
 
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }
