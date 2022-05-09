@@ -10,6 +10,7 @@ Generate self signed certs:
 ./mashupsdk/tls/certs_gen.sh
 
 Mac users have indicated some problems here.  You'll need these if you don't have them yet.
+
 brew install libvorbis openal-soft
 
 Run Hello world gio:
