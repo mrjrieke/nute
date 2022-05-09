@@ -160,9 +160,7 @@ func (w *WorldApp) InitMainWindow() {
 							ElementStates: []*mashupsdk.MashupElementState{elementState},
 						}
 
-						// TODO: Make a bundle...
 						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
-
 					}
 				}
 			}
