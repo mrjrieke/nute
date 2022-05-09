@@ -60,7 +60,7 @@ message MashupDetailedElement {
 
 message MashupDetailedElementBundle {
   string authToken = 1;
-  repeated MashupDetailedElement mashobjects = 2;
+  repeated MashupDetailedElement detailedElements = 2;
 }
 
 message MashupElementState {
@@ -70,5 +70,5 @@ message MashupElementState {
 
 message MashupElementStateBundle {
   string authToken = 1;
-  repeated MashupElementState mashobjects = 2;
+  repeated MashupElementState elementStates = 2;
 }

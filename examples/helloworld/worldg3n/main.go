@@ -47,10 +47,10 @@ type WorldApp struct {
 	scene               *core.Node
 	cam                 *camera.Camera
 
-	mashupContext  *mashupsdk.MashupContext // Needed for callbacks to other mashups
-	elementIndex   map[string]*mashupsdk.MashupDetailedElement
-	Elements       []*mashupsdk.MashupDetailedElement
-	ElementsStates mashupsdk.MashupElementStateBundle
+	mashupContext    *mashupsdk.MashupContext // Needed for callbacks to other mashups
+	elementIndex     map[string]*mashupsdk.MashupElementState
+	DetailedElements []*mashupsdk.MashupDetailedElement
+	StateBundle      mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -143,15 +143,27 @@ func (w *WorldApp) InitMainWindow() {
 			caster.SetFromCamera(worldApp.cam, xPosNdc, yPosNdc)
 
 			if worldApp.scene.Visible() {
-				_, intersections := worldApp.Cast(worldApp.scene, caster)
+				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
 					// TODO: Interact!
 					// Need to feed back state to other app.
-					//me := worldApp.elementIndex[n.GetNode().LoaderID()]
-					elementStateBundle := mashupsdk.MashupElementStateBundle{}
+					elementState := worldApp.elementIndex[n.GetNode().LoaderID()]
+					if elementState != nil {
+						// Zero out states of all elements to rest state.
+						for i := 0; i < len(worldApp.StateBundle.ElementStates); i++ {
+							if worldApp.StateBundle.ElementStates[i].State != mashupsdk.Rest {
+								worldApp.StateBundle.ElementStates[i].State = mashupsdk.Rest
+							}
+						}
+						elementState.State = mashupsdk.Clicked
+						elementStateBundle := mashupsdk.MashupElementStateBundle{
+							ElementStates: []*mashupsdk.MashupElementState{elementState},
+						}
 
-					// TODO: Make a bundle...
-					worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
+						// TODO: Make a bundle...
+						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
+
+					}
 				}
 			}
 
@@ -204,24 +216,25 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 
 func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupElements\n")
-	worldApp.Elements = detailedElementBundle.Mashobjects
-	for _, e := range worldApp.Elements {
-		worldApp.elementIndex[e.GetName()] = e
-	}
-	worldApp.ElementsStates = mashupsdk.MashupElementStateBundle{
-		Mashobjects: make([]*mashupsdk.MashupElementState, len(worldApp.Elements)),
+	worldApp.DetailedElements = detailedElementBundle.DetailedElements
+	worldApp.StateBundle = mashupsdk.MashupElementStateBundle{
+		ElementStates: make([]*mashupsdk.MashupElementState, len(worldApp.DetailedElements)),
 	}
 
-	for _, detailedElement := range worldApp.Elements {
+	for _, detailedElement := range detailedElementBundle.DetailedElements {
 		detailedElement.State = mashupsdk.Rest
-		worldApp.ElementsStates.Mashobjects = append(worldApp.ElementsStates.Mashobjects, &mashupsdk.MashupElementState{
+		es := &mashupsdk.MashupElementState{
 			Id:    detailedElement.Id,
 			State: mashupsdk.Rest,
-		})
+		}
+
+		worldApp.StateBundle.ElementStates = append(worldApp.StateBundle.ElementStates, es)
+
+		worldApp.elementIndex[detailedElement.GetName()] = es
 	}
 
 	log.Printf("G3n UpsertMashupElements updated\n")
-	return &worldApp.ElementsStates, nil
+	return &worldApp.StateBundle, nil
 }
 
 func (w *worldApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
@@ -242,7 +255,7 @@ func main() {
 
 	worldApp = WorldApp{
 		wApiHandler:         &worldApiHandler{},
-		elementIndex:        map[string]*mashupsdk.MashupDetailedElement{},
+		elementIndex:        map[string]*mashupsdk.MashupElementState{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
