@@ -10,3 +10,6 @@ mashupsdk/mashupsdk.pb.go
 mashupsdk/mashupsdk_grpc.pb.go
 mashupsdk/tls/mashup.crt
 mashupsdk/tls/mashup.key
+
+*.key
+go.sum

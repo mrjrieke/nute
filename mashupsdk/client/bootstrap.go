@@ -108,7 +108,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 		log.Fatalf("Failed to serve: %v", err)
 	}
 	go func() {
-		sdk.RegisterMashupServerServer(handshakeServer, &MashupHandshakeServer{})
+		sdk.RegisterMashupServerServer(handshakeServer, &MashupClient{})
 		handshakeServer.Serve(lis)
 	}()
 

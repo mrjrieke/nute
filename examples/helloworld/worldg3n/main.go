@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
+	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
@@ -23,7 +25,7 @@ import (
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
-	sdk "tini.com/nute/mashupsdk"
+	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
 )
@@ -33,16 +35,52 @@ var worldCompleteChan chan bool
 type worldApiHandler struct {
 }
 
+type worldClientInitHandler struct {
+}
+
 type WorldApp struct {
 	wApiHandler         *worldApiHandler
-	displaySetupChan    chan *sdk.MashupDisplayHint
-	displayPositionChan chan *sdk.MashupDisplayHint
+	wClientInitHandler  *worldClientInitHandler
+	displaySetupChan    chan *mashupsdk.MashupDisplayHint
+	displayPositionChan chan *mashupsdk.MashupDisplayHint
 	mainWin             *app.Application
 	scene               *core.Node
 	cam                 *camera.Camera
+
+	mashupContext    *mashupsdk.MashupContext // Needed for callbacks to other mashups
+	elementIndex     map[string]*mashupsdk.MashupElementState
+	DetailedElements []*mashupsdk.MashupDetailedElement
+	StateBundle      mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
+
+func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INode, []collision.Intersect) {
+	// Ignore invisible nodes and their descendants
+	if !inode.Visible() {
+		return nil, nil
+	}
+
+	if _, ok := inode.(gui.IPanel); ok {
+		// TODO: Do we care about these types at all?
+	} else if igr, ok := inode.(graphic.IGraphic); ok {
+		if igr.Renderable() {
+			if _, meshOk := inode.(*graphic.Mesh); meshOk {
+				return inode, caster.IntersectObject(inode, false)
+			}
+		}
+		// Ignore everything else.
+	}
+
+	if inode.Children() != nil {
+		for _, ichild := range inode.Children() {
+			if n, intersections := w.Cast(ichild, caster); n != nil {
+				return n, intersections
+			}
+		}
+	}
+	return nil, nil
+}
 
 func (w *WorldApp) InitMainWindow() {
 	log.Printf("Initializing mainWin.")
@@ -83,6 +121,7 @@ func (w *WorldApp) InitMainWindow() {
 		geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 		mat := material.NewStandard(math32.NewColor("DarkBlue"))
 		mesh := graphic.NewMesh(geom, mat)
+		mesh.SetLoaderID("torus")
 		w.scene.Add(mesh)
 
 		// Create and add a button to the scene
@@ -93,6 +132,40 @@ func (w *WorldApp) InitMainWindow() {
 			mat.SetColor(math32.NewColor("DarkRed"))
 		})
 		w.scene.Add(btn)
+
+		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
+			mev := ev.(*window.MouseEvent)
+			g3Width, g3Height := worldApp.mainWin.GetSize()
+
+			xPosNdc := 2*(mev.Xpos/float32(g3Width)) - 1
+			yPosNdc := -2*(mev.Ypos/float32(g3Height)) + 1
+			caster := collision.NewRaycaster(&math32.Vector3{}, &math32.Vector3{})
+			caster.SetFromCamera(worldApp.cam, xPosNdc, yPosNdc)
+
+			if worldApp.scene.Visible() {
+				n, intersections := worldApp.Cast(worldApp.scene, caster)
+				if len(intersections) != 0 {
+					// TODO: Interact!
+					// Need to feed back state to other app.
+					elementState := worldApp.elementIndex[n.GetNode().LoaderID()]
+					if elementState != nil {
+						// Zero out states of all elements to rest state.
+						for i := 0; i < len(worldApp.StateBundle.ElementStates); i++ {
+							if worldApp.StateBundle.ElementStates[i].State != mashupsdk.Rest {
+								worldApp.StateBundle.ElementStates[i].State = mashupsdk.Rest
+							}
+						}
+						elementState.State = mashupsdk.Clicked
+						elementStateBundle := mashupsdk.MashupElementStateBundle{
+							ElementStates: []*mashupsdk.MashupElementState{elementState},
+						}
+
+						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
+					}
+				}
+			}
+
+		})
 
 		// Create and add lights to the scene
 		w.scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
@@ -124,7 +197,11 @@ func (w *WorldApp) InitMainWindow() {
 	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
 }
 
-func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
+func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContext) {
+	worldApp.mashupContext = context
+}
+
+func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
@@ -133,6 +210,35 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 		worldApp.displaySetupChan <- displayHint
 		worldApp.displayPositionChan <- displayHint
 	}
+}
+
+func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("G3n Received UpsertMashupElements\n")
+	worldApp.DetailedElements = detailedElementBundle.DetailedElements
+	worldApp.StateBundle = mashupsdk.MashupElementStateBundle{
+		ElementStates: make([]*mashupsdk.MashupElementState, len(worldApp.DetailedElements)),
+	}
+
+	for _, detailedElement := range detailedElementBundle.DetailedElements {
+		detailedElement.State = mashupsdk.Rest
+		es := &mashupsdk.MashupElementState{
+			Id:    detailedElement.Id,
+			State: mashupsdk.Rest,
+		}
+
+		worldApp.StateBundle.ElementStates = append(worldApp.StateBundle.ElementStates, es)
+
+		worldApp.elementIndex[detailedElement.GetName()] = es
+	}
+
+	log.Printf("G3n UpsertMashupElements updated\n")
+	return &worldApp.StateBundle, nil
+}
+
+func (w *worldApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	// Not implemented.
+	log.Printf("G3n UpsertMashupElementsState called\n")
+	return nil, errors.New("Could not capture items.")
 }
 
 func main() {
@@ -147,11 +253,18 @@ func main() {
 
 	worldApp = WorldApp{
 		wApiHandler:         &worldApiHandler{},
-		displaySetupChan:    make(chan *sdk.MashupDisplayHint, 1),
-		displayPositionChan: make(chan *sdk.MashupDisplayHint, 1),
+		elementIndex:        map[string]*mashupsdk.MashupElementState{},
+		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
+		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
 
-	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler)
+	if *callerCreds != "" {
+		server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler, worldApp.wClientInitHandler)
+	} else {
+		go func() {
+			worldApp.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}
+		}()
+	}
 
 	// Initialize the main window.
 	go worldApp.InitMainWindow()

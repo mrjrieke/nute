@@ -1,11 +1,13 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"log"
 	"os"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
@@ -19,11 +21,13 @@ type HelloContext struct {
 var helloContext HelloContext
 
 type HelloApp struct {
-	HelloContext   *HelloContext
-	mainWin        fyne.Window
-	mainWinDisplay *mashupsdk.MashupDisplayHint
-	settled        int
-	yOffset        int
+	HelloContext     *HelloContext
+	mainWin          fyne.Window
+	mainWinDisplay   *mashupsdk.MashupDisplayHint
+	settled          int
+	yOffset          int
+	DetailedElements []*mashupsdk.MashupDetailedElement
+	ElementStates    *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -76,6 +80,9 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
+//go:embed gophericon.png
+var gopherIcon embed.FS
+
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	flag.Parse()
@@ -86,13 +93,69 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 
-	helloApp := HelloApp{}
+	helloApp := HelloApp{
+		DetailedElements: []*mashupsdk.MashupDetailedElement{
+			&mashupsdk.MashupDetailedElement{
+				Id:          1,
+				State:       mashupsdk.Init,
+				Name:        "Inside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          2,
+				State:       mashupsdk.Init,
+				Name:        "Outside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Exo",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          3,
+				State:       mashupsdk.Init,
+				Name:        "It",
+				Description: "",
+				Genre:       "Solid",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    []int64{4},
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          4,
+				State:       mashupsdk.Init,
+				Name:        "Up-Side-Down",
+				Description: "",
+				Genre:       "Attitude",
+				Subgenre:    "",
+				Parentids:   []int64{3},
+				Childids:    nil,
+			},
+		},
+	}
 
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
 			if helloApp.HelloContext == nil {
 				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+
+				var upsertErr error
+				// Connection with mashup fully established.  Initialize mashup elements.
+				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElements(helloApp.HelloContext.MashContext,
+					&mashupsdk.MashupDetailedElementBundle{
+						AuthToken:        client.GetServerAuthToken(),
+						DetailedElements: helloApp.DetailedElements,
+					})
+
+				if upsertErr != nil {
+					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+				}
+
 				helloApp.settled |= 8
 			}
 			helloApp.OnResize(helloApp.mainWinDisplay)
@@ -115,9 +178,20 @@ func main() {
 			})
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
+		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
 
-		helloApp.mainWin.Resize(fyne.NewSize(800, 30))
-		helloApp.mainWin.SetContent(widget.NewLabel("The world of hello"))
+		helloApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
+		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
+
+		torusMenu := container.NewAppTabs(
+			container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
+			container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
+			container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
+			container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+		)
+		torusMenu.SetTabLocation(container.TabLocationTop)
+
+		helloApp.mainWin.SetContent(torusMenu)
 		helloApp.mainWin.SetCloseIntercept(func() {
 			helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			os.Exit(0)
