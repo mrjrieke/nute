@@ -18,16 +18,21 @@ type HelloContext struct {
 	MashContext *mashupsdk.MashupContext
 }
 
+type mashupSdkApiHandler struct {
+}
+
 var helloContext HelloContext
 
 type HelloApp struct {
-	HelloContext     *HelloContext
-	mainWin          fyne.Window
-	mainWinDisplay   *mashupsdk.MashupDisplayHint
-	settled          int
-	yOffset          int
-	DetailedElements []*mashupsdk.MashupDetailedElement
-	ElementStates    *mashupsdk.MashupElementStateBundle
+	mSdkApiHandler     *mashupSdkApiHandler
+	HelloContext       *HelloContext
+	mainWin            fyne.Window
+	mainWinDisplay     *mashupsdk.MashupDisplayHint
+	settled            int
+	yOffset            int
+	DetailedElements   []*mashupsdk.MashupDetailedElement
+	elementIndex       map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementStateBundle *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -80,6 +85,8 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
+var helloApp HelloApp
+
 //go:embed gophericon.png
 var gopherIcon embed.FS
 
@@ -93,7 +100,8 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 
-	helloApp := HelloApp{
+	helloApp = HelloApp{
+		mSdkApiHandler: &mashupSdkApiHandler{},
 		DetailedElements: []*mashupsdk.MashupDetailedElement{
 			&mashupsdk.MashupDetailedElement{
 				Id:          1,
@@ -146,7 +154,7 @@ func main() {
 
 				var upsertErr error
 				// Connection with mashup fully established.  Initialize mashup elements.
-				helloApp.ElementStates, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElements(helloApp.HelloContext.MashContext,
+				helloApp.elementStateBundle, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElements(helloApp.HelloContext.MashContext,
 					&mashupsdk.MashupDetailedElementBundle{
 						AuthToken:        client.GetServerAuthToken(),
 						DetailedElements: helloApp.DetailedElements,
@@ -205,4 +213,26 @@ func main() {
 
 	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
 
+}
+
+func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+	if helloApp.mainWin != nil {
+		log.Printf("Fyne Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	} else {
+		log.Printf("Fyne Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	}
+}
+
+func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Fyne UpsertMashupElements - not implemented\n")
+	return nil, nil
+}
+
+func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Fye UpsertMashupElementsState called\n")
+	for _, es := range elementStateBundle.ElementStates {
+		// TODO: Continue handling here...
+		helloApp.elementIndex[es.GetId()] = es
+	}
+	return nil, nil
 }
