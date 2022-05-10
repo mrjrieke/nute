@@ -47,10 +47,11 @@ type WorldApp struct {
 	scene               *core.Node
 	cam                 *camera.Camera
 
-	mashupContext    *mashupsdk.MashupContext // Needed for callbacks to other mashups
-	elementIndex     map[string]*mashupsdk.MashupElementState
-	DetailedElements []*mashupsdk.MashupDetailedElement
-	StateBundle      mashupsdk.MashupElementStateBundle
+	mashupContext     *mashupsdk.MashupContext                // Needed for callbacks to other mashups
+	elementIndex      map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementDictionary map[string]int64
+	DetailedElements  []*mashupsdk.MashupDetailedElement
+	StateBundle       mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -147,7 +148,9 @@ func (w *WorldApp) InitMainWindow() {
 				if len(intersections) != 0 {
 					// TODO: Interact!
 					// Need to feed back state to other app.
-					elementState := worldApp.elementIndex[n.GetNode().LoaderID()]
+					lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
+					elementState := worldApp.elementIndex[lookupId]
+
 					if elementState != nil {
 						// Zero out states of all elements to rest state.
 						for i := 0; i < len(worldApp.StateBundle.ElementStates); i++ {
@@ -228,7 +231,8 @@ func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.
 
 		worldApp.StateBundle.ElementStates = append(worldApp.StateBundle.ElementStates, es)
 
-		worldApp.elementIndex[detailedElement.GetName()] = es
+		worldApp.elementDictionary[detailedElement.GetName()] = detailedElement.Id
+		worldApp.elementIndex[detailedElement.Id] = es
 	}
 
 	log.Printf("G3n UpsertMashupElements updated\n")
@@ -238,6 +242,9 @@ func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.
 func (w *worldApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	// Not implemented.
 	log.Printf("G3n UpsertMashupElementsState called\n")
+	for _, es := range elementStateBundle.ElementStates {
+		worldApp.elementIndex[es.GetId()] = es
+	}
 	return nil, errors.New("Could not capture items.")
 }
 
@@ -253,7 +260,8 @@ func main() {
 
 	worldApp = WorldApp{
 		wApiHandler:         &worldApiHandler{},
-		elementIndex:        map[string]*mashupsdk.MashupElementState{},
+		elementIndex:        map[int64]*mashupsdk.MashupElementState{},
+		elementDictionary:   map[string]int64{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
