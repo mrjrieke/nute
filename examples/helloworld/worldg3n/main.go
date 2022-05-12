@@ -26,6 +26,7 @@ import (
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"tini.com/nute/mashupsdk"
+	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
 )
@@ -148,10 +149,15 @@ func (w *WorldApp) InitMainWindow() {
 				if len(intersections) != 0 {
 					// TODO: Interact!
 					// Need to feed back state to other app.
+					log.Printf("Clicked on: " + n.GetNode().LoaderID())
+
 					lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
 					elementState := worldApp.elementIndex[lookupId]
+					log.Printf("State: %d\n", elementState.State)
 
 					if elementState != nil {
+						log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
+
 						// Zero out states of all elements to rest state.
 						for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
 							if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
@@ -159,11 +165,15 @@ func (w *WorldApp) InitMainWindow() {
 							}
 						}
 						elementState.State = mashupsdk.Clicked
+						log.Printf("Zeroed.")
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
+							AuthToken:     client.GetServerAuthToken(),
 							ElementStates: []*mashupsdk.MashupElementState{elementState},
 						}
+						log.Printf("Calling home: id: %d state: %d\n", elementState.Id, elementState.State)
 
-						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
+						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
+						log.Printf("Called home.\n")
 					}
 				}
 			}
@@ -219,7 +229,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	log.Printf("G3n Received UpsertMashupElements\n")
 	worldApp.DetailedElements = detailedElementBundle.DetailedElements
 	worldApp.elementStateBundle = mashupsdk.MashupElementStateBundle{
-		ElementStates: make([]*mashupsdk.MashupElementState, len(worldApp.DetailedElements)),
+		ElementStates: []*mashupsdk.MashupElementState{},
 	}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {

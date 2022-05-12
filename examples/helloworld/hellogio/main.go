@@ -25,14 +25,22 @@ import (
 type HelloContext struct {
 	MashContext *mashupsdk.MashupContext
 }
+type gioMashupApiHandler struct {
+}
 
 type HelloApp struct {
-	HelloContext   *HelloContext
-	mainWin        *app.Window
-	mainWinDisplay *mashupsdk.MashupDisplayHint
-	settled        int
-	yOffset        int
+	gioMashupApiHandler *gioMashupApiHandler
+	HelloContext        *HelloContext
+	mainWin             *app.Window
+	mainWinDisplay      *mashupsdk.MashupDisplayHint
+	settled             int
+	yOffset             int
+	DetailedElements    []*mashupsdk.MashupDetailedElement
+	elementIndex        map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementStateBundle  *mashupsdk.MashupElementStateBundle
 }
+
+var helloApp HelloApp
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := false
@@ -100,10 +108,55 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 
-	helloApp := HelloApp{}
+	helloApp = HelloApp{
+		DetailedElements: []*mashupsdk.MashupDetailedElement{
+			&mashupsdk.MashupDetailedElement{
+				Id:          1,
+				State:       mashupsdk.Init,
+				Name:        "Inside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          2,
+				State:       mashupsdk.Init,
+				Name:        "Outside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Exo",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          3,
+				State:       mashupsdk.Init,
+				Name:        "torus",
+				Description: "",
+				Genre:       "Solid",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    []int64{4},
+			},
+			&mashupsdk.MashupDetailedElement{
+				Id:          4,
+				State:       mashupsdk.Init,
+				Name:        "Up-Side-Down",
+				Description: "",
+				Genre:       "Attitude",
+				Subgenre:    "",
+				Parentids:   []int64{3},
+				Childids:    nil,
+			},
+		},
+		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
+		elementIndex:       map[int64]*mashupsdk.MashupElementState{},
+	}
 
 	go func() {
-		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)}
 		helloApp.settled |= 8
 		helloApp.OnResize(helloApp.mainWinDisplay)
 	}()
@@ -194,4 +247,26 @@ func main() {
 	}
 
 	guiboot.InitMainWindow(guiboot.Gio, initHandler, runtimeHandler)
+}
+
+func (mSdk *gioMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+	if helloApp.mainWin != nil {
+		log.Printf("Gio Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	} else {
+		log.Printf("Gio Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	}
+}
+
+func (mSdk *gioMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Gio UpsertMashupElements - not implemented\n")
+	return nil, nil
+}
+
+func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Gio UpsertMashupElementsState called\n")
+	for _, es := range elementStateBundle.ElementStates {
+		helloApp.elementIndex[es.GetId()].State = es.State
+	}
+	log.Printf("Gio UpsertMashupElementsState complete\n")
+	return nil, nil
 }

@@ -18,21 +18,21 @@ type HelloContext struct {
 	MashContext *mashupsdk.MashupContext
 }
 
-type mashupSdkApiHandler struct {
+type fyneMashupApiHandler struct {
 }
 
 var helloContext HelloContext
 
 type HelloApp struct {
-	mSdkApiHandler     *mashupSdkApiHandler
-	HelloContext       *HelloContext
-	mainWin            fyne.Window
-	mainWinDisplay     *mashupsdk.MashupDisplayHint
-	settled            int
-	yOffset            int
-	DetailedElements   []*mashupsdk.MashupDetailedElement
-	elementIndex       map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
-	elementStateBundle *mashupsdk.MashupElementStateBundle
+	fyneMashupApiHandler *fyneMashupApiHandler
+	HelloContext         *HelloContext
+	mainWin              fyne.Window
+	mainWinDisplay       *mashupsdk.MashupDisplayHint
+	settled              int
+	yOffset              int
+	DetailedElements     []*mashupsdk.MashupDetailedElement
+	elementIndex         map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementStateBundle   *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -101,7 +101,7 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp = HelloApp{
-		mSdkApiHandler: &mashupSdkApiHandler{},
+		fyneMashupApiHandler: &fyneMashupApiHandler{},
 		DetailedElements: []*mashupsdk.MashupDetailedElement{
 			&mashupsdk.MashupDetailedElement{
 				Id:          1,
@@ -126,7 +126,7 @@ func main() {
 			&mashupsdk.MashupDetailedElement{
 				Id:          3,
 				State:       mashupsdk.Init,
-				Name:        "It",
+				Name:        "torus",
 				Description: "",
 				Genre:       "Solid",
 				Subgenre:    "Ento",
@@ -144,13 +144,24 @@ func main() {
 				Childids:    nil,
 			},
 		},
+		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
+		elementIndex:       map[int64]*mashupsdk.MashupElementState{},
 	}
 
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
+			helloApp.elementStateBundle.ElementStates = make([]*mashupsdk.MashupElementState, len(helloApp.DetailedElements))
+
+			// Init element states.
+			for _, mashupDetailedElement := range helloApp.DetailedElements {
+				es := &mashupsdk.MashupElementState{Id: mashupDetailedElement.Id, State: mashupDetailedElement.State}
+				helloApp.elementStateBundle.ElementStates = append(helloApp.elementStateBundle.ElementStates, es)
+				helloApp.elementIndex[es.GetId()] = es
+			}
+
 			if helloApp.HelloContext == nil {
-				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", nil, nil, insecure)}
+				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)}
 
 				var upsertErr error
 				// Connection with mashup fully established.  Initialize mashup elements.
@@ -215,7 +226,7 @@ func main() {
 
 }
 
-func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if helloApp.mainWin != nil {
 		log.Printf("Fyne Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
@@ -223,16 +234,16 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 	}
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("Fyne UpsertMashupElements - not implemented\n")
 	return nil, nil
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("Fye UpsertMashupElementsState called\n")
+func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Fyne UpsertMashupElementsState called\n")
 	for _, es := range elementStateBundle.ElementStates {
-		// TODO: Continue handling here...
-		helloApp.elementIndex[es.GetId()] = es
+		helloApp.elementIndex[es.GetId()].State = es.State
 	}
+	log.Printf("Fyne UpsertMashupElementsState complete\n")
 	return nil, nil
 }
