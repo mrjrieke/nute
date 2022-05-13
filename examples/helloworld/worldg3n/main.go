@@ -26,7 +26,6 @@ import (
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"tini.com/nute/mashupsdk"
-	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
 )
@@ -167,7 +166,7 @@ func (w *WorldApp) InitMainWindow() {
 						elementState.State = mashupsdk.Clicked
 						log.Printf("Zeroed.")
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
-							AuthToken:     client.GetServerAuthToken(),
+							AuthToken:     server.GetServerAuthToken(),
 							ElementStates: []*mashupsdk.MashupElementState{elementState},
 						}
 						log.Printf("Calling home: id: %d state: %d\n", elementState.Id, elementState.State)

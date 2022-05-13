@@ -27,6 +27,14 @@ func GetClientAuthToken() string {
 	}
 }
 
+func GetServerAuthToken() string {
+	if serverConnectionConfigs != nil {
+		return serverConnectionConfigs.AuthToken
+	} else {
+		return ""
+	}
+}
+
 // Shutdown -- handles request to shut down the mashup.
 func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
 	log.Println("Shutdown called")

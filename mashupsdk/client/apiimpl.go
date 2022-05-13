@@ -88,8 +88,7 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 
 func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
-	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
-		log.Printf("Auth failure.")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		log.Printf(spew.Sdump(c.mashupApiHandler))
 		return nil, errors.New("Auth failure")
 	}
