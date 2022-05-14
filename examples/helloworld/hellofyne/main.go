@@ -276,9 +276,11 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 	for _, es := range elementStateBundle.ElementStates {
 		fyneComponent := helloApp.fyneComponentCache[es.GetId()]
 		fyneComponent.mashupDetailedElement.State.State = es.State
-		torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
-		// Select the item.
-		torusMenu.Select(fyneComponent.fyneComponent.(*container.TabItem))
+		if es.State == mashupsdk.Clicked {
+			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
+			// Select the item.
+			torusMenu.Select(fyneComponent.fyneComponent.(*container.TabItem))
+		}
 	}
 	log.Printf("Fyne UpsertMashupElementsState complete\n")
 	return nil, nil

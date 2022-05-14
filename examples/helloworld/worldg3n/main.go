@@ -184,6 +184,28 @@ func (w *WorldApp) InitMainWindow() {
 
 						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 					}
+				} else {
+					// Nothing selected...
+					changedElements := []*mashupsdk.MashupElementState{}
+					for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+						if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+							worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
+							changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
+						}
+					}
+					// TODO: determine whether click was inside or outside toroid
+					// For now, append the 'outside' clicked.
+					lookupId := worldApp.elementDictionary["Outside"]
+					elementState := worldApp.elementIndex[lookupId]
+					elementState.State = mashupsdk.Clicked
+					changedElements = append(changedElements, elementState)
+
+					elementStateBundle := mashupsdk.MashupElementStateBundle{
+						AuthToken:     server.GetServerAuthToken(),
+						ElementStates: changedElements,
+					}
+
+					worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 				}
 			}
 
