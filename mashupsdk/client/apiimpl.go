@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"tini.com/nute/mashupsdk"
@@ -87,12 +88,47 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 
 func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
-	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf(spew.Sdump(c.mashupApiHandler))
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
 		c.mashupApiHandler.UpsertMashupElementsState(in)
+	} else {
+		log.Printf("No api handler provided.")
+	}
+	return nil, nil
+}
+
+func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
+	log.Printf("UpsertMashupElements called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf(spew.Sdump(c.mashupApiHandler))
+		return nil, errors.New("Auth failure")
+	}
+	if c.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
+		c.mashupApiHandler.UpsertMashupElements(in)
+	} else {
+		log.Printf("No api handler provided.")
+	}
+	return nil, nil
+}
+
+func (c *MashupClient) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
+	log.Printf("OnResize called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf(spew.Sdump(c.mashupApiHandler))
+		return nil, errors.New("Auth failure")
+	}
+	displayHint := in.MashupDisplayHint
+	log.Printf("Received resize: %d %d %d %d\n", displayHint.Xpos, displayHint.Ypos, displayHint.Width, displayHint.Height)
+	if c.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
+		c.mashupApiHandler.OnResize(displayHint)
+	} else {
+		log.Printf("No api handler provided.")
 	}
 	return nil, nil
 }
