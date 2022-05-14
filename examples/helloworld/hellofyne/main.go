@@ -15,13 +15,18 @@ import (
 )
 
 type HelloContext struct {
-	MashContext *mashupsdk.MashupContext
+	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 }
 
 type fyneMashupApiHandler struct {
 }
 
 var helloContext HelloContext
+
+type FyneWidgetBundle struct {
+	fyneComponent         interface{}
+	mashupDetailedElement *mashupsdk.MashupDetailedElement
+}
 
 type HelloApp struct {
 	fyneMashupApiHandler *fyneMashupApiHandler
@@ -30,9 +35,9 @@ type HelloApp struct {
 	mainWinDisplay       *mashupsdk.MashupDisplayHint
 	settled              int
 	yOffset              int
-	DetailedElements     []*mashupsdk.MashupDetailedElement
-	elementIndex         map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
-	elementStateBundle   *mashupsdk.MashupElementStateBundle
+	fyneWidgetElements   []*FyneWidgetBundle
+	fyneComponentCache   map[int64]*FyneWidgetBundle // g3n indexes by string...
+	//	elementStateBundle   *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -71,12 +76,12 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 
 	if resize {
-		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
+		if ha.HelloContext == nil || ha.HelloContext.mashupContext == nil {
 			return
 		}
 
-		if ha.HelloContext.MashContext != nil {
-			ha.HelloContext.MashContext.Client.OnResize(ha.HelloContext.MashContext,
+		if ha.HelloContext.mashupContext != nil {
+			ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
 				&mashupsdk.MashupDisplayBundle{
 					AuthToken:         client.GetServerAuthToken(),
 					MashupDisplayHint: ha.mainWinDisplay,
@@ -102,73 +107,96 @@ func main() {
 
 	helloApp = HelloApp{
 		fyneMashupApiHandler: &fyneMashupApiHandler{},
-		DetailedElements: []*mashupsdk.MashupDetailedElement{
-			&mashupsdk.MashupDetailedElement{
-				Id:          1,
-				State:       mashupsdk.Init,
-				Name:        "Inside",
-				Description: "",
-				Genre:       "Space",
-				Subgenre:    "Ento",
-				Parentids:   nil,
-				Childids:    nil,
+		fyneWidgetElements: []*FyneWidgetBundle{
+			&FyneWidgetBundle{
+				fyneComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
+				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
+					Id:          1,
+					State:       &mashupsdk.MashupElementState{Id: 1, State: mashupsdk.Init},
+					Name:        "Inside",
+					Description: "",
+					Genre:       "Space",
+					Subgenre:    "Ento",
+					Parentids:   nil,
+					Childids:    nil,
+				},
 			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          2,
-				State:       mashupsdk.Init,
-				Name:        "Outside",
-				Description: "",
-				Genre:       "Space",
-				Subgenre:    "Exo",
-				Parentids:   nil,
-				Childids:    nil,
+			&FyneWidgetBundle{
+				fyneComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
+				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
+					Id:          2,
+					State:       &mashupsdk.MashupElementState{Id: 2, State: mashupsdk.Init},
+					Name:        "Outside",
+					Description: "",
+					Genre:       "Space",
+					Subgenre:    "Exo",
+					Parentids:   nil,
+					Childids:    nil,
+				},
 			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          3,
-				State:       mashupsdk.Init,
-				Name:        "torus",
-				Description: "",
-				Genre:       "Solid",
-				Subgenre:    "Ento",
-				Parentids:   nil,
-				Childids:    []int64{4},
+			&FyneWidgetBundle{
+				fyneComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
+				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
+					Id:          3,
+					State:       &mashupsdk.MashupElementState{Id: 3, State: mashupsdk.Init},
+					Name:        "torus",
+					Description: "",
+					Genre:       "Solid",
+					Subgenre:    "Ento",
+					Parentids:   nil,
+					Childids:    []int64{4},
+				},
 			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          4,
-				State:       mashupsdk.Init,
-				Name:        "Up-Side-Down",
-				Description: "",
-				Genre:       "Attitude",
-				Subgenre:    "",
-				Parentids:   []int64{3},
-				Childids:    nil,
+			&FyneWidgetBundle{
+				fyneComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
+					Id:          4,
+					State:       &mashupsdk.MashupElementState{Id: 4, State: mashupsdk.Init},
+					Name:        "Up-Side-Down",
+					Description: "",
+					Genre:       "Attitude",
+					Subgenre:    "",
+					Parentids:   []int64{3},
+					Childids:    nil,
+				},
 			},
 		},
-		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
-		elementIndex:       map[int64]*mashupsdk.MashupElementState{},
+		//		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
+		fyneComponentCache: map[int64]*FyneWidgetBundle{},
+	}
+
+	// Build component cache.
+	for _, fc := range helloApp.fyneWidgetElements {
+		helloApp.fyneComponentCache[fc.mashupDetailedElement.Id] = fc
 	}
 
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
-			helloApp.elementStateBundle.ElementStates = make([]*mashupsdk.MashupElementState, len(helloApp.DetailedElements))
+			//			helloApp.elementStateBundle.ElementStates = make([]*mashupsdk.MashupElementState, len(helloApp.fyneComponentCache))
 
-			// Init element states.
-			for _, mashupDetailedElement := range helloApp.DetailedElements {
-				es := &mashupsdk.MashupElementState{Id: mashupDetailedElement.Id, State: mashupDetailedElement.State}
-				helloApp.elementStateBundle.ElementStates = append(helloApp.elementStateBundle.ElementStates, es)
-				helloApp.elementIndex[es.GetId()] = es
-			}
+			// Init element state bundle.
+			// Do I even need this???
+			//			for _, fyneComponent := range helloApp.fyneComponentCache {
+			//				es := fyneComponent.mashupDetailedElement.State
+			//				helloApp.elementStateBundle.ElementStates = append(helloApp.elementStateBundle.ElementStates, es)
+			//			}
 
 			if helloApp.HelloContext == nil {
 				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)}
 
 				var upsertErr error
+
+				DetailedElements := []*mashupsdk.MashupDetailedElement{}
+				for _, fyneComponent := range helloApp.fyneComponentCache {
+					DetailedElements = append(DetailedElements, fyneComponent.mashupDetailedElement)
+				}
+
 				// Connection with mashup fully established.  Initialize mashup elements.
-				helloApp.elementStateBundle, upsertErr = helloApp.HelloContext.MashContext.Client.UpsertMashupElements(helloApp.HelloContext.MashContext,
+				_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
 					&mashupsdk.MashupDetailedElementBundle{
 						AuthToken:        client.GetServerAuthToken(),
-						DetailedElements: helloApp.DetailedElements,
+						DetailedElements: DetailedElements,
 					})
 
 				if upsertErr != nil {
@@ -203,16 +231,16 @@ func main() {
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
 
 		torusMenu := container.NewAppTabs(
-			container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
-			container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
-			container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
-			container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+			helloApp.fyneComponentCache[1].fyneComponent.(*container.TabItem), // inside
+			helloApp.fyneComponentCache[2].fyneComponent.(*container.TabItem), // inside
+			helloApp.fyneComponentCache[3].fyneComponent.(*container.TabItem), // inside
+			helloApp.fyneComponentCache[4].fyneComponent.(*container.TabItem), // inside
 		)
 		torusMenu.SetTabLocation(container.TabLocationTop)
 
 		helloApp.mainWin.SetContent(torusMenu)
 		helloApp.mainWin.SetCloseIntercept(func() {
-			helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+			helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			os.Exit(0)
 		})
 	}
@@ -228,6 +256,10 @@ func main() {
 
 func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if helloApp.mainWin != nil {
+		// TODO: Resize without infinite looping....
+		// The moment fyne is resized, it'll want to resize g3n...
+		// Which then wants to resize fyne ad-infinitum
+		//		helloApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
 		log.Printf("Fyne Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("Fyne Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
@@ -242,7 +274,11 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *ma
 func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("Fyne UpsertMashupElementsState called\n")
 	for _, es := range elementStateBundle.ElementStates {
-		helloApp.elementIndex[es.GetId()].State = es.State
+		fyneComponent := helloApp.fyneComponentCache[es.GetId()]
+		fyneComponent.mashupDetailedElement.State.State = es.State
+		torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
+		// Select the item.
+		torusMenu.Select(fyneComponent.fyneComponent.(*container.TabItem))
 	}
 	log.Printf("Fyne UpsertMashupElementsState complete\n")
 	return nil, nil

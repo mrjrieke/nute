@@ -114,6 +114,20 @@ func (w *WorldApp) InitMainWindow() {
 			a.Gls().Viewport(0, 0, int32(width), int32(height))
 			// Update the camera's aspect ratio
 			w.cam.SetAspect(float32(width) / float32(height))
+
+			xpos, ypos := (*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
+
+			// TODO: Add callback to client.
+			worldApp.mashupContext.Client.OnResize(worldApp.mashupContext,
+				&mashupsdk.MashupDisplayBundle{
+					AuthToken: server.GetServerAuthToken(),
+					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+						Xpos:   int64(xpos),
+						Ypos:   int64(ypos),
+						Width:  int64(width),
+						Height: int64(height),
+					},
+				})
 		}
 		a.Subscribe(window.OnWindowSize, onResize)
 		onResize("", nil)
@@ -146,7 +160,6 @@ func (w *WorldApp) InitMainWindow() {
 			if worldApp.scene.Visible() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
-					// TODO: Interact!
 					// Need to feed back state to other app.
 					log.Printf("Clicked on: " + n.GetNode().LoaderID())
 
@@ -164,15 +177,12 @@ func (w *WorldApp) InitMainWindow() {
 							}
 						}
 						elementState.State = mashupsdk.Clicked
-						log.Printf("Zeroed.")
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
 							AuthToken:     server.GetServerAuthToken(),
 							ElementStates: []*mashupsdk.MashupElementState{elementState},
 						}
-						log.Printf("Calling home: id: %d state: %d\n", elementState.Id, elementState.State)
 
 						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
-						log.Printf("Called home.\n")
 					}
 				}
 			}
@@ -232,7 +242,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {
-		detailedElement.State = mashupsdk.Rest
+		detailedElement.State.State = mashupsdk.Rest
 		es := &mashupsdk.MashupElementState{
 			Id:    detailedElement.Id,
 			State: mashupsdk.Rest,

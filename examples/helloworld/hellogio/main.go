@@ -112,7 +112,7 @@ func main() {
 		DetailedElements: []*mashupsdk.MashupDetailedElement{
 			&mashupsdk.MashupDetailedElement{
 				Id:          1,
-				State:       mashupsdk.Init,
+				State:       &mashupsdk.MashupElementState{Id: 1, State: mashupsdk.Init},
 				Name:        "Inside",
 				Description: "",
 				Genre:       "Space",
@@ -122,7 +122,7 @@ func main() {
 			},
 			&mashupsdk.MashupDetailedElement{
 				Id:          2,
-				State:       mashupsdk.Init,
+				State:       &mashupsdk.MashupElementState{Id: 2, State: mashupsdk.Init},
 				Name:        "Outside",
 				Description: "",
 				Genre:       "Space",
@@ -132,7 +132,7 @@ func main() {
 			},
 			&mashupsdk.MashupDetailedElement{
 				Id:          3,
-				State:       mashupsdk.Init,
+				State:       &mashupsdk.MashupElementState{Id: 3, State: mashupsdk.Init},
 				Name:        "torus",
 				Description: "",
 				Genre:       "Solid",
@@ -142,7 +142,7 @@ func main() {
 			},
 			&mashupsdk.MashupDetailedElement{
 				Id:          4,
-				State:       mashupsdk.Init,
+				State:       &mashupsdk.MashupElementState{Id: 4, State: mashupsdk.Init},
 				Name:        "Up-Side-Down",
 				Description: "",
 				Genre:       "Attitude",
