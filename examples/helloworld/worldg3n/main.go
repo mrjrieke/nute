@@ -32,14 +32,14 @@ import (
 
 var worldCompleteChan chan bool
 
-type worldApiHandler struct {
+type mashupSdkApiHandler struct {
 }
 
 type worldClientInitHandler struct {
 }
 
 type WorldApp struct {
-	wApiHandler         *worldApiHandler
+	mSdkApiHandler      *mashupSdkApiHandler
 	wClientInitHandler  *worldClientInitHandler
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
@@ -47,10 +47,11 @@ type WorldApp struct {
 	scene               *core.Node
 	cam                 *camera.Camera
 
-	mashupContext    *mashupsdk.MashupContext // Needed for callbacks to other mashups
-	elementIndex     map[string]*mashupsdk.MashupElementState
-	DetailedElements []*mashupsdk.MashupDetailedElement
-	StateBundle      mashupsdk.MashupElementStateBundle
+	mashupContext      *mashupsdk.MashupContext                // Needed for callbacks to other mashups
+	elementIndex       map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementDictionary  map[string]int64
+	DetailedElements   []*mashupsdk.MashupDetailedElement
+	elementStateBundle mashupsdk.MashupElementStateBundle
 }
 
 var worldApp WorldApp
@@ -113,6 +114,20 @@ func (w *WorldApp) InitMainWindow() {
 			a.Gls().Viewport(0, 0, int32(width), int32(height))
 			// Update the camera's aspect ratio
 			w.cam.SetAspect(float32(width) / float32(height))
+
+			xpos, ypos := (*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
+
+			// TODO: Add callback to client.
+			worldApp.mashupContext.Client.OnResize(worldApp.mashupContext,
+				&mashupsdk.MashupDisplayBundle{
+					AuthToken: server.GetServerAuthToken(),
+					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+						Xpos:   int64(xpos),
+						Ypos:   int64(ypos),
+						Width:  int64(width),
+						Height: int64(height),
+					},
+				})
 		}
 		a.Subscribe(window.OnWindowSize, onResize)
 		onResize("", nil)
@@ -145,23 +160,52 @@ func (w *WorldApp) InitMainWindow() {
 			if worldApp.scene.Visible() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
-					// TODO: Interact!
 					// Need to feed back state to other app.
-					elementState := worldApp.elementIndex[n.GetNode().LoaderID()]
+					log.Printf("Clicked on: " + n.GetNode().LoaderID())
+
+					lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
+					elementState := worldApp.elementIndex[lookupId]
+					log.Printf("State: %d\n", elementState.State)
+
 					if elementState != nil {
+						log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
+
 						// Zero out states of all elements to rest state.
-						for i := 0; i < len(worldApp.StateBundle.ElementStates); i++ {
-							if worldApp.StateBundle.ElementStates[i].State != mashupsdk.Rest {
-								worldApp.StateBundle.ElementStates[i].State = mashupsdk.Rest
+						for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+							if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+								worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
 							}
 						}
 						elementState.State = mashupsdk.Clicked
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
+							AuthToken:     server.GetServerAuthToken(),
 							ElementStates: []*mashupsdk.MashupElementState{elementState},
 						}
 
-						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle, nil)
+						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 					}
+				} else {
+					// Nothing selected...
+					changedElements := []*mashupsdk.MashupElementState{}
+					for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+						if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+							worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
+							changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
+						}
+					}
+					// TODO: determine whether click was inside or outside toroid
+					// For now, append the 'outside' clicked.
+					lookupId := worldApp.elementDictionary["Outside"]
+					elementState := worldApp.elementIndex[lookupId]
+					elementState.State = mashupsdk.Clicked
+					changedElements = append(changedElements, elementState)
+
+					elementStateBundle := mashupsdk.MashupElementStateBundle{
+						AuthToken:     server.GetServerAuthToken(),
+						ElementStates: changedElements,
+					}
+
+					worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 				}
 			}
 
@@ -201,7 +245,7 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 	worldApp.mashupContext = context
 }
 
-func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
@@ -212,32 +256,36 @@ func (w *worldApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	}
 }
 
-func (w *worldApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupElements\n")
 	worldApp.DetailedElements = detailedElementBundle.DetailedElements
-	worldApp.StateBundle = mashupsdk.MashupElementStateBundle{
-		ElementStates: make([]*mashupsdk.MashupElementState, len(worldApp.DetailedElements)),
+	worldApp.elementStateBundle = mashupsdk.MashupElementStateBundle{
+		ElementStates: []*mashupsdk.MashupElementState{},
 	}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {
-		detailedElement.State = mashupsdk.Rest
+		detailedElement.State.State = mashupsdk.Rest
 		es := &mashupsdk.MashupElementState{
 			Id:    detailedElement.Id,
 			State: mashupsdk.Rest,
 		}
 
-		worldApp.StateBundle.ElementStates = append(worldApp.StateBundle.ElementStates, es)
+		worldApp.elementStateBundle.ElementStates = append(worldApp.elementStateBundle.ElementStates, es)
 
-		worldApp.elementIndex[detailedElement.GetName()] = es
+		worldApp.elementDictionary[detailedElement.GetName()] = detailedElement.Id
+		worldApp.elementIndex[detailedElement.Id] = es
 	}
 
 	log.Printf("G3n UpsertMashupElements updated\n")
-	return &worldApp.StateBundle, nil
+	return &worldApp.elementStateBundle, nil
 }
 
-func (w *worldApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	// Not implemented.
 	log.Printf("G3n UpsertMashupElementsState called\n")
+	for _, es := range elementStateBundle.ElementStates {
+		worldApp.elementIndex[es.GetId()] = es
+	}
 	return nil, errors.New("Could not capture items.")
 }
 
@@ -252,14 +300,15 @@ func main() {
 	log.SetOutput(worldLog)
 
 	worldApp = WorldApp{
-		wApiHandler:         &worldApiHandler{},
-		elementIndex:        map[string]*mashupsdk.MashupElementState{},
+		mSdkApiHandler:      &mashupSdkApiHandler{},
+		elementIndex:        map[int64]*mashupsdk.MashupElementState{},
+		elementDictionary:   map[string]int64{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
 
 	if *callerCreds != "" {
-		server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler, worldApp.wClientInitHandler)
+		server.InitServer(*callerCreds, *insecure, worldApp.mSdkApiHandler, worldApp.wClientInitHandler)
 	} else {
 		go func() {
 			worldApp.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}

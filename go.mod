@@ -51,7 +51,7 @@ require (
 )
 
 // Uncomment for local development
-// replace fyne.io/fyne/v2 v2.1.3 => ../../fyne // Use mashup_v1 branch
+replace fyne.io/fyne/v2 v2.1.3 => ../../fyne // Use mashup_v1 branch
 
 // replace gioui.org v0.0.0-20220318070519-8833a6738a3b => ../../gio // Use mashup_v1 branch
 
@@ -59,10 +59,10 @@ require (
 
 // replace github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 => ../../glfw-js // Use mashup_v1 branch
 
-replace fyne.io/fyne/v2 v2.1.3 => github.com/mrjrieke/fyne/v2 v2.1.3-0
+// replace fyne.io/fyne/v2 v2.1.3 => github.com/mrjrieke/fyne/v2 v2.1.3-0
 
 replace gioui.org v0.0.0-20220318070519-8833a6738a3b => github.com/mrjrieke/gio v0.0.0-20220406132257-ec1380c11ef0
 
-replace github.com/g3n/engine v0.2.0 => github.com/mrjrieke/engine v0.2.1-0.20220406131816-8d6b6bcadc77
+replace github.com/g3n/engine v0.2.0 => github.com/mrjrieke/engine v0.2.1-0.20220429130921-1cb788c5a9f8
 
 replace github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 => github.com/mrjrieke/glfw-js v0.0.0-20220409154018-95a896685cdb

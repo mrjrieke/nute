@@ -29,6 +29,9 @@ helloworldfyne: */*.go */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/hellofyne" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellofyne/main.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldg3n/main.go
 
+worldg3n: */*.go */*/*.go */*/*/*.go
+	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldg3n/main.go
+
 # In disrepair...
 # helloworldmobile: */*.go */*/*.go */*/*/*.go
 #	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellomobile" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go

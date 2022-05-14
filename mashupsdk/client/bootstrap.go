@@ -14,6 +14,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"tini.com/nute/mashupsdk"
 	sdk "tini.com/nute/mashupsdk"
 )
 
@@ -62,7 +63,8 @@ func forkMashup(mashupGoodies map[string]interface{}) error {
 	return forkErr
 }
 
-func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
+func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
+	mashupGoodies map[string]interface{}) *sdk.MashupContext {
 	log.Printf("Initializing Mashup.\n")
 
 	handshakeCompleteChan = make(chan bool)
@@ -108,7 +110,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 		log.Fatalf("Failed to serve: %v", err)
 	}
 	go func() {
-		sdk.RegisterMashupServerServer(handshakeServer, &MashupClient{})
+		sdk.RegisterMashupServerServer(handshakeServer, &MashupClient{mashupApiHandler: mashupApiHandler})
 		handshakeServer.Serve(lis)
 	}()
 
@@ -137,6 +139,7 @@ func initContext(mashupGoodies map[string]interface{}) *sdk.MashupContext {
 // it to establish shared set of credentials to be used in
 // future transactions.
 func BootstrapInit(mashupPath string,
+	mashupApiHandler mashupsdk.MashupApiHandler,
 	envParams []string,
 	params []string,
 	insecure *bool) *sdk.MashupContext {
@@ -147,5 +150,5 @@ func BootstrapInit(mashupPath string,
 	mashupGoodies["PARAMS"] = params
 	mashupGoodies["insecure"] = insecure
 
-	return initContext(mashupGoodies)
+	return initContext(mashupApiHandler, mashupGoodies)
 }
