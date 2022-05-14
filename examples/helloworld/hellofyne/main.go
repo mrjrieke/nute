@@ -37,7 +37,6 @@ type HelloApp struct {
 	yOffset              int
 	fyneWidgetElements   []*FyneWidgetBundle
 	fyneComponentCache   map[int64]*FyneWidgetBundle // g3n indexes by string...
-	//	elementStateBundle   *mashupsdk.MashupElementStateBundle
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -108,7 +107,7 @@ func main() {
 	helloApp = HelloApp{
 		fyneMashupApiHandler: &fyneMashupApiHandler{},
 		fyneWidgetElements: []*FyneWidgetBundle{
-			&FyneWidgetBundle{
+			{
 				fyneComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          1,
@@ -121,7 +120,7 @@ func main() {
 					Childids:    nil,
 				},
 			},
-			&FyneWidgetBundle{
+			{
 				fyneComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          2,
@@ -134,7 +133,7 @@ func main() {
 					Childids:    nil,
 				},
 			},
-			&FyneWidgetBundle{
+			{
 				fyneComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          3,
@@ -147,7 +146,7 @@ func main() {
 					Childids:    []int64{4},
 				},
 			},
-			&FyneWidgetBundle{
+			{
 				fyneComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          4,
@@ -161,7 +160,6 @@ func main() {
 				},
 			},
 		},
-		//		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
 		fyneComponentCache: map[int64]*FyneWidgetBundle{},
 	}
 
@@ -173,15 +171,6 @@ func main() {
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
-			//			helloApp.elementStateBundle.ElementStates = make([]*mashupsdk.MashupElementState, len(helloApp.fyneComponentCache))
-
-			// Init element state bundle.
-			// Do I even need this???
-			//			for _, fyneComponent := range helloApp.fyneComponentCache {
-			//				es := fyneComponent.mashupDetailedElement.State
-			//				helloApp.elementStateBundle.ElementStates = append(helloApp.elementStateBundle.ElementStates, es)
-			//			}
-
 			if helloApp.HelloContext == nil {
 				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)}
 
