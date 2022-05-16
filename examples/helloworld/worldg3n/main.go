@@ -148,6 +148,27 @@ func (w *WorldApp) InitMainWindow() {
 		})
 		w.scene.Add(btn)
 
+		w.mainWin.Subscribe(gui.OnFocus, func(name string, ev interface{}) {
+			// Focus gained...
+			log.Printf("G3n Focus gained\n")
+			for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+				if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+					switch worldApp.elementStateBundle.ElementStates[i].Id {
+					case 1:
+						mat.SetColor(math32.NewColor("DarkBlue"))
+					case 2:
+						mat.SetColor(math32.NewColor("DarkBlue"))
+					case 3:
+						mat.SetColor(math32.NewColor("DarkRed"))
+					case 4:
+						mat.SetColor(math32.NewColor("DarkBlue"))
+					}
+
+				}
+			}
+			log.Printf("G3n End Focus gained\n")
+		})
+
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
 			mev := ev.(*window.MouseEvent)
 			g3Width, g3Height := worldApp.mainWin.GetSize()
@@ -160,9 +181,6 @@ func (w *WorldApp) InitMainWindow() {
 			if worldApp.scene.Visible() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
-					// Need to feed back state to other app.
-					log.Printf("Clicked on: " + n.GetNode().LoaderID())
-
 					lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
 					elementState := worldApp.elementIndex[lookupId]
 					log.Printf("State: %d\n", elementState.State)
@@ -283,11 +301,19 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 }
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	// Not implemented.
 	log.Printf("G3n UpsertMashupElementsState called\n")
-	for _, es := range elementStateBundle.ElementStates {
-		worldApp.elementIndex[es.GetId()] = es
+
+	for _, wes := range worldApp.elementIndex {
+		wes.State = mashupsdk.Rest
 	}
+
+	for _, es := range elementStateBundle.ElementStates {
+		if worldApp.elementIndex[es.GetId()].State != es.State {
+			worldApp.elementIndex[es.GetId()].State = es.State
+		}
+	}
+	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
+	log.Printf("G3n End UpsertMashupElementsState called\n")
 	return nil, errors.New("Could not capture items.")
 }
 

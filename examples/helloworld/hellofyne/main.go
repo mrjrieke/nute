@@ -39,6 +39,16 @@ type HelloApp struct {
 	fyneComponentCache   map[int64]*FyneWidgetBundle // g3n indexes by string...
 }
 
+func (fwb *FyneWidgetBundle) OnClicked() {
+	fwb.mashupDetailedElement.State.State = mashupsdk.Clicked
+
+	elementStateBundle := mashupsdk.MashupElementStateBundle{
+		AuthToken:     client.GetServerAuthToken(),
+		ElementStates: []*mashupsdk.MashupElementState{fwb.mashupDetailedElement.State},
+	}
+	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
+}
+
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := false
 	if ha.mainWinDisplay == nil {
@@ -221,10 +231,26 @@ func main() {
 
 		torusMenu := container.NewAppTabs(
 			helloApp.fyneComponentCache[1].fyneComponent.(*container.TabItem), // inside
-			helloApp.fyneComponentCache[2].fyneComponent.(*container.TabItem), // inside
-			helloApp.fyneComponentCache[3].fyneComponent.(*container.TabItem), // inside
-			helloApp.fyneComponentCache[4].fyneComponent.(*container.TabItem), // inside
+			helloApp.fyneComponentCache[2].fyneComponent.(*container.TabItem), // outside
+			helloApp.fyneComponentCache[3].fyneComponent.(*container.TabItem), // IT
+			helloApp.fyneComponentCache[4].fyneComponent.(*container.TabItem), // Upside down
 		)
+		torusMenu.OnSelected = func(tabItem *container.TabItem) {
+			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
+			// Lookup by name instead and try to keep track of any name changes instead...
+			log.Printf("Selected: %s\n", tabItem.Text)
+			switch tabItem.Text {
+			case "Inside":
+				helloApp.fyneComponentCache[1].OnClicked()
+			case "Outside":
+				helloApp.fyneComponentCache[2].OnClicked()
+			case "It":
+				helloApp.fyneComponentCache[3].OnClicked()
+			case "Up-side-down":
+				helloApp.fyneComponentCache[4].OnClicked()
+			}
+		}
+
 		torusMenu.SetTabLocation(container.TabLocationTop)
 
 		helloApp.mainWin.SetContent(torusMenu)

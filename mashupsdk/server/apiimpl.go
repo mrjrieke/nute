@@ -82,6 +82,7 @@ func (s *MashupServer) UpsertMashupElements(ctx context.Context, in *sdk.MashupD
 func (s *MashupServer) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("UpsertMashupElementsState Auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
