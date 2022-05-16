@@ -169,6 +169,7 @@ func (w *WorldApp) InitMainWindow() {
 
 					if elementState != nil {
 						log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
+						mat.SetColor(math32.NewColor("DarkRed"))
 
 						// Zero out states of all elements to rest state.
 						for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
@@ -186,6 +187,7 @@ func (w *WorldApp) InitMainWindow() {
 					}
 				} else {
 					// Nothing selected...
+					mat.SetColor(math32.NewColor("DarkBlue"))
 					changedElements := []*mashupsdk.MashupElementState{}
 					for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
 						if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
