@@ -222,6 +222,7 @@ func main() {
 
 			case system.DestroyEvent:
 				helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+				os.Exit(0)
 				return
 
 			case system.FrameEvent:
