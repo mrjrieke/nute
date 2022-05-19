@@ -175,6 +175,7 @@ func main() {
 
 	// Build component cache.
 	for _, fc := range helloApp.fyneWidgetElements {
+		fc.fyneComponent.(*container.TabItem).Content.(*widget.Label).Wrapping = fyne.TextWrapWord
 		helloApp.fyneComponentCache[fc.mashupDetailedElement.Id] = fc
 	}
 
@@ -228,6 +229,7 @@ func main() {
 
 		helloApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
+		helloApp.mainWin.SetFixedSize(false)
 
 		torusMenu := container.NewAppTabs(
 			helloApp.fyneComponentCache[1].fyneComponent.(*container.TabItem), // inside

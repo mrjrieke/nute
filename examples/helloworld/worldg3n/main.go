@@ -156,12 +156,16 @@ func (w *WorldApp) InitMainWindow() {
 				if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
 					switch worldApp.elementStateBundle.ElementStates[i].Id {
 					case 1:
+						// TODO: Rotate front to back
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 2:
+						// TODO: Rotate front to back
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 3:
+						// TODO: Rotate front to back
 						mat.SetColor(math32.NewColor("DarkRed"))
 					case 4:
+						// TODO: Rotate back to front...
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					}
 
