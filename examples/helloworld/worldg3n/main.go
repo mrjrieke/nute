@@ -186,51 +186,57 @@ func (w *WorldApp) InitMainWindow() {
 			if worldApp.scene.Visible() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
-					lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
-					elementState := worldApp.elementIndex[lookupId]
-					log.Printf("State: %d\n", elementState.State)
+					mat.SetColor(math32.NewColor("DarkRed"))
 
-					if elementState != nil {
-						log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
-						mat.SetColor(math32.NewColor("DarkRed"))
+					if len(worldApp.elementDictionary) != 0 {
+						lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
+						elementState := worldApp.elementIndex[lookupId]
+						log.Printf("State: %d\n", elementState.State)
 
-						// Zero out states of all elements to rest state.
+						if elementState != nil {
+							log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
+							mat.SetColor(math32.NewColor("DarkRed"))
+							// Zero out states of all elements to rest state.
+							for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+								if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+									worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
+								}
+							}
+							elementState.State = mashupsdk.Clicked
+							elementStateBundle := mashupsdk.MashupElementStateBundle{
+								AuthToken:     server.GetServerAuthToken(),
+								ElementStates: []*mashupsdk.MashupElementState{elementState},
+							}
+
+							worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
+						}
+					}
+
+				} else {
+					// Nothing selected...
+					mat.SetColor(math32.NewColor("DarkBlue"))
+					if len(worldApp.elementDictionary) != 0 {
+						changedElements := []*mashupsdk.MashupElementState{}
 						for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
 							if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
 								worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
+								changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
 							}
 						}
+						// TODO: determine whether click was inside or outside toroid
+						// For now, append the 'outside' clicked.
+						lookupId := worldApp.elementDictionary["Outside"]
+						elementState := worldApp.elementIndex[lookupId]
 						elementState.State = mashupsdk.Clicked
+						changedElements = append(changedElements, elementState)
+
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
 							AuthToken:     server.GetServerAuthToken(),
-							ElementStates: []*mashupsdk.MashupElementState{elementState},
+							ElementStates: changedElements,
 						}
 
 						worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 					}
-				} else {
-					// Nothing selected...
-					mat.SetColor(math32.NewColor("DarkBlue"))
-					changedElements := []*mashupsdk.MashupElementState{}
-					for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
-						if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
-							worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
-							changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
-						}
-					}
-					// TODO: determine whether click was inside or outside toroid
-					// For now, append the 'outside' clicked.
-					lookupId := worldApp.elementDictionary["Outside"]
-					elementState := worldApp.elementIndex[lookupId]
-					elementState.State = mashupsdk.Clicked
-					changedElements = append(changedElements, elementState)
-
-					elementStateBundle := mashupsdk.MashupElementStateBundle{
-						AuthToken:     server.GetServerAuthToken(),
-						ElementStates: changedElements,
-					}
-
-					worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
 				}
 			}
 

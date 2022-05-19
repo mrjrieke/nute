@@ -270,6 +270,7 @@ func main() {
 }
 
 func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+	log.Printf("Fyne OnResize - not implemented yet..\n")
 	if helloApp.mainWin != nil {
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
