@@ -7,7 +7,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"log"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
@@ -27,6 +29,21 @@ func GetServerAuthToken() string {
 	} else {
 		return ""
 	}
+}
+
+// Shutdown -- handles request to shut down the mashup.
+func (s *MashupClient) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
+	log.Println("Shutdown called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		os.Exit(-1)
+	}()
+
+	log.Println("Shutdown initiated.")
+	return &sdk.MashupEmpty{}, nil
 }
 
 // Shake - Implementation of the handshake.  During the callback from

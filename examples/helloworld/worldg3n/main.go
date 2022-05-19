@@ -25,6 +25,7 @@ import (
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
+	"github.com/go-gl/glfw/v3.3/glfw"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
@@ -167,6 +168,10 @@ func (w *WorldApp) InitMainWindow() {
 				}
 			}
 			log.Printf("G3n End Focus gained\n")
+		})
+
+		(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(w *glfw.Window) {
+			worldApp.mashupContext.Client.Shutdown(worldApp.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 		})
 
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
