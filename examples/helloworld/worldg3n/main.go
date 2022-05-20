@@ -5,7 +5,6 @@ package main
 
 // World is a basic gomobile app.
 import (
-	"errors"
 	"flag"
 	"log"
 	"os"
@@ -335,7 +334,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
 	log.Printf("G3n End UpsertMashupElementsState called\n")
-	return nil, errors.New("Could not capture items.")
+	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
 func main() {

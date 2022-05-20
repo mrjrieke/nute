@@ -268,7 +268,6 @@ func main() {
 	}
 
 	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
-
 }
 
 func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -277,7 +276,7 @@ func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayH
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
 		// Which then wants to resize fyne ad-infinitum
-		//		helloApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
+		//helloApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
 		log.Printf("Fyne Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("Fyne Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
@@ -286,7 +285,7 @@ func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayH
 
 func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("Fyne UpsertMashupElements - not implemented\n")
-	return nil, nil
+	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
 func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
@@ -301,5 +300,5 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 		}
 	}
 	log.Printf("Fyne UpsertMashupElementsState complete\n")
-	return nil, nil
+	return &mashupsdk.MashupElementStateBundle{}, nil
 }
