@@ -118,17 +118,18 @@ func (w *WorldApp) InitMainWindow() {
 
 			xpos, ypos := (*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
 
-			// TODO: Add callback to client.
-			worldApp.mashupContext.Client.OnResize(worldApp.mashupContext,
-				&mashupsdk.MashupDisplayBundle{
-					AuthToken: server.GetServerAuthToken(),
-					MashupDisplayHint: &mashupsdk.MashupDisplayHint{
-						Xpos:   int64(xpos),
-						Ypos:   int64(ypos),
-						Width:  int64(width),
-						Height: int64(height),
-					},
-				})
+			if worldApp.mashupContext != nil {
+				worldApp.mashupContext.Client.OnResize(worldApp.mashupContext,
+					&mashupsdk.MashupDisplayBundle{
+						AuthToken: server.GetServerAuthToken(),
+						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+							Xpos:   int64(xpos),
+							Ypos:   int64(ypos),
+							Width:  int64(width),
+							Height: int64(height),
+						},
+					})
+			}
 		}
 		a.Subscribe(window.OnWindowSize, onResize)
 		onResize("", nil)
