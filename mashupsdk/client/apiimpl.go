@@ -111,7 +111,7 @@ func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.Ma
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		c.mashupApiHandler.UpsertMashupElementsState(in)
+		return c.mashupApiHandler.UpsertMashupElementsState(in)
 	} else {
 		log.Printf("No api handler provided.")
 	}
@@ -126,7 +126,7 @@ func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupD
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		c.mashupApiHandler.UpsertMashupElements(in)
+		return c.mashupApiHandler.UpsertMashupElements(in)
 	} else {
 		log.Printf("No api handler provided.")
 	}
@@ -147,5 +147,5 @@ func (c *MashupClient) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	} else {
 		log.Printf("No api handler provided.")
 	}
-	return nil, nil
+	return displayHint, nil
 }
