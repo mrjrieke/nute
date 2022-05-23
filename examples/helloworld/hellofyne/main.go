@@ -32,9 +32,7 @@ type HelloApp struct {
 	fyneMashupApiHandler *fyneMashupApiHandler
 	HelloContext         *HelloContext
 	mainWin              fyne.Window
-	mainWinDisplay       *mashupsdk.MashupDisplayHint
-	settled              int
-	yOffset              int
+	mashupDisplayContext *mashupsdk.MashupDisplayContext
 	fyneWidgetElements   []*FyneWidgetBundle
 	fyneComponentCache   map[int64]*FyneWidgetBundle // g3n indexes by string...
 }
@@ -50,39 +48,7 @@ func (fwb *FyneWidgetBundle) OnClicked() {
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	resize := false
-	if ha.mainWinDisplay == nil {
-		resize = true
-		ha.mainWinDisplay = &mashupsdk.MashupDisplayHint{}
-	}
-
-	if displayHint == nil {
-		return
-	}
-
-	if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
-		ha.mainWinDisplay.Xpos = displayHint.Xpos
-		resize = true
-	}
-	if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
-		ha.mainWinDisplay.Ypos = displayHint.Ypos + int64(ha.yOffset)
-		resize = true
-	}
-	if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
-		ha.mainWinDisplay.Width = displayHint.Width
-		resize = true
-	}
-	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height+int64(ha.yOffset) {
-		ha.mainWinDisplay.Height = displayHint.Height
-		resize = true
-	}
-
-	if ha.settled < 15 {
-		return
-	} else if ha.settled == 15 {
-		resize = true
-		ha.settled = 31
-	}
+	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
 	if resize {
 		if ha.HelloContext == nil || ha.HelloContext.mashupContext == nil {
@@ -93,7 +59,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 			ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
 				&mashupsdk.MashupDisplayBundle{
 					AuthToken:         client.GetServerAuthToken(),
-					MashupDisplayHint: ha.mainWinDisplay,
+					MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
 				})
 		}
 	}
@@ -115,6 +81,7 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp = HelloApp{
+		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
 		fyneMashupApiHandler: &fyneMashupApiHandler{},
 		fyneWidgetElements: []*FyneWidgetBundle{
 			{
@@ -203,18 +170,16 @@ func main() {
 					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}
 
-				helloApp.settled |= 8
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
-			helloApp.OnResize(helloApp.mainWinDisplay)
+			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 		})
 		a.Lifecycle().SetOnResized(func(xpos int, ypos int, yoffset int, width int, height int) {
 			log.Printf("Received resize: %d %d %d %d %d\n", xpos, ypos, yoffset, width, height)
-			helloApp.settled |= 1
-			helloApp.settled |= 2
-			helloApp.settled |= 4
+			helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured|mashupsdk.Position|mashupsdk.Frame, false)
 
-			if helloApp.yOffset == 0 {
-				helloApp.yOffset = yoffset + 3
+			if helloApp.mashupDisplayContext.GetYoffset() == 0 {
+				helloApp.mashupDisplayContext.SetYoffset(yoffset + 3)
 			}
 
 			helloApp.OnResize(&mashupsdk.MashupDisplayHint{

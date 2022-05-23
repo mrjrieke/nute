@@ -29,53 +29,19 @@ type gioMashupApiHandler struct {
 }
 
 type HelloApp struct {
-	gioMashupApiHandler *gioMashupApiHandler
-	HelloContext        *HelloContext
-	mainWin             *app.Window
-	mainWinDisplay      *mashupsdk.MashupDisplayHint
-	settled             int
-	yOffset             int
-	DetailedElements    []*mashupsdk.MashupDetailedElement
-	elementIndex        map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
-	elementStateBundle  *mashupsdk.MashupElementStateBundle
+	gioMashupApiHandler  *gioMashupApiHandler
+	HelloContext         *HelloContext
+	mainWin              *app.Window
+	mashupDisplayContext *mashupsdk.MashupDisplayContext
+	DetailedElements     []*mashupsdk.MashupDetailedElement
+	elementIndex         map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
+	elementStateBundle   *mashupsdk.MashupElementStateBundle
 }
 
 var helloApp HelloApp
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	resize := false
-	if ha.mainWinDisplay == nil {
-		resize = true
-		ha.mainWinDisplay = &mashupsdk.MashupDisplayHint{}
-	}
-
-	if displayHint == nil {
-		return
-	}
-
-	if displayHint.Xpos != 0 && (*ha.mainWinDisplay).Xpos != displayHint.Xpos {
-		ha.mainWinDisplay.Xpos = displayHint.Xpos
-		resize = true
-	}
-	if displayHint.Ypos != 0 && (*ha.mainWinDisplay).Ypos != displayHint.Ypos {
-		ha.mainWinDisplay.Ypos = displayHint.Ypos
-		resize = true
-	}
-	if displayHint.Width != 0 && (*ha.mainWinDisplay).Width != displayHint.Width {
-		ha.mainWinDisplay.Width = displayHint.Width
-		resize = true
-	}
-	if displayHint.Height != 0 && (*ha.mainWinDisplay).Height != displayHint.Height+int64(ha.yOffset) {
-		ha.mainWinDisplay.Height = displayHint.Height + int64(ha.yOffset)
-		resize = true
-	}
-
-	if ha.settled < 15 {
-		return
-	} else if ha.settled == 15 {
-		resize = true
-		ha.settled = 31
-	}
+	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
 	if resize {
 		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
@@ -86,7 +52,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 			ha.HelloContext.MashContext.Client.OnResize(ha.HelloContext.MashContext,
 				&mashupsdk.MashupDisplayBundle{
 					AuthToken:         client.GetServerAuthToken(),
-					MashupDisplayHint: ha.mainWinDisplay,
+					MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
 				})
 		}
 	}
@@ -109,6 +75,7 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp = HelloApp{
+		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
 		DetailedElements: []*mashupsdk.MashupDetailedElement{
 			&mashupsdk.MashupDetailedElement{
 				Id:          1,
@@ -157,8 +124,8 @@ func main() {
 
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)}
-		helloApp.settled |= 8
-		helloApp.OnResize(helloApp.mainWinDisplay)
+		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
+		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 	}()
 
 	// Sync initialization.
@@ -183,11 +150,11 @@ func main() {
 			case app.ConfigEvent:
 				ce := e.Config
 
-				if helloApp.settled > 15 || (ce.Center && (helloApp.settled&1) == 0) {
+				if helloApp.mashupDisplayContext.GetSettled() > 15 || (ce.Center && (helloApp.mashupDisplayContext.GetSettled()&1) == 0) {
 					if ce.YOffset != 0 {
-						helloApp.yOffset = ce.YOffset + 3
+						helloApp.mashupDisplayContext.SetYoffset(ce.YOffset + 3)
 					}
-					helloApp.settled |= 1
+					helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured, false)
 					helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 						Xpos:   int64(ce.Position.X),
 						Ypos:   int64(ce.Position.Y),
@@ -197,9 +164,9 @@ func main() {
 				}
 			case system.PositionEvent:
 				if e.YOffset != 0 {
-					helloApp.yOffset = e.YOffset + 3
+					helloApp.mashupDisplayContext.SetYoffset(e.YOffset + 3)
 				}
-				helloApp.settled |= 2
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Position, false)
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(e.X),
 					Ypos:   int64(e.Y),
@@ -227,10 +194,10 @@ func main() {
 
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
-				helloApp.settled |= 4
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Frame, false)
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
-					Xpos:   int64(helloApp.mainWinDisplay.Xpos),
-					Ypos:   int64(helloApp.mainWinDisplay.Ypos),
+					Xpos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Xpos),
+					Ypos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Ypos),
 					Width:  int64(e.Size.X),
 					Height: int64(e.Size.Y),
 				})
