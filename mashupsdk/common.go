@@ -10,10 +10,11 @@ const (
 type MashupDisplayState int
 
 const (
-	Configured MashupDisplayState = 1
-	Position   MashupDisplayState = 2
-	Frame      MashupDisplayState = 4
-	AppInitted MashupDisplayState = 8
+	Configured     MashupDisplayState = 1
+	Position       MashupDisplayState = 2
+	Frame          MashupDisplayState = 4
+	AppInitted     MashupDisplayState = 8
+	DisplaySettled MashupDisplayState = 31
 )
 
 type MashupDisplayContext struct {
@@ -72,11 +73,11 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 		resize = true
 	}
 
-	if m.settled < 15 {
+	if m.settled < (Configured | Position | Frame | AppInitted) {
 		return false
-	} else if m.settled == 15 {
+	} else if m.settled == (Configured | Position | Frame | AppInitted) {
 		resize = true
-		m.settled = 31
+		m.settled = DisplaySettled
 	}
 	return resize
 }
