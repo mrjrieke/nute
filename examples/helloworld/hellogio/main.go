@@ -124,7 +124,7 @@ func main() {
 
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)}
-		helloApp.mashupDisplayContext.ApplySettled(8, true)
+		helloApp.mashupDisplayContext.ApplySettled(8, false)
 		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 	}()
 
