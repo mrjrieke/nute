@@ -75,7 +75,6 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 // MashupApiHandler -- mashups implement this to handle all events sent from
 // other mashups.
 type MashupApiHandler interface {
-	//	InitDisplayContext(mashupDisplayContext *MashupDisplayContext)
 	OnResize(displayHint *MashupDisplayHint)
 	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
 	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
