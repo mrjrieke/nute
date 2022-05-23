@@ -124,7 +124,7 @@ func main() {
 
 	go func() {
 		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)}
-		helloApp.mashupDisplayContext.ApplySettled(8, false)
+		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 	}()
 
@@ -154,7 +154,7 @@ func main() {
 					if ce.YOffset != 0 {
 						helloApp.mashupDisplayContext.SetYoffset(ce.YOffset + 3)
 					}
-					helloApp.mashupDisplayContext.ApplySettled(1, false)
+					helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured, false)
 					helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 						Xpos:   int64(ce.Position.X),
 						Ypos:   int64(ce.Position.Y),
@@ -166,7 +166,7 @@ func main() {
 				if e.YOffset != 0 {
 					helloApp.mashupDisplayContext.SetYoffset(e.YOffset + 3)
 				}
-				helloApp.mashupDisplayContext.ApplySettled(2, false)
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Position, false)
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(e.X),
 					Ypos:   int64(e.Y),
@@ -194,7 +194,7 @@ func main() {
 
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
-				helloApp.mashupDisplayContext.ApplySettled(4, false)
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Frame, false)
 				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Xpos),
 					Ypos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Ypos),

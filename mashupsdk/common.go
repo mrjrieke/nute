@@ -7,10 +7,19 @@ const (
 	Moved   int64 = 3
 )
 
+type MashupDisplayState int
+
+const (
+	Configured MashupDisplayState = 1
+	Position   MashupDisplayState = 2
+	Frame      MashupDisplayState = 4
+	AppInitted MashupDisplayState = 8
+)
+
 type MashupDisplayContext struct {
 	MainWinDisplay *MashupDisplayHint
 	yOffset        int
-	settled        int
+	settled        MashupDisplayState
 }
 
 func (m *MashupDisplayContext) GetYoffset() int {
@@ -22,11 +31,11 @@ func (m *MashupDisplayContext) SetYoffset(a int) int {
 	return m.yOffset
 }
 
-func (m *MashupDisplayContext) GetSettled() int {
+func (m *MashupDisplayContext) GetSettled() MashupDisplayState {
 	return m.settled
 }
 
-func (m *MashupDisplayContext) ApplySettled(s int, override bool) int {
+func (m *MashupDisplayContext) ApplySettled(s MashupDisplayState, override bool) MashupDisplayState {
 	if override {
 		m.settled = s
 	} else {

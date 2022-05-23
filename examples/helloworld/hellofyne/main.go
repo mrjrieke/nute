@@ -170,16 +170,13 @@ func main() {
 					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}
 
-				helloApp.mashupDisplayContext.ApplySettled(8, false)
+				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
 			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 		})
 		a.Lifecycle().SetOnResized(func(xpos int, ypos int, yoffset int, width int, height int) {
 			log.Printf("Received resize: %d %d %d %d %d\n", xpos, ypos, yoffset, width, height)
-			//			helloApp.settled |= 1
-			//			helloApp.settled |= 2
-			//			helloApp.settled |= 4
-			helloApp.mashupDisplayContext.ApplySettled(7, false)
+			helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured|mashupsdk.Position|mashupsdk.Frame, false)
 
 			if helloApp.mashupDisplayContext.GetYoffset() == 0 {
 				helloApp.mashupDisplayContext.SetYoffset(yoffset + 3)
