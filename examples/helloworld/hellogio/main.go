@@ -44,7 +44,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
 	if resize {
-		if ha.HelloContext == nil || ha.HelloContext.MashContext == nil {
+		if ha.HelloContext.MashContext == nil {
 			return
 		}
 
@@ -75,67 +75,27 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp = HelloApp{
+		gioMashupApiHandler: &gioMashupApiHandler{},
+		HelloContext:        &HelloContext{},
+		mainWin: app.NewWindow([]app.Option{
+			app.Size(unit.Dp(800), unit.Dp(100)),
+			app.Title("Hello Gio World"),
+			Center(),
+		}...),
 		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
-		DetailedElements: []*mashupsdk.MashupDetailedElement{
-			&mashupsdk.MashupDetailedElement{
-				Id:          1,
-				State:       &mashupsdk.MashupElementState{Id: 1, State: mashupsdk.Init},
-				Name:        "Inside",
-				Description: "",
-				Genre:       "Space",
-				Subgenre:    "Ento",
-				Parentids:   nil,
-				Childids:    nil,
-			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          2,
-				State:       &mashupsdk.MashupElementState{Id: 2, State: mashupsdk.Init},
-				Name:        "Outside",
-				Description: "",
-				Genre:       "Space",
-				Subgenre:    "Exo",
-				Parentids:   nil,
-				Childids:    nil,
-			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          3,
-				State:       &mashupsdk.MashupElementState{Id: 3, State: mashupsdk.Init},
-				Name:        "torus",
-				Description: "",
-				Genre:       "Solid",
-				Subgenre:    "Ento",
-				Parentids:   nil,
-				Childids:    []int64{4},
-			},
-			&mashupsdk.MashupDetailedElement{
-				Id:          4,
-				State:       &mashupsdk.MashupElementState{Id: 4, State: mashupsdk.Init},
-				Name:        "Up-Side-Down",
-				Description: "",
-				Genre:       "Attitude",
-				Subgenre:    "",
-				Parentids:   []int64{3},
-				Childids:    nil,
-			},
-		},
-		elementStateBundle: &mashupsdk.MashupElementStateBundle{},
-		elementIndex:       map[int64]*mashupsdk.MashupElementState{},
+		DetailedElements:     []*mashupsdk.MashupDetailedElement{{Id: 1, State: &mashupsdk.MashupElementState{Id: 1, State: mashupsdk.Init}, Name: "Inside", Description: "", Genre: "Space", Subgenre: "Ento", Parentids: nil, Childids: nil}, {Id: 2, State: &mashupsdk.MashupElementState{Id: 2, State: mashupsdk.Init}, Name: "Outside", Description: "", Genre: "Space", Subgenre: "Exo", Parentids: nil, Childids: nil}, {Id: 3, State: &mashupsdk.MashupElementState{Id: 3, State: mashupsdk.Init}, Name: "torus", Description: "", Genre: "Solid", Subgenre: "Ento", Parentids: nil, Childids: []int64{4}}, {Id: 4, State: &mashupsdk.MashupElementState{Id: 4, State: mashupsdk.Init}, Name: "Up-Side-Down", Description: "", Genre: "Attitude", Subgenre: "", Parentids: []int64{3}, Childids: nil}},
+		elementIndex:         map[int64]*mashupsdk.MashupElementState{},
+		elementStateBundle:   &mashupsdk.MashupElementStateBundle{},
 	}
 
 	go func() {
-		helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)}
+		helloApp.HelloContext.MashContext = client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)
 		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 	}()
 
 	// Sync initialization.
 	initHandler := func() {
-		options := []app.Option{
-			app.Size(unit.Dp(800), unit.Dp(100)),
-			app.Title("Hello Gio World"),
-			Center(),
-		}
-		helloApp.mainWin = app.NewWindow(options...)
 		helloApp.mainWin.Center()
 	}
 

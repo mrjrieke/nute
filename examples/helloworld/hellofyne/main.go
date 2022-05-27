@@ -51,7 +51,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
 	if resize {
-		if ha.HelloContext == nil || ha.HelloContext.mashupContext == nil {
+		if ha.HelloContext.mashupContext == nil {
 			return
 		}
 
@@ -81,8 +81,10 @@ func main() {
 	log.SetOutput(helloLog)
 
 	helloApp = HelloApp{
-		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
 		fyneMashupApiHandler: &fyneMashupApiHandler{},
+		HelloContext:         &HelloContext{},
+		mainWin:              nil,
+		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
 		fyneWidgetElements: []*FyneWidgetBundle{
 			{
 				fyneComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
@@ -149,8 +151,8 @@ func main() {
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnEnteredForeground(func() {
-			if helloApp.HelloContext == nil {
-				helloApp.HelloContext = &HelloContext{client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)}
+			if helloApp.HelloContext.mashupContext == nil {
+				helloApp.HelloContext.mashupContext = client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)
 
 				var upsertErr error
 
