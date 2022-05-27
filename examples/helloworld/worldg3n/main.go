@@ -156,15 +156,19 @@ func (w *WorldApp) InitMainWindow() {
 				if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
 					switch worldApp.elementStateBundle.ElementStates[i].Id {
 					case 1:
+						log.Printf("G3n Inside\n")
 						mesh.SetRotationX(0)
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 2:
+						log.Printf("G3n Outside\n")
 						mesh.SetRotationX(0)
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 3:
+						log.Printf("G3n It\n")
 						mesh.SetRotationX(0)
 						mat.SetColor(math32.NewColor("DarkRed"))
 					case 4:
+						log.Printf("G3n Up-Side-Down\n")
 						mesh.SetRotationX(180)
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					}
@@ -269,6 +273,25 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
+		for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
+			if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
+				switch worldApp.elementStateBundle.ElementStates[i].Id {
+				case 1:
+					// Inside
+					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
+				case 2:
+					// Outside
+					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
+				case 3:
+					// It
+					worldApp.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
+				case 4:
+					// Up-side-down
+					worldApp.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
+				}
+				break
+			}
+		}
 		worldApp.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
 	}
