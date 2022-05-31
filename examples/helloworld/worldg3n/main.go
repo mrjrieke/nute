@@ -134,11 +134,17 @@ func (w *WorldApp) InitMainWindow() {
 		onResize("", nil)
 
 		// Create a blue torus and add it to the scene
-		geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
+		torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 		mat := material.NewStandard(math32.NewColor("DarkBlue"))
-		mesh := graphic.NewMesh(geom, mat)
+		mesh := graphic.NewMesh(torusGeom, mat)
 		mesh.SetLoaderID("torus")
 		w.scene.Add(mesh)
+
+		diskGeom := geometry.NewDisk(1, 32)
+		diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
+		diskMesh := graphic.NewMesh(diskGeom, diskMat)
+		diskMesh.SetLoaderID("Inside")
+		w.scene.Add(diskMesh)
 
 		// Create and add a button to the scene
 		btn := gui.NewButton("Make Red")
@@ -158,14 +164,17 @@ func (w *WorldApp) InitMainWindow() {
 					case 1:
 						log.Printf("G3n Inside\n")
 						mesh.SetRotationX(0)
+						diskMat.SetColor(math32.NewColor("DarkRed"))
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 2:
 						log.Printf("G3n Outside\n")
 						mesh.SetRotationX(0)
+						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 3:
 						log.Printf("G3n It\n")
 						mesh.SetRotationX(0)
+						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 						mat.SetColor(math32.NewColor("DarkRed"))
 					case 4:
 						log.Printf("G3n Up-Side-Down\n")
@@ -194,6 +203,7 @@ func (w *WorldApp) InitMainWindow() {
 			if worldApp.scene.Visible() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
+					log.Printf("Intersection found\n")
 					mat.SetColor(math32.NewColor("DarkRed"))
 
 					if len(worldApp.elementDictionary) != 0 {
@@ -221,6 +231,7 @@ func (w *WorldApp) InitMainWindow() {
 					}
 
 				} else {
+					log.Printf("No intersection found\n")
 					// Nothing selected...
 					mat.SetColor(math32.NewColor("DarkBlue"))
 					if len(worldApp.elementDictionary) != 0 {
@@ -278,7 +289,8 @@ func (w *WorldApp) InitMainWindow() {
 				switch worldApp.elementStateBundle.ElementStates[i].Id {
 				case 1:
 					// Inside
-					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
+					//					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
+					worldApp.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
 				case 2:
 					// Outside
 					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
