@@ -75,7 +75,7 @@ func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INo
 
 	if inode.Children() != nil {
 		for _, ichild := range inode.Children() {
-			if n, intersections := w.Cast(ichild, caster); n != nil {
+			if n, intersections := w.Cast(ichild, caster); n != nil && len(intersections) > 0 {
 				return n, intersections
 			}
 		}
@@ -204,7 +204,7 @@ func (w *WorldApp) InitMainWindow() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
 					log.Printf("Intersection found\n")
-					mat.SetColor(math32.NewColor("DarkRed"))
+					//					mat.SetColor(math32.NewColor("DarkRed"))
 
 					if len(worldApp.elementDictionary) != 0 {
 						lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
