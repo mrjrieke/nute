@@ -164,21 +164,25 @@ func (w *WorldApp) InitMainWindow() {
 					case 1:
 						log.Printf("G3n Inside\n")
 						mesh.SetRotationX(0)
+						diskMesh.SetRotationX(0)
 						diskMat.SetColor(math32.NewColor("DarkRed"))
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 2:
 						log.Printf("G3n Outside\n")
 						mesh.SetRotationX(0)
+						diskMesh.SetRotationX(0)
 						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					case 3:
 						log.Printf("G3n It\n")
 						mesh.SetRotationX(0)
+						diskMesh.SetRotationX(0)
 						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 						mat.SetColor(math32.NewColor("DarkRed"))
 					case 4:
 						log.Printf("G3n Up-Side-Down\n")
 						mesh.SetRotationX(180)
+						diskMesh.SetRotationX(180)
 						mat.SetColor(math32.NewColor("DarkBlue"))
 					}
 
@@ -239,8 +243,6 @@ func (w *WorldApp) InitMainWindow() {
 								changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
 							}
 						}
-						// TODO: determine whether click was inside or outside toroid
-						// For now, append the 'outside' clicked.
 						lookupId := worldApp.elementDictionary["Outside"]
 						elementState := worldApp.elementIndex[lookupId]
 						elementState.State = mashupsdk.Clicked
@@ -286,10 +288,10 @@ func (w *WorldApp) InitMainWindow() {
 				switch worldApp.elementStateBundle.ElementStates[i].Id {
 				case 1:
 					// Inside
-					//					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
 					worldApp.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
 				case 2:
 					// Outside
+					// Updates the background to dark red...
 					worldApp.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
 				case 3:
 					// It
