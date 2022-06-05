@@ -38,7 +38,7 @@ type HelloApp struct {
 }
 
 func (fwb *FyneWidgetBundle) OnClicked() {
-	fwb.mashupDetailedElement.State.State = mashupsdk.Clicked
+	fwb.mashupDetailedElement.State.State = int64(mashupsdk.Clicked)
 
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
 		AuthToken:     client.GetServerAuthToken(),
@@ -90,7 +90,7 @@ func main() {
 				fyneComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          1,
-					State:       &mashupsdk.MashupElementState{Id: 1, State: mashupsdk.Init},
+					State:       &mashupsdk.MashupElementState{Id: 1, State: int64(mashupsdk.Init)},
 					Name:        "Inside",
 					Description: "",
 					Genre:       "Space",
@@ -103,7 +103,7 @@ func main() {
 				fyneComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          2,
-					State:       &mashupsdk.MashupElementState{Id: 2, State: mashupsdk.Init},
+					State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
 					Name:        "Outside",
 					Description: "",
 					Genre:       "Space",
@@ -116,7 +116,7 @@ func main() {
 				fyneComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          3,
-					State:       &mashupsdk.MashupElementState{Id: 3, State: mashupsdk.Init},
+					State:       &mashupsdk.MashupElementState{Id: 3, State: int64(mashupsdk.Init)},
 					Name:        "torus",
 					Description: "",
 					Genre:       "Solid",
@@ -129,7 +129,7 @@ func main() {
 				fyneComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
 				mashupDetailedElement: &mashupsdk.MashupDetailedElement{
 					Id:          4,
-					State:       &mashupsdk.MashupElementState{Id: 4, State: mashupsdk.Init},
+					State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Init)},
 					Name:        "Up-Side-Down",
 					Description: "",
 					Genre:       "Attitude",
@@ -142,7 +142,7 @@ func main() {
 		fyneComponentCache: map[int64]*FyneWidgetBundle{},
 	}
 
-	// Build component cache.
+	// Build G3nDetailedElement cache.
 	for _, fc := range helloApp.fyneWidgetElements {
 		fc.fyneComponent.(*container.TabItem).Content.(*widget.Label).Wrapping = fyne.TextWrapWord
 		helloApp.fyneComponentCache[fc.mashupDetailedElement.Id] = fc
@@ -260,7 +260,7 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 	for _, es := range elementStateBundle.ElementStates {
 		fyneComponent := helloApp.fyneComponentCache[es.GetId()]
 		fyneComponent.mashupDetailedElement.State.State = es.State
-		if es.State == mashupsdk.Clicked {
+		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
 			// Select the item.
 			torusMenu.Select(fyneComponent.fyneComponent.(*container.TabItem))

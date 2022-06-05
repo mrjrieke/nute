@@ -5,11 +5,13 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"errors"
 	"flag"
 	"log"
 	"os"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
@@ -22,9 +24,11 @@ import (
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
+	"github.com/g3n/engine/util"
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"tini.com/nute/examples/helloworld/worldg3n/g3nmash"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
@@ -44,17 +48,52 @@ type WorldApp struct {
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
 	mainWin             *app.Application
+	frameRater          *util.FrameRater // Render loop frame rater
 	scene               *core.Node
 	cam                 *camera.Camera
+	oc                  *camera.OrbitControl
 
-	mashupContext      *mashupsdk.MashupContext                // Needed for callbacks to other mashups
-	elementIndex       map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
-	elementDictionary  map[string]int64
-	DetailedElements   []*mashupsdk.MashupDetailedElement
-	elementStateBundle mashupsdk.MashupElementStateBundle
+	mashupContext     *mashupsdk.MashupContext              // Needed for callbacks to other mashups
+	elementIndex      map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
+	elementDictionary map[string]int64
 }
 
 var worldApp WorldApp
+
+func (w *WorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
+	changedElements := []*mashupsdk.MashupElementState{}
+	for _, g3nDetailedElement := range worldApp.elementIndex {
+		if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
+			g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
+			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
+		}
+	}
+
+	return changedElements
+}
+
+// Sets all elements to a "Rest state."
+func (w *WorldApp) ResetG3nDetailedElementStates() {
+	for _, wes := range w.elementIndex {
+		wes.SetDisplayState(mashupsdk.Rest)
+	}
+}
+
+func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *g3nmash.G3nDetailedElement {
+	w.elementDictionary[detailedElement.GetName()] = detailedElement.Id
+	g3nDetailedElement := g3nmash.NewG3nDetailedElement(detailedElement)
+	w.elementIndex[detailedElement.Id] = g3nDetailedElement
+	return g3nDetailedElement
+}
+
+func (w *WorldApp) GetG3nDetailedElement(elementName string) (*g3nmash.G3nDetailedElement, error) {
+	if eid, eidOk := w.elementDictionary[elementName]; eidOk {
+		if g3nElement, g3nElementOk := w.elementIndex[eid]; g3nElementOk {
+			return g3nElement, nil
+		}
+	}
+	return nil, errors.New("Element does not exist: " + elementName)
+}
 
 func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INode, []collision.Intersect) {
 	// Ignore invisible nodes and their descendants
@@ -92,8 +131,14 @@ func (w *WorldApp) InitMainWindow() {
 		if w.mainWin == nil {
 			w.mainWin = a
 		}
+		log.Printf("Frame rater setup.")
+		w.frameRater = util.NewFrameRater(25)
+		log.Printf("Frame rater setup complete.")
+
 		displayHint := <-worldApp.displaySetupChan
+		log.Printf("Initializing app.")
 		app.AppCustom(a, "Hello world G3n", int(displayHint.Width), int(displayHint.Height), int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+		log.Printf("Initializing scene.")
 		w.scene = core.NewNode()
 
 		// Set the scene to be managed by the gui manager
@@ -105,7 +150,8 @@ func (w *WorldApp) InitMainWindow() {
 		w.scene.Add(w.cam)
 
 		// Set up orbit control for the camera
-		camera.NewOrbitControl(w.cam)
+		w.oc = camera.NewOrbitControl(w.cam)
+		log.Printf("Finished Orbit Control setup.")
 
 		// Set up callback to update viewport and camera aspect ratio when the window is resized
 		onResize := func(evname string, ev interface{}) {
@@ -133,66 +179,75 @@ func (w *WorldApp) InitMainWindow() {
 		a.Subscribe(window.OnWindowSize, onResize)
 		onResize("", nil)
 
-		// Create a blue torus and add it to the scene
-		torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
-		mat := material.NewStandard(math32.NewColor("DarkBlue"))
-		mesh := graphic.NewMesh(torusGeom, mat)
-		mesh.SetLoaderID("torus")
-		w.scene.Add(mesh)
-
-		diskGeom := geometry.NewDisk(1, 32)
-		diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-		diskMesh := graphic.NewMesh(diskGeom, diskMat)
-		diskMesh.SetLoaderID("Inside")
-		w.scene.Add(diskMesh)
-
-		// Create and add a button to the scene
-		btn := gui.NewButton("Make Red")
-		btn.SetPosition(100, 40)
-		btn.SetSize(40, 40)
-		btn.Subscribe(gui.OnClick, func(name string, ev interface{}) {
-			mat.SetColor(math32.NewColor("DarkRed"))
-		})
-		w.scene.Add(btn)
-
 		w.mainWin.Subscribe(gui.OnFocus, func(name string, ev interface{}) {
+			log.Printf("G3n Focus gained\n")
+
+			// Create a blue torus and add it to the scene
+			if torusG3n, tidErr := w.GetG3nDetailedElement("torus"); tidErr == nil {
+				torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
+				mat := material.NewStandard(math32.NewColor("DarkBlue"))
+				torusMesh := graphic.NewMesh(torusGeom, mat)
+				torusMesh.SetLoaderID("torus")
+				torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
+				w.scene.Add(torusMesh)
+				torusG3n.SetNamedMesh("torus", torusMesh)
+			}
+
+			if torusInside, tidErr := w.GetG3nDetailedElement("Inside"); tidErr == nil {
+				diskGeom := geometry.NewDisk(1, 32)
+				diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
+				diskMesh := graphic.NewMesh(diskGeom, diskMat)
+				diskMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
+				diskMesh.SetLoaderID("Inside")
+				w.scene.Add(diskMesh)
+				torusInside.SetNamedMesh("Inside", diskMesh)
+			}
+
 			// Focus gained...
 			log.Printf("G3n Focus gained\n")
-			for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
-				if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
-					switch worldApp.elementStateBundle.ElementStates[i].Id {
+			torus, _ := worldApp.GetG3nDetailedElement("torus")
+			torusInnerDisk, _ := w.GetG3nDetailedElement("Inside")
+
+			for _, g3nDetailedElement := range worldApp.elementIndex {
+				if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
+					switch g3nDetailedElement.GetDisplayId() {
 					case 1:
 						log.Printf("G3n Inside\n")
-						mesh.SetRotationX(0)
-						diskMesh.SetRotationX(0)
-						diskMat.SetColor(math32.NewColor("DarkRed"))
-						mat.SetColor(math32.NewColor("DarkBlue"))
+						torus.SetRotationX(0)
+						torus.SetColor(math32.NewColor("DarkBlue"))
+
+						torusInnerDisk.SetRotationX(0)
+						torusInnerDisk.SetColor(math32.NewColor("DarkRed"))
 					case 2:
 						log.Printf("G3n Outside\n")
-						mesh.SetRotationX(0)
-						diskMesh.SetRotationX(0)
-						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-						mat.SetColor(math32.NewColor("DarkBlue"))
+						torus.SetRotationX(0)
+						torus.SetColor(math32.NewColor("DarkBlue"))
+
+						torusInnerDisk.SetRotationX(0)
+						torusInnerDisk.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 					case 3:
 						log.Printf("G3n It\n")
-						mesh.SetRotationX(0)
-						diskMesh.SetRotationX(0)
-						diskMat.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-						mat.SetColor(math32.NewColor("DarkRed"))
+						torus.SetRotationX(0)
+						torus.SetColor(math32.NewColor("DarkRed"))
+
+						torusInnerDisk.SetRotationX(0)
+						torusInnerDisk.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
 					case 4:
 						log.Printf("G3n Up-Side-Down\n")
-						mesh.SetRotationX(180)
-						diskMesh.SetRotationX(180)
-						mat.SetColor(math32.NewColor("DarkBlue"))
-					}
+						torus.SetRotationX(180)
+						torus.SetColor(math32.NewColor("DarkBlue"))
 
+						torusInnerDisk.SetRotationX(180)
+					}
 				}
 			}
 			log.Printf("G3n End Focus gained\n")
 		})
 
 		(*worldApp.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(w *glfw.Window) {
-			worldApp.mashupContext.Client.Shutdown(worldApp.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+			if worldApp.mashupContext != nil {
+				worldApp.mashupContext.Client.Shutdown(worldApp.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+			}
 		})
 
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
@@ -208,23 +263,25 @@ func (w *WorldApp) InitMainWindow() {
 				n, intersections := worldApp.Cast(worldApp.scene, caster)
 				if len(intersections) != 0 {
 					if len(worldApp.elementDictionary) != 0 {
-						lookupId := worldApp.elementDictionary[n.GetNode().LoaderID()]
-						elementState := worldApp.elementIndex[lookupId]
-						log.Printf("State: %d\n", elementState.State)
+						g3nElement, err := worldApp.GetG3nDetailedElement(n.GetNode().LoaderID())
+						if err != nil {
+							log.Fatal(err)
+						}
 
-						if elementState != nil {
-							log.Printf("State size: %d\n", len(worldApp.elementStateBundle.ElementStates))
-							mat.SetColor(math32.NewColor("DarkRed"))
+						log.Printf("State: %d\n", g3nElement.GetDisplayState())
+
+						if g3nElement.GetMashupElementState() != nil {
+							log.Printf("State size: %d\n", len(worldApp.elementDictionary))
+							g3nElement.SetColor(math32.NewColor("DarkRed"))
 							// Zero out states of all elements to rest state.
-							for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
-								if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
-									worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
-								}
-							}
-							elementState.State = mashupsdk.Clicked
+							changedStates := worldApp.ResetChangeStates()
+
+							g3nElement.SetDisplayState(mashupsdk.Clicked)
+							changedStates = append(changedStates, g3nElement.GetMashupElementState())
+
 							elementStateBundle := mashupsdk.MashupElementStateBundle{
 								AuthToken:     server.GetServerAuthToken(),
-								ElementStates: []*mashupsdk.MashupElementState{elementState},
+								ElementStates: changedStates,
 							}
 
 							worldApp.mashupContext.Client.UpsertMashupElementsState(worldApp.mashupContext, &elementStateBundle)
@@ -234,19 +291,19 @@ func (w *WorldApp) InitMainWindow() {
 				} else {
 					log.Printf("No intersection found\n")
 					// Nothing selected...
-					mat.SetColor(math32.NewColor("DarkBlue"))
+					if torusG3n, tidErr := w.GetG3nDetailedElement("torus"); tidErr == nil {
+						torusG3n.SetColor(math32.NewColor("DarkBlue"))
+					}
 					if len(worldApp.elementDictionary) != 0 {
-						changedElements := []*mashupsdk.MashupElementState{}
-						for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
-							if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
-								worldApp.elementStateBundle.ElementStates[i].State = mashupsdk.Rest
-								changedElements = append(changedElements, worldApp.elementStateBundle.ElementStates[i])
-							}
+						changedElements := worldApp.ResetChangeStates()
+
+						g3nElement, err := worldApp.GetG3nDetailedElement("Outside")
+						if err != nil {
+							log.Fatal(err)
 						}
-						lookupId := worldApp.elementDictionary["Outside"]
-						elementState := worldApp.elementIndex[lookupId]
-						elementState.State = mashupsdk.Clicked
-						changedElements = append(changedElements, elementState)
+
+						g3nElement.SetDisplayState(mashupsdk.Clicked)
+						changedElements = append(changedElements, g3nElement.GetMashupElementState())
 
 						elementStateBundle := mashupsdk.MashupElementStateBundle{
 							AuthToken:     server.GetServerAuthToken(),
@@ -269,6 +326,7 @@ func (w *WorldApp) InitMainWindow() {
 		// Create and add an axis helper to the scene
 		w.scene.Add(helper.NewAxes(0.5))
 
+		w.frameRater.Start()
 		// Set background color to gray
 		a.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
 		go func() {
@@ -283,9 +341,9 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
-		for i := 0; i < len(worldApp.elementStateBundle.ElementStates); i++ {
-			if worldApp.elementStateBundle.ElementStates[i].State != mashupsdk.Rest {
-				switch worldApp.elementStateBundle.ElementStates[i].Id {
+		for _, g3nDetailedElement := range worldApp.elementIndex {
+			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
+				switch g3nDetailedElement.GetDisplayId() {
 				case 1:
 					// Inside
 					worldApp.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
@@ -305,6 +363,7 @@ func (w *WorldApp) InitMainWindow() {
 		}
 		worldApp.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
+		worldApp.frameRater.Wait()
 	}
 
 	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
@@ -332,38 +391,32 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupElements\n")
-	worldApp.DetailedElements = detailedElementBundle.DetailedElements
-	worldApp.elementStateBundle = mashupsdk.MashupElementStateBundle{
-		ElementStates: []*mashupsdk.MashupElementState{},
-	}
+	result := &mashupsdk.MashupElementStateBundle{ElementStates: []*mashupsdk.MashupElementState{}}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {
-		detailedElement.State.State = mashupsdk.Rest
-		es := &mashupsdk.MashupElementState{
-			Id:    detailedElement.Id,
-			State: mashupsdk.Rest,
-		}
+		g3nDetailedElement := worldApp.NewG3nDetailedElement(detailedElement)
+		g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
 
-		worldApp.elementStateBundle.ElementStates = append(worldApp.elementStateBundle.ElementStates, es)
-
-		worldApp.elementDictionary[detailedElement.GetName()] = detailedElement.Id
-		worldApp.elementIndex[detailedElement.Id] = es
+		// Add to resulting element states.
+		result.ElementStates = append(result.ElementStates, detailedElement.State)
 	}
+	log.Printf("G3n UpsertMashupElements allocation complete\n")
+	log.Printf(spew.Sdump(worldApp.mainWin))
+
+	//	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
 
 	log.Printf("G3n UpsertMashupElements updated\n")
-	return &worldApp.elementStateBundle, nil
+	return result, nil
 }
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
-	for _, wes := range worldApp.elementIndex {
-		wes.State = mashupsdk.Rest
-	}
+	worldApp.ResetG3nDetailedElementStates()
 
 	for _, es := range elementStateBundle.ElementStates {
-		if worldApp.elementIndex[es.GetId()].State != es.State {
-			worldApp.elementIndex[es.GetId()].State = es.State
+		if worldApp.elementIndex[es.GetId()].GetDisplayState() != mashupsdk.DisplayElementState(es.State) {
+			worldApp.elementIndex[es.GetId()].SetDisplayState(mashupsdk.DisplayElementState(es.State))
 		}
 	}
 	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
@@ -383,7 +436,7 @@ func main() {
 
 	worldApp = WorldApp{
 		mSdkApiHandler:      &mashupSdkApiHandler{},
-		elementIndex:        map[int64]*mashupsdk.MashupElementState{},
+		elementIndex:        map[int64]*g3nmash.G3nDetailedElement{},
 		elementDictionary:   map[string]int64{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
