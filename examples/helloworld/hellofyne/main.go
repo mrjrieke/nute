@@ -160,6 +160,7 @@ func main() {
 				for _, fyneComponent := range helloApp.fyneComponentCache {
 					DetailedElements = append(DetailedElements, fyneComponent.mashupDetailedElement)
 				}
+				log.Printf("Delivering mashup elements.\n")
 
 				// Connection with mashup fully established.  Initialize mashup elements.
 				_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
@@ -171,6 +172,7 @@ func main() {
 				if upsertErr != nil {
 					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}
+				log.Printf("Mashup elements delivered.\n")
 
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
