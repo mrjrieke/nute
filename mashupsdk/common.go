@@ -1,10 +1,12 @@
 package mashupsdk
 
+type DisplayElementState int64
+
 const (
-	Init    int64 = 0
-	Rest    int64 = 1
-	Clicked int64 = 2
-	Moved   int64 = 3
+	Init    DisplayElementState = 0
+	Rest    DisplayElementState = 1
+	Clicked DisplayElementState = 2
+	Moved   DisplayElementState = 3
 )
 
 type MashupDisplayState int
