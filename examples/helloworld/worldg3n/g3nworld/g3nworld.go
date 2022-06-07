@@ -47,6 +47,7 @@ type WorldApp struct {
 	mashupContext     *mashupsdk.MashupContext              // Needed for callbacks to other mashups
 	elementIndex      map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementDictionary map[string]int64
+	isInit            bool
 }
 
 var worldApp WorldApp
@@ -217,7 +218,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.mainWin = a
 		}
 		log.Printf("Frame rater setup.")
-		w.frameRater = util.NewFrameRater(25)
+		w.frameRater = util.NewFrameRater(1)
 		log.Printf("Frame rater setup complete.")
 
 		displayHint := <-w.displaySetupChan
@@ -385,7 +386,11 @@ func (w *WorldApp) InitMainWindow() {
 		}
 		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
-		worldApp.G3nOnFocus("", InitEvent{})
+
+		if !w.isInit {
+			w.G3nOnFocus("", InitEvent{})
+			w.isInit = true
+		}
 		w.frameRater.Wait()
 	}
 
@@ -423,9 +428,6 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 		// Add to resulting element states.
 		result.ElementStates = append(result.ElementStates, detailedElement.State)
 	}
-	log.Printf("G3n UpsertMashupElements allocation complete\n")
-
-	//	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
 
 	log.Printf("G3n UpsertMashupElements updated\n")
 	return result, nil
