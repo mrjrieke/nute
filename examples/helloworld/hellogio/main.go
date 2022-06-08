@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/client"
 	"tini.com/nute/mashupsdk/guiboot"
@@ -23,9 +25,13 @@ import (
 )
 
 type HelloContext struct {
-	MashContext *mashupsdk.MashupContext
+	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 }
 type gioMashupApiHandler struct {
+}
+
+type GioWidgetBundle struct {
+	mashupsdk.GuiWidgetBundle
 }
 
 type HelloApp struct {
@@ -33,9 +39,9 @@ type HelloApp struct {
 	HelloContext         *HelloContext
 	mainWin              *app.Window
 	mashupDisplayContext *mashupsdk.MashupDisplayContext
-	DetailedElements     []*mashupsdk.MashupDetailedElement
-	elementIndex         map[int64]*mashupsdk.MashupElementState // g3n indexes by string...
-	elementStateBundle   *mashupsdk.MashupElementStateBundle
+	gioWidgetElements    []*GioWidgetBundle
+	gioComponentCache    map[int64]*GioWidgetBundle // g3n indexes by string...
+
 }
 
 var helloApp HelloApp
@@ -44,12 +50,12 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
 	if resize {
-		if ha.HelloContext.MashContext == nil {
+		if ha.HelloContext.mashupContext == nil {
 			return
 		}
 
-		if ha.HelloContext.MashContext != nil {
-			ha.HelloContext.MashContext.Client.OnResize(ha.HelloContext.MashContext,
+		if ha.HelloContext.mashupContext != nil {
+			ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
 				&mashupsdk.MashupDisplayBundle{
 					AuthToken:         client.GetServerAuthToken(),
 					MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
@@ -83,15 +89,101 @@ func main() {
 			Center(),
 		}...),
 		mashupDisplayContext: &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
-		DetailedElements:     []*mashupsdk.MashupDetailedElement{{Id: 1, State: &mashupsdk.MashupElementState{Id: 1, State: int64(mashupsdk.Init)}, Name: "Inside", Description: "", Genre: "Space", Subgenre: "Ento", Parentids: nil, Childids: nil}, {Id: 2, State: &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)}, Name: "Outside", Description: "", Genre: "Space", Subgenre: "Exo", Parentids: nil, Childids: nil}, {Id: 3, State: &mashupsdk.MashupElementState{Id: 3, State: int64(mashupsdk.Init)}, Name: "torus", Description: "", Genre: "Solid", Subgenre: "Ento", Parentids: nil, Childids: []int64{4}}, {Id: 4, State: &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Init)}, Name: "Up-Side-Down", Description: "", Genre: "Attitude", Subgenre: "", Parentids: []int64{3}, Childids: nil}},
-		elementIndex:         map[int64]*mashupsdk.MashupElementState{},
-		elementStateBundle:   &mashupsdk.MashupElementStateBundle{},
+		gioWidgetElements: []*GioWidgetBundle{
+			{
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
+						Id:          1,
+						State:       &mashupsdk.MashupElementState{Id: 1, State: int64(mashupsdk.Init)},
+						Name:        "Inside",
+						Description: "",
+						Genre:       "Space",
+						Subgenre:    "Ento",
+						Parentids:   nil,
+						Childids:    nil,
+					},
+				},
+			},
+			{
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
+						Id:          2,
+						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						Name:        "Outside",
+						Description: "",
+						Genre:       "Space",
+						Subgenre:    "Exo",
+						Parentids:   nil,
+						Childids:    nil,
+					},
+				},
+			},
+			{
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
+						Id:          3,
+						State:       &mashupsdk.MashupElementState{Id: 3, State: int64(mashupsdk.Init)},
+						Name:        "torus",
+						Description: "",
+						Genre:       "Solid",
+						Subgenre:    "Ento",
+						Parentids:   nil,
+						Childids:    []int64{4},
+					},
+				},
+			},
+			{
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
+						Id:          4,
+						State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Init)},
+						Name:        "Up-Side-Down",
+						Description: "",
+						Genre:       "Attitude",
+						Subgenre:    "",
+						Parentids:   []int64{3},
+						Childids:    nil,
+					},
+				},
+			},
+		},
+		gioComponentCache: map[int64]*GioWidgetBundle{},
+	}
+
+	// Build G3nDetailedElement cache.
+	for _, gc := range helloApp.gioWidgetElements {
+		helloApp.gioComponentCache[gc.MashupDetailedElement.Id] = gc
 	}
 
 	go func() {
-		helloApp.HelloContext.MashContext = client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)
+		helloApp.HelloContext.mashupContext = client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)
 		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+
+		DetailedElements := []*mashupsdk.MashupDetailedElement{}
+		for _, fyneComponent := range helloApp.gioComponentCache {
+			DetailedElements = append(DetailedElements, fyneComponent.MashupDetailedElement)
+		}
+		log.Printf("Delivering mashup elements: %d\n", len(DetailedElements))
+
+		var upsertErr error
+
+		// Connection with mashup fully established.  Initialize mashup elements.
+		_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
+			&mashupsdk.MashupDetailedElementBundle{
+				AuthToken:        client.GetServerAuthToken(),
+				DetailedElements: DetailedElements,
+			})
+
+		if upsertErr != nil {
+			log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+		}
+		log.Printf("Mashup elements delivered.\n")
+
 	}()
 
 	// Sync initialization.
@@ -148,7 +240,7 @@ func main() {
 				//pos := e.Position
 
 			case system.DestroyEvent:
-				helloApp.HelloContext.MashContext.Client.Shutdown(helloApp.HelloContext.MashContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+				helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 				os.Exit(0)
 				return
 
@@ -193,8 +285,12 @@ func (mSdk *gioMashupApiHandler) UpsertMashupElements(detailedElementBundle *mas
 func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("Gio UpsertMashupElementsState called\n")
 	for _, es := range elementStateBundle.ElementStates {
-		helloApp.elementIndex[es.GetId()].State = es.State
+		fyneComponent := helloApp.gioComponentCache[es.GetId()]
+		fyneComponent.MashupDetailedElement.State.State = es.State
+		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+			// TODO: Select the item.
+		}
 	}
 	log.Printf("Gio UpsertMashupElementsState complete\n")
-	return nil, nil
+	return &mashupsdk.MashupElementStateBundle{}, nil
 }
