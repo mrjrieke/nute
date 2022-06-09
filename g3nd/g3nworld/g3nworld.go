@@ -21,7 +21,7 @@ import (
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"tini.com/nute/examples/helloworld/worldg3n/g3nmash"
+	"tini.com/nute/g3nd/g3nmash"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
