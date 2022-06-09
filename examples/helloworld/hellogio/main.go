@@ -100,7 +100,7 @@ func main() {
 						Description: "",
 						Genre:       "Space",
 						Subgenre:    "Ento",
-						Parentids:   nil,
+						Parentids:   []int64{3},
 						Childids:    nil,
 					},
 				},

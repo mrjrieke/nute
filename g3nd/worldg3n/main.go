@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 
-	"tini.com/nute/examples/helloworld/worldg3n/g3nworld"
+	"tini.com/nute/g3nd/g3nworld"
 )
 
 var worldCompleteChan chan bool
