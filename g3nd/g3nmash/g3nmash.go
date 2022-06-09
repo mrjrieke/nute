@@ -26,6 +26,18 @@ func (g *G3nDetailedElement) GetDisplayId() int64 {
 	return g.detailedElement.Id
 }
 
+func (g *G3nDetailedElement) GetChildElements() []int64 {
+	if g.detailedElement.Childids != nil {
+		return g.detailedElement.Childids
+	} else {
+		return []int64{}
+	}
+}
+
+func (g *G3nDetailedElement) GetDisplayName() string {
+	return g.detailedElement.Name
+}
+
 func (g *G3nDetailedElement) GetMashupElementState() *mashupsdk.MashupElementState {
 	return g.detailedElement.State
 }
