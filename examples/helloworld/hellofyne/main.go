@@ -126,7 +126,7 @@ func main() {
 						Genre:       "Solid",
 						Subgenre:    "Ento",
 						Parentids:   nil,
-						Childids:    []int64{4},
+						Childids:    []int64{1, 4},
 					},
 				},
 			},

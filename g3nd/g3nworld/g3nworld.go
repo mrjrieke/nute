@@ -2,7 +2,9 @@ package g3nworld
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -70,32 +72,38 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 	log.Printf("G3nWorld Focus gained\n")
 
 	if _, iOk := ev.(InitEvent); iOk {
-		// Create a blue torus and add it to the scene
-		if torusG3n, tidErr := w.GetG3nDetailedElement("torus"); tidErr == nil {
+
+		torusG3ns, err := w.GetG3nDetailedFilteredElements("torus")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, torusG3n := range torusG3ns {
 			torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 			mat := material.NewStandard(math32.NewColor("DarkBlue"))
 			torusMesh := graphic.NewMesh(torusGeom, mat)
-			torusMesh.SetLoaderID("torus")
+			torusMesh.SetLoaderID(torusG3n.GetDisplayName())
 			torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
 			w.scene.Add(torusMesh)
-			torusG3n.SetNamedMesh("torus", torusMesh)
-		}
+			torusG3n.SetNamedMesh(torusG3n.GetDisplayName(), torusMesh)
 
-		if torusInside, tidErr := w.GetG3nDetailedElement("Inside"); tidErr == nil {
-			diskGeom := geometry.NewDisk(1, 32)
-			diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-			diskMesh := graphic.NewMesh(diskGeom, diskMat)
-			diskMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
-			diskMesh.SetLoaderID("Inside")
-			w.scene.Add(diskMesh)
-			torusInside.SetNamedMesh("Inside", diskMesh)
+			if torusInside, tidErr := w.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tidErr == nil {
+				diskGeom := geometry.NewDisk(1, 32)
+				diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
+				diskMesh := graphic.NewMesh(diskGeom, diskMat)
+				diskMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
+				diskMesh.SetLoaderID(torusInside.GetDisplayName())
+				w.scene.Add(diskMesh)
+				torusInside.SetNamedMesh(torusInside.GetDisplayName(), diskMesh)
+			}
+
 		}
 	} else {
 
 		// Focus gained...
 		log.Printf("G3n Focus gained\n")
 		torus, _ := w.GetG3nDetailedElement("torus")
-		torusInnerDisk, _ := w.GetG3nDetailedElement("Inside")
+		torusInnerDisk, _ := w.GetG3nDetailedElementById(torus.GetChildElements()[0])
 
 		for _, g3nDetailedElement := range w.elementIndex {
 			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
@@ -162,13 +170,31 @@ func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetail
 	return g3nDetailedElement
 }
 
+func (w *WorldApp) GetG3nDetailedFilteredElements(elementPrefix string) ([]*g3nmash.G3nDetailedElement, error) {
+	filteredElements := []*g3nmash.G3nDetailedElement{}
+	for _, element := range w.elementIndex {
+		if strings.HasPrefix(element.GetDisplayName(), elementPrefix) {
+			filteredElements = append(filteredElements, element)
+		}
+	}
+
+	return filteredElements, nil
+}
+
 func (w *WorldApp) GetG3nDetailedElement(elementName string) (*g3nmash.G3nDetailedElement, error) {
 	if eid, eidOk := w.elementDictionary[elementName]; eidOk {
 		if g3nElement, g3nElementOk := w.elementIndex[eid]; g3nElementOk {
 			return g3nElement, nil
 		}
 	}
-	return nil, errors.New("Element does not exist: " + elementName)
+	return nil, errors.New("element does not exist: " + elementName)
+}
+
+func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
+	if g3nElement, g3nElementOk := w.elementIndex[eid]; g3nElementOk {
+		return g3nElement, nil
+	}
+	return nil, fmt.Errorf("element does not exist: %d", eid)
 }
 
 func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INode, []collision.Intersect) {
