@@ -139,7 +139,7 @@ func main() {
 						Name:        "Up-Side-Down",
 						Description: "",
 						Genre:       "Attitude",
-						Subgenre:    "",
+						Subgenre:    "180,0,0",
 						Parentids:   []int64{3},
 						Childids:    nil,
 					},
