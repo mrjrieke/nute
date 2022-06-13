@@ -2,6 +2,7 @@ package g3nmash
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 
@@ -28,6 +29,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *G3
 				g3n.attitudes = append(g3n.attitudes, float32(a))
 			}
 		}
+		log.Printf("We have attitude: %v\n", g3n.attitudes)
 	}
 	return &g3n
 }
@@ -44,6 +46,10 @@ func (g *G3nDetailedElement) IsBackground() bool {
 	return g.detailedElement.Genre == "Space" && g.detailedElement.Subgenre == "Exo"
 }
 
+func (g *G3nDetailedElement) IsBackgroundColor() bool {
+	return g.detailedElement.Genre == "Space"
+}
+
 func (g *G3nDetailedElement) HasAttitudeAdjustment() bool {
 	return g.detailedElement.Genre == "Attitude"
 }
@@ -52,12 +58,14 @@ func (g *G3nDetailedElement) AdjustAttitude(parentG3Elements []*G3nDetailedEleme
 	if g.HasAttitudeAdjustment() {
 		switch len(g.attitudes) {
 		case 1:
-			g.SetRotation(parentG3Elements, g.attitudes[0], 0, 0)
+			return g.ApplyRotation(parentG3Elements, g.attitudes[0], 0, 0)
 		case 2:
-			g.SetRotation(parentG3Elements, g.attitudes[0], g.attitudes[1], 0)
+			return g.ApplyRotation(parentG3Elements, g.attitudes[0], g.attitudes[1], 0)
 		case 3:
-			g.SetRotation(parentG3Elements, g.attitudes[0], g.attitudes[1], g.attitudes[2])
+			return g.ApplyRotation(parentG3Elements, g.attitudes[0], g.attitudes[1], g.attitudes[2])
 		}
+	} else {
+		return g.ApplyRotation(parentG3Elements, 0.0, 0.0, 0.0)
 	}
 	return errors.New("no adjustment")
 }
@@ -82,6 +90,14 @@ func (g *G3nDetailedElement) IsItemClicked(node core.INode) bool {
 func (g *G3nDetailedElement) GetChildElements() []int64 {
 	if g.detailedElement.Childids != nil {
 		return g.detailedElement.Childids
+	} else {
+		return []int64{}
+	}
+}
+
+func (g *G3nDetailedElement) GetParentElements() []int64 {
+	if g.detailedElement.Parentids != nil {
+		return g.detailedElement.Parentids
 	} else {
 		return []int64{}
 	}
@@ -115,16 +131,15 @@ func (g *G3nDetailedElement) SetRotationX(x float32) error {
 	return errors.New("missing components")
 }
 
-func (g *G3nDetailedElement) SetRotation(parentG3Elements []*G3nDetailedElement, x float32, y float32, z float32) error {
-	if len(g.detailedElement.GetChildids()) > 0 {
-		for _, parentG3Element := range parentG3Elements {
-			if rootMesh, rootOk := parentG3Element.meshComposite[g.detailedElement.Name]; rootOk { // Hello friend.
-				rootMesh.SetRotationX(x)
-				rootMesh.SetRotationY(y)
-				rootMesh.SetRotationZ(z)
-			}
+func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElement, x float32, y float32, z float32) error {
+	log.Printf("Apply rotation: %d\n", len(parentG3Elements))
+	for _, parentG3Element := range parentG3Elements {
+		if rootMesh, rootOk := parentG3Element.meshComposite[parentG3Element.detailedElement.Name]; rootOk { // Hello friend.
+			log.Printf("Apply rotation: %f %f %f\n", x, y, z)
+			rootMesh.SetRotationX(x)
+			rootMesh.SetRotationY(y)
+			rootMesh.SetRotationZ(z)
 		}
-
 	}
 	return errors.New("missing components")
 }

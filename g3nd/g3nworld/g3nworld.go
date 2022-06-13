@@ -103,33 +103,8 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 		// Focus gained...
 		log.Printf("G3n Focus gained\n")
-		itemColor := g3ndpalette.DARK_BLUE
-		itemClickedColor := g3ndpalette.DARK_RED
 
-		for _, g3nDetailedElement := range w.elementIndex {
-			g3nColor := itemColor
-			clicked := false
-
-			if g3nDetailedElement.IsItemActive() {
-				g3nColor = itemClickedColor
-				clicked = true
-			} else {
-				if g3nDetailedElement.IsBackground() {
-					// Alternative not clicked color
-					g3nColor = g3ndpalette.GREY
-				}
-			}
-			if clicked {
-				g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
-			} else {
-				g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
-			}
-			g3nDetailedElement.SetColor(g3nColor)
-
-			if g3nDetailedElement.HasAttitudeAdjustment() {
-				g3nDetailedElement.AdjustAttitude()
-			}
-		}
+		w.Transform()
 		log.Printf("G3n End Focus gained\n")
 	}
 
@@ -226,6 +201,53 @@ func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 	}
 }
 
+func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
+	itemColor := g3ndpalette.DARK_BLUE
+	itemClickedColor := g3ndpalette.DARK_RED
+
+	changedElements := []*mashupsdk.MashupElementState{}
+	for _, g3nDetailedElement := range w.elementIndex {
+		var changed bool
+		g3nColor := itemColor
+		if g3nDetailedElement.IsItemActive() {
+			g3nColor = itemClickedColor
+			if g3nDetailedElement.HasAttitudeAdjustment() {
+				log.Printf("G3n Has parents\n")
+				parentIds := g3nDetailedElement.GetParentElements()
+				g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
+				for _, parentId := range parentIds {
+					if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
+						g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+					}
+				}
+				log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
+
+				g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
+			}
+		} else {
+			if g3nDetailedElement.IsBackground() {
+				if g3nDetailedElement.IsItemActive() {
+					// No items clicked means background is clicked.
+					g3nColor = itemClickedColor
+				} else {
+					g3nColor = g3ndpalette.GREY
+				}
+			} else {
+				if g3nDetailedElement.IsBackgroundColor() {
+					g3nColor = g3ndpalette.GREY
+				}
+			}
+			g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+		}
+		g3nDetailedElement.SetColor(g3nColor)
+
+		if changed {
+			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
+		}
+	}
+	return changedElements
+}
+
 func (w *WorldApp) InitMainWindow() {
 	log.Printf("Initializing mainWin.")
 
@@ -303,39 +325,24 @@ func (w *WorldApp) InitMainWindow() {
 			if w.scene.Visible() {
 				itemClicked, _ := w.Cast(w.scene, caster)
 
-				itemColor := g3ndpalette.DARK_BLUE
-				itemClickedColor := g3ndpalette.DARK_RED
-
-				changedElements := []*mashupsdk.MashupElementState{}
+				itemMatched := false
+				var backgroundG3n *g3nmash.G3nDetailedElement
 				for _, g3nDetailedElement := range w.elementIndex {
-					var changed bool
-					g3nColor := itemColor
-					clicked := false
-					if g3nDetailedElement.IsItemClicked(itemClicked) {
-						g3nColor = itemClickedColor
-						clicked = true
+					if g3nDetailedElement.IsBackground() {
+						backgroundG3n = g3nDetailedElement
 					} else {
-						if g3nDetailedElement.IsBackground() {
-							if itemClicked == nil {
-								// No items clicked means background is clicked.
-								g3nColor = itemClickedColor
-								clicked = true
-							} else {
-								g3nColor = g3ndpalette.GREY
-							}
+						if g3nDetailedElement.IsItemClicked(itemClicked) {
+							g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
+							itemMatched = true
+						} else {
+							g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
 						}
 					}
-					if clicked {
-						changed = g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
-					} else {
-						changed = g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
-					}
-					g3nDetailedElement.SetColor(g3nColor)
-
-					if changed {
-						changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
-					}
 				}
+				if !itemMatched {
+					backgroundG3n.SetDisplayState(mashupsdk.Clicked)
+				}
+				changedElements := w.Transform()
 
 				elementStateBundle := mashupsdk.MashupElementStateBundle{
 					AuthToken:     server.GetServerAuthToken(),

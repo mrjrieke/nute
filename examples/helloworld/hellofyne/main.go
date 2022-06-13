@@ -140,7 +140,7 @@ func main() {
 						Description: "",
 						Genre:       "Attitude",
 						Subgenre:    "180,0,0",
-						Parentids:   []int64{3},
+						Parentids:   []int64{1, 3},
 						Childids:    nil,
 					},
 				},
