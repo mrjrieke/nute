@@ -208,6 +208,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 	itemClickedColor := g3ndpalette.DARK_RED
 
 	changedElements := []*mashupsdk.MashupElementState{}
+	visitedNodes := map[int64]bool{}
 	for _, g3nDetailedElement := range w.elementIndex {
 		var changed bool
 		g3nColor := itemColor
@@ -221,10 +222,16 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
 						g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
 					}
+					visitedNodes[parentId] = true
 				}
 				log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
 
 				g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
+			} else {
+				if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+					g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+					visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+				}
 			}
 		} else {
 			if g3nDetailedElement.IsBackground() {
@@ -239,7 +246,10 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					g3nColor = g3ndpalette.GREY
 				}
 			}
-			g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+			if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+				g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+				visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+			}
 		}
 		g3nDetailedElement.SetColor(g3nColor)
 
