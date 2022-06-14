@@ -37,7 +37,8 @@ type worldClientInitHandler struct {
 }
 
 type WorldApp struct {
-	mSdkApiHandler      *mashupSdkApiHandler
+	headless            bool // Mode for troubleshooting.
+	MSdkApiHandler      *mashupSdkApiHandler
 	wClientInitHandler  *worldClientInitHandler
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
@@ -55,9 +56,10 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp() *WorldApp {
+func NewWorldApp(headless bool) *WorldApp {
 	worldApp = WorldApp{
-		mSdkApiHandler:      &mashupSdkApiHandler{},
+		headless:            headless,
+		MSdkApiHandler:      &mashupSdkApiHandler{},
 		elementIndex:        map[int64]*g3nmash.G3nDetailedElement{},
 		elementDictionary:   map[string]int64{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
@@ -193,7 +195,7 @@ func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INo
 
 func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 	if callerCreds != "" {
-		server.InitServer(callerCreds, insecure, w.mSdkApiHandler, w.wClientInitHandler)
+		server.InitServer(callerCreds, insecure, w.MSdkApiHandler, w.wClientInitHandler)
 	} else {
 		go func() {
 			w.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}
@@ -341,6 +343,8 @@ func (w *WorldApp) InitMainWindow() {
 				}
 				if !itemMatched {
 					backgroundG3n.SetDisplayState(mashupsdk.Clicked)
+				} else {
+					backgroundG3n.SetDisplayState(mashupsdk.Rest)
 				}
 				changedElements := w.Transform()
 
@@ -349,7 +353,9 @@ func (w *WorldApp) InitMainWindow() {
 					ElementStates: changedElements,
 				}
 
-				w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
+				if !w.headless {
+					w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
+				}
 			}
 
 		})
