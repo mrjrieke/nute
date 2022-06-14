@@ -24,6 +24,7 @@ import (
 	"github.com/g3n/engine/window"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"tini.com/nute/g3nd/g3nmash"
+	g3ndpalette "tini.com/nute/g3nd/palette"
 	"tini.com/nute/mashupsdk"
 	"tini.com/nute/mashupsdk/guiboot"
 	"tini.com/nute/mashupsdk/server"
@@ -36,7 +37,8 @@ type worldClientInitHandler struct {
 }
 
 type WorldApp struct {
-	mSdkApiHandler      *mashupSdkApiHandler
+	headless            bool // Mode for troubleshooting.
+	MSdkApiHandler      *mashupSdkApiHandler
 	wClientInitHandler  *worldClientInitHandler
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
@@ -54,9 +56,10 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp() *WorldApp {
+func NewWorldApp(headless bool) *WorldApp {
 	worldApp = WorldApp{
-		mSdkApiHandler:      &mashupSdkApiHandler{},
+		headless:            headless,
+		MSdkApiHandler:      &mashupSdkApiHandler{},
 		elementIndex:        map[int64]*g3nmash.G3nDetailedElement{},
 		elementDictionary:   map[string]int64{},
 		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
@@ -80,7 +83,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 		for _, torusG3n := range torusG3ns {
 			torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
-			mat := material.NewStandard(math32.NewColor("DarkBlue"))
+			mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 			torusMesh := graphic.NewMesh(torusGeom, mat)
 			torusMesh.SetLoaderID(torusG3n.GetDisplayName())
 			torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
@@ -89,7 +92,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 			if torusInside, tidErr := w.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tidErr == nil {
 				diskGeom := geometry.NewDisk(1, 32)
-				diskMat := material.NewStandard(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
+				diskMat := material.NewStandard(g3ndpalette.GREY)
 				diskMesh := graphic.NewMesh(diskGeom, diskMat)
 				diskMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
 				diskMesh.SetLoaderID(torusInside.GetDisplayName())
@@ -102,42 +105,8 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 		// Focus gained...
 		log.Printf("G3n Focus gained\n")
-		torus, _ := w.GetG3nDetailedElement("torus")
-		torusInnerDisk, _ := w.GetG3nDetailedElementById(torus.GetChildElements()[0])
 
-		for _, g3nDetailedElement := range w.elementIndex {
-			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
-				switch g3nDetailedElement.GetDisplayId() {
-				case 1:
-					log.Printf("G3n Inside\n")
-					torus.SetRotationX(0)
-					torus.SetColor(math32.NewColor("DarkBlue"))
-
-					torusInnerDisk.SetRotationX(0)
-					torusInnerDisk.SetColor(math32.NewColor("DarkRed"))
-				case 2:
-					log.Printf("G3n Outside\n")
-					torus.SetRotationX(0)
-					torus.SetColor(math32.NewColor("DarkBlue"))
-
-					torusInnerDisk.SetRotationX(0)
-					torusInnerDisk.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-				case 3:
-					log.Printf("G3n It\n")
-					torus.SetRotationX(0)
-					torus.SetColor(math32.NewColor("DarkRed"))
-
-					torusInnerDisk.SetRotationX(0)
-					torusInnerDisk.SetColor(&math32.Color{R: 0.5, G: 0.5, B: 0.5})
-				case 4:
-					log.Printf("G3n Up-Side-Down\n")
-					torus.SetRotationX(180)
-					torus.SetColor(math32.NewColor("DarkBlue"))
-
-					torusInnerDisk.SetRotationX(180)
-				}
-			}
-		}
+		w.Transform()
 		log.Printf("G3n End Focus gained\n")
 	}
 
@@ -226,12 +195,69 @@ func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INo
 
 func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 	if callerCreds != "" {
-		server.InitServer(callerCreds, insecure, w.mSdkApiHandler, w.wClientInitHandler)
+		server.InitServer(callerCreds, insecure, w.MSdkApiHandler, w.wClientInitHandler)
 	} else {
 		go func() {
 			w.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}
 		}()
 	}
+}
+
+func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
+	itemColor := g3ndpalette.DARK_BLUE
+	itemClickedColor := g3ndpalette.DARK_RED
+
+	changedElements := []*mashupsdk.MashupElementState{}
+	visitedNodes := map[int64]bool{}
+	for _, g3nDetailedElement := range w.elementIndex {
+		var changed bool
+		g3nColor := itemColor
+		if g3nDetailedElement.IsItemActive() {
+			g3nColor = itemClickedColor
+			if g3nDetailedElement.HasAttitudeAdjustment() {
+				log.Printf("G3n Has parents\n")
+				parentIds := g3nDetailedElement.GetParentElements()
+				g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
+				for _, parentId := range parentIds {
+					if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
+						g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+					}
+					visitedNodes[parentId] = true
+				}
+				log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
+
+				g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
+			} else {
+				if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+					g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+					visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+				}
+			}
+		} else {
+			if g3nDetailedElement.IsBackground() {
+				if g3nDetailedElement.IsItemActive() {
+					// No items clicked means background is clicked.
+					g3nColor = itemClickedColor
+				} else {
+					g3nColor = g3ndpalette.GREY
+				}
+			} else {
+				if g3nDetailedElement.IsBackgroundColor() {
+					g3nColor = g3ndpalette.GREY
+				}
+			}
+			if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+				g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+				visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+			}
+		}
+		g3nDetailedElement.SetColor(g3nColor)
+
+		if changed {
+			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
+		}
+	}
+	return changedElements
 }
 
 func (w *WorldApp) InitMainWindow() {
@@ -309,66 +335,44 @@ func (w *WorldApp) InitMainWindow() {
 			caster.SetFromCamera(w.cam, xPosNdc, yPosNdc)
 
 			if w.scene.Visible() {
-				n, intersections := w.Cast(w.scene, caster)
-				if len(intersections) != 0 {
-					if len(w.elementDictionary) != 0 {
-						g3nElement, err := w.GetG3nDetailedElement(n.GetNode().LoaderID())
-						if err != nil {
-							log.Fatal(err)
-						}
+				itemClicked, _ := w.Cast(w.scene, caster)
 
-						log.Printf("State: %d\n", g3nElement.GetDisplayState())
-
-						if g3nElement.GetMashupElementState() != nil {
-							log.Printf("State size: %d\n", len(w.elementDictionary))
-							g3nElement.SetColor(math32.NewColor("DarkRed"))
-							// Zero out states of all elements to rest state.
-							changedStates := w.ResetChangeStates()
-
-							g3nElement.SetDisplayState(mashupsdk.Clicked)
-							changedStates = append(changedStates, g3nElement.GetMashupElementState())
-
-							elementStateBundle := mashupsdk.MashupElementStateBundle{
-								AuthToken:     server.GetServerAuthToken(),
-								ElementStates: changedStates,
-							}
-
-							w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
+				itemMatched := false
+				var backgroundG3n *g3nmash.G3nDetailedElement
+				for _, g3nDetailedElement := range w.elementIndex {
+					if g3nDetailedElement.IsBackground() {
+						backgroundG3n = g3nDetailedElement
+					} else {
+						if g3nDetailedElement.IsItemClicked(itemClicked) {
+							g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
+							itemMatched = true
+						} else {
+							g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
 						}
 					}
-
+				}
+				if !itemMatched {
+					backgroundG3n.SetDisplayState(mashupsdk.Clicked)
 				} else {
-					log.Printf("No intersection found\n")
-					// Nothing selected...
-					if torusG3n, tidErr := w.GetG3nDetailedElement("torus"); tidErr == nil {
-						torusG3n.SetColor(math32.NewColor("DarkBlue"))
-					}
-					if len(w.elementDictionary) != 0 {
-						changedElements := w.ResetChangeStates()
+					backgroundG3n.SetDisplayState(mashupsdk.Rest)
+				}
+				changedElements := w.Transform()
 
-						g3nElement, err := w.GetG3nDetailedElement("Outside")
-						if err != nil {
-							log.Fatal(err)
-						}
+				elementStateBundle := mashupsdk.MashupElementStateBundle{
+					AuthToken:     server.GetServerAuthToken(),
+					ElementStates: changedElements,
+				}
 
-						g3nElement.SetDisplayState(mashupsdk.Clicked)
-						changedElements = append(changedElements, g3nElement.GetMashupElementState())
-
-						elementStateBundle := mashupsdk.MashupElementStateBundle{
-							AuthToken:     server.GetServerAuthToken(),
-							ElementStates: changedElements,
-						}
-
-						w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
-					}
+				if !w.headless {
+					w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
 				}
 			}
 
 		})
 
 		// Create and add lights to the scene
-		w.scene.Add(light.NewAmbient(&math32.Color{1.0, 1.0, 1.0}, 0.8))
-		pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 5.0)
+		w.scene.Add(light.NewAmbient(g3ndpalette.WHITE, 0.8))
+		pointLight := light.NewPoint(g3ndpalette.WHITE, 5.0)
 		pointLight.SetPosition(1, 0, 2)
 		w.scene.Add(pointLight)
 
@@ -377,7 +381,7 @@ func (w *WorldApp) InitMainWindow() {
 
 		w.frameRater.Start()
 		// Set background color to gray
-		a.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
+		g3ndpalette.RefreshBackgroundColor(a.Gls(), g3ndpalette.GREY, 1.0)
 		go func() {
 			log.Println("Watching position events.")
 			for displayHint := range w.displayPositionChan {
@@ -392,22 +396,11 @@ func (w *WorldApp) InitMainWindow() {
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		for _, g3nDetailedElement := range w.elementIndex {
 			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
-				switch g3nDetailedElement.GetDisplayId() {
-				case 1:
-					// Inside
-					w.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
-				case 2:
-					// Outside
-					// Updates the background to dark red...
-					w.mainWin.Gls().ClearColor(.545, 0, 0, 1.0)
-				case 3:
-					// It
-					w.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
-				case 4:
-					// Up-side-down
-					w.mainWin.Gls().ClearColor(0.5, 0.5, 0.5, 1.0)
+				if g3nDetailedElement.IsBackground() {
+					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.DARK_RED, 1.0)
+				} else {
+					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.GREY, 1.0)
 				}
-				break
 			}
 		}
 		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
