@@ -48,7 +48,13 @@ type WorldApp struct {
 	cam                 *camera.Camera
 	oc                  *camera.OrbitControl
 
-	mashupContext     *mashupsdk.MashupContext              // Needed for callbacks to other mashups
+	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
+
+	// Library for mashup objects
+	elementLibraryIndex      map[int64]*g3nmash.G3nDetailedElement
+	elementLibraryDictionary map[string]int64
+
+	maxElementId      int64
 	elementIndex      map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementDictionary map[string]int64
 	isInit            bool
@@ -58,12 +64,14 @@ var worldApp WorldApp
 
 func NewWorldApp(headless bool) *WorldApp {
 	worldApp = WorldApp{
-		headless:            headless,
-		MSdkApiHandler:      &mashupSdkApiHandler{},
-		elementIndex:        map[int64]*g3nmash.G3nDetailedElement{},
-		elementDictionary:   map[string]int64{},
-		displaySetupChan:    make(chan *mashupsdk.MashupDisplayHint, 1),
-		displayPositionChan: make(chan *mashupsdk.MashupDisplayHint, 1),
+		headless:                 headless,
+		MSdkApiHandler:           &mashupSdkApiHandler{},
+		elementLibraryIndex:      map[int64]*g3nmash.G3nDetailedElement{},
+		elementLibraryDictionary: map[string]int64{},
+		elementIndex:             map[int64]*g3nmash.G3nDetailedElement{},
+		elementDictionary:        map[string]int64{},
+		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
+		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
 	}
 	return &worldApp
 }
@@ -132,10 +140,24 @@ func (w *WorldApp) ResetG3nDetailedElementStates() {
 	}
 }
 
+func (w *WorldApp) CloneG3nDetailedElement(g3nElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
+	w.maxElementId = w.maxElementId + 1
+	// TODO: Recursively build....
+	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.maxElementId, g3nElement))
+}
+
 func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *g3nmash.G3nDetailedElement {
-	w.elementDictionary[detailedElement.GetName()] = detailedElement.Id
-	g3nDetailedElement := g3nmash.NewG3nDetailedElement(detailedElement)
-	w.elementIndex[detailedElement.Id] = g3nDetailedElement
+	return w.indexG3nDetailedElement(g3nmash.NewG3nDetailedElement(detailedElement))
+}
+
+func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
+	if mashupsdk.DisplayElementState(g3nDetailedElement.GetDisplayState()) == mashupsdk.Mutable {
+		w.elementLibraryDictionary[g3nDetailedElement.GetDisplayName()] = g3nDetailedElement.GetDisplayId()
+		w.elementLibraryIndex[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+	} else {
+		w.elementDictionary[g3nDetailedElement.GetDisplayName()] = g3nDetailedElement.GetDisplayId()
+		w.elementIndex[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+	}
 	return g3nDetailedElement
 }
 
@@ -439,13 +461,54 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n Received UpsertMashupElements\n")
 	result := &mashupsdk.MashupElementStateBundle{ElementStates: []*mashupsdk.MashupElementState{}}
+	incompleteG3nElements := []*g3nmash.G3nDetailedElement{}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {
 		g3nDetailedElement := worldApp.NewG3nDetailedElement(detailedElement)
-		g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
+		if g3nDetailedElement.IsLibraryElement() {
+			continue
+		}
+
+		if detailedElement.State.Id != int64(mashupsdk.Immutable) {
+			g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
+		}
+
+		for _, childId := range g3nDetailedElement.GetChildElements() {
+			if childId < 0 {
+				incompleteG3nElements = append(incompleteG3nElements, g3nDetailedElement)
+				break
+			}
+		}
+		if worldApp.maxElementId < g3nDetailedElement.GetDisplayId() {
+			worldApp.maxElementId = g3nDetailedElement.GetDisplayId()
+		}
 
 		// Add to resulting element states.
 		result.ElementStates = append(result.ElementStates, detailedElement.State)
+	}
+
+	if len(incompleteG3nElements) > 0 {
+		childStates := []*mashupsdk.MashupElementState{}
+		for _, incompleteG3nElement := range incompleteG3nElements {
+			newChildIds := []int64{}
+			for _, childId := range incompleteG3nElement.GetChildElements() {
+				if childId < 0 {
+					if libElement, err := worldApp.GetG3nDetailedElementById(childId); err == nil {
+						clonedElement := worldApp.CloneG3nDetailedElement(libElement)
+						newChildIds = append(newChildIds, clonedElement.GetDisplayId())
+						childStates = append(childStates, clonedElement.GetMashupElementState())
+					} else {
+						log.Printf("Missing child from library: %d\n", childId)
+					}
+					if len(childStates) > 0 {
+						result.ElementStates = append(result.ElementStates, childStates...)
+					}
+				}
+			}
+			if len(newChildIds) > 0 {
+				incompleteG3nElement.SetChildElements(newChildIds)
+			}
+		}
 	}
 
 	log.Printf("G3n UpsertMashupElements updated\n")

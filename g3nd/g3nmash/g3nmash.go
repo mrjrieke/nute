@@ -34,6 +34,12 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *G3
 	return &g3n
 }
 
+func CloneG3nDetailedElement(newId int64, g3nElement *G3nDetailedElement) *G3nDetailedElement {
+	g3n := NewG3nDetailedElement(g3nElement.detailedElement)
+	g3n.detailedElement.Id = newId
+	return g3n
+}
+
 func (g *G3nDetailedElement) SetNamedMesh(meshName string, mesh *graphic.Mesh) {
 	g.meshComposite[meshName] = mesh
 }
@@ -70,6 +76,10 @@ func (g *G3nDetailedElement) AdjustAttitude(parentG3Elements []*G3nDetailedEleme
 	return errors.New("no adjustment")
 }
 
+func (g *G3nDetailedElement) IsLibraryElement() bool {
+	return g.detailedElement.State.State == int64(mashupsdk.Mutable)
+}
+
 // TODO: Find a better name for this.
 func (g *G3nDetailedElement) IsComposite() bool {
 	return len(g.detailedElement.Parentids) == 0
@@ -93,6 +103,10 @@ func (g *G3nDetailedElement) GetChildElements() []int64 {
 	} else {
 		return []int64{}
 	}
+}
+
+func (g *G3nDetailedElement) SetChildElements(childIds []int64) {
+	g.detailedElement.Childids = childIds
 }
 
 func (g *G3nDetailedElement) GetParentElements() []int64 {
