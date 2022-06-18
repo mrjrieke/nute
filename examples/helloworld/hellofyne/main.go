@@ -89,13 +89,13 @@ func main() {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 					GuiComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
 					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          1,
-						State:       &mashupsdk.MashupElementState{Id: 1, State: int64(mashupsdk.Init)},
-						Name:        "Inside",
+						Id:          -2,
+						State:       &mashupsdk.MashupElementState{Id: -2, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-AxialCircle",
 						Description: "",
 						Genre:       "Space",
 						Subgenre:    "Ento",
-						Parentids:   []int64{3},
+						Parentids:   []int64{-1},
 						Childids:    nil,
 					},
 				},
@@ -104,7 +104,7 @@ func main() {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 					GuiComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
 					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          2,
+						Id:          4,
 						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
 						Name:        "Outside",
 						Description: "",
@@ -119,14 +119,14 @@ func main() {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 					GuiComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
 					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          3,
-						State:       &mashupsdk.MashupElementState{Id: 3, State: int64(mashupsdk.Init)},
-						Name:        "torus",
+						Id:          -1,
+						State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-Torus",
 						Description: "",
 						Genre:       "Solid",
 						Subgenre:    "Ento",
 						Parentids:   nil,
-						Childids:    []int64{1, 4},
+						Childids:    []int64{-2, -3},
 					},
 				},
 			},
@@ -134,13 +134,13 @@ func main() {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 					GuiComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
 					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          4,
-						State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Init)},
-						Name:        "Up-Side-Down",
+						Id:          -4,
+						State:       &mashupsdk.MashupElementState{Id: -4, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-SharedAttitude",
 						Description: "",
 						Genre:       "Attitude",
 						Subgenre:    "180,0,0",
-						Parentids:   []int64{1, 3},
+						Parentids:   []int64{-1},
 						Childids:    nil,
 					},
 				},
@@ -163,7 +163,69 @@ func main() {
 
 				var upsertErr error
 
-				DetailedElements := []*mashupsdk.MashupDetailedElement{}
+				DetailedElements := []*mashupsdk.MashupDetailedElement{
+					{
+						Id:          -1,
+						State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-Torus",
+						Description: "",
+						Genre:       "Solid",
+						Subgenre:    "Ento",
+						Parentids:   nil,
+						Childids:    []int64{-2, -3},
+					},
+					{
+						Id:          -2,
+						State:       &mashupsdk.MashupElementState{Id: -2, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-AxialCircle",
+						Description: "",
+						Genre:       "Space",
+						Subgenre:    "Ento",
+						Parentids:   []int64{-1},
+						Childids:    nil,
+					},
+					{
+						Id:          -3,
+						State:       &mashupsdk.MashupElementState{Id: -3, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-Body",
+						Description: "",
+						Genre:       "Solid",
+						Subgenre:    "Ento",
+						Parentids:   []int64{-1},
+						Childids:    nil,
+					},
+					{
+						Id:          -4,
+						State:       &mashupsdk.MashupElementState{Id: -4, State: int64(mashupsdk.Mutable)},
+						Name:        "{0}-SharedAttitude",
+						Description: "",
+						Genre:       "Attitude",
+						Subgenre:    "180,0,0",
+						Parentids:   []int64{-1},
+						Childids:    nil,
+					},
+					{
+						Id:          5,
+						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						Name:        "ToriOne",
+						Description: "Tori",
+						Genre:       "",
+						Subgenre:    "",
+						Parentids:   []int64{},
+						Childids:    []int64{6},
+					},
+					{
+						Id:          6,
+						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						Name:        "Torus",
+						Description: "",
+						Genre:       "Abstract",
+						Subgenre:    "",
+						Parentids:   []int64{5},
+						Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+					},
+				}
+
 				for _, fyneComponent := range helloApp.fyneComponentCache {
 					DetailedElements = append(DetailedElements, fyneComponent.MashupDetailedElement)
 				}
