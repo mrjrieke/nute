@@ -97,7 +97,7 @@ func main() {
 				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
 				Name:        "Torus",
 				Description: "",
-				Genre:       "",
+				Genre:       "Abstract",
 				Subgenre:    "",
 				Parentids:   []int64{5},
 				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.

@@ -90,15 +90,22 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 		}
 
 		for _, torusG3n := range torusG3ns {
+			torusConcreteG3n := torusG3n
+			if torusG3n.IsAbstract() {
+				if tc, tErr := worldApp.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tErr == nil {
+					torusConcreteG3n = tc
+				}
+			}
+
 			torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 			mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 			torusMesh := graphic.NewMesh(torusGeom, mat)
-			torusMesh.SetLoaderID(torusG3n.GetDisplayName())
+			torusMesh.SetLoaderID(torusConcreteG3n.GetDisplayName())
 			torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
 			w.scene.Add(torusMesh)
-			torusG3n.SetNamedMesh(torusG3n.GetDisplayName(), torusMesh)
+			torusConcreteG3n.SetNamedMesh(torusConcreteG3n.GetDisplayName(), torusMesh)
 
-			if torusInside, tidErr := w.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tidErr == nil {
+			for _, torusInside := range w.GetG3nDetailedElementsByGenre(torusConcreteG3n, "Space") {
 				diskGeom := geometry.NewDisk(1, 32)
 				diskMat := material.NewStandard(g3ndpalette.GREY)
 				diskMesh := graphic.NewMesh(diskGeom, diskMat)
@@ -107,7 +114,6 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 				w.scene.Add(diskMesh)
 				torusInside.SetNamedMesh(torusInside.GetDisplayName(), diskMesh)
 			}
-
 		}
 	} else {
 
@@ -146,7 +152,7 @@ func (w *WorldApp) NewElementIdPump() int64 {
 }
 
 func (w *WorldApp) CloneG3nDetailedElement(g3nElement *g3nmash.G3nDetailedElement, elementStates *[]interface{}) *g3nmash.G3nDetailedElement {
-	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.GetG3nDetailedLibraryElementById, w.NewElementIdPump, g3nElement, elementStates))
+	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.GetG3nDetailedLibraryElementById, w.indexG3nDetailedElement, w.NewElementIdPump, g3nElement, elementStates))
 }
 
 func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, deepCopy bool) *g3nmash.G3nDetailedElement {
@@ -189,6 +195,18 @@ func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedEle
 		return g3nElement, nil
 	}
 	return nil, fmt.Errorf("element does not exist: %d", eid)
+}
+
+func (w *WorldApp) GetG3nDetailedElementsByGenre(g3n *g3nmash.G3nDetailedElement, genre string) []*g3nmash.G3nDetailedElement {
+	results := []*g3nmash.G3nDetailedElement{}
+	for _, childId := range g3n.GetChildElements() {
+		if g3nChild, err := w.GetG3nDetailedElementById(childId); err == nil {
+			if g3nChild.HasGenre(genre) {
+				results = append(results, g3nChild)
+			}
+		}
+	}
+	return results
 }
 
 func (w *WorldApp) GetG3nDetailedLibraryElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
@@ -274,7 +292,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					g3nColor = g3ndpalette.GREY
 				}
 			} else {
-				if g3nDetailedElement.IsBackgroundColor() {
+				if g3nDetailedElement.IsBackgroundElement() {
 					g3nColor = g3ndpalette.GREY
 				}
 			}

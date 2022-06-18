@@ -50,6 +50,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 
 func CloneG3nDetailedElement(
 	getG3nDetailedLibraryElementById func(eid int64) (*G3nDetailedElement, error),
+	indexG3nDetailedElement func(*G3nDetailedElement) *G3nDetailedElement,
 	newIdPumpFunc func() int64,
 	g3nElement *G3nDetailedElement,
 	elementStates *[]interface{},
@@ -58,6 +59,9 @@ func CloneG3nDetailedElement(
 	if g3n.detailedElement.Id < 0 {
 		g3n.detailedElement.Id = newIdPumpFunc()
 		g3n.detailedElement.Name = strings.Replace(g3n.detailedElement.Name, "{0}", strconv.FormatInt(g3n.detailedElement.Id, 10), 1)
+		// Converted from mutable to instance...
+		// Upgrade state to Init.
+		g3n.SetDisplayState(mashupsdk.Init)
 	}
 
 	childStates := []interface{}{}
@@ -65,9 +69,10 @@ func CloneG3nDetailedElement(
 	for _, childId := range g3n.GetChildElements() {
 		if childId < 0 {
 			if libElement, err := getG3nDetailedLibraryElementById(childId); err == nil {
-				clonedElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, newIdPumpFunc, libElement, elementStates)
-				newChildIds = append(newChildIds, clonedElement.GetDisplayId())
-				childStates = append(childStates, clonedElement.GetMashupElementState())
+				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, elementStates)
+				clonedChildElement.SetParentElements([]int64{g3n.GetDisplayId()})
+				newChildIds = append(newChildIds, clonedChildElement.GetDisplayId())
+				childStates = append(childStates, clonedChildElement.GetMashupElementState())
 			} else {
 				log.Printf("Missing child from library: %d\n", childId)
 			}
@@ -79,6 +84,7 @@ func CloneG3nDetailedElement(
 	if len(newChildIds) > 0 {
 		g3n.SetChildElements(newChildIds)
 	}
+	indexG3nDetailedElement(g3n)
 
 	return g3n
 }
@@ -91,12 +97,20 @@ func (g *G3nDetailedElement) GetDisplayId() int64 {
 	return g.detailedElement.Id
 }
 
+func (g *G3nDetailedElement) IsAbstract() bool {
+	return g.detailedElement.Genre == "Abstract"
+}
+
 func (g *G3nDetailedElement) IsBackground() bool {
 	return g.detailedElement.Genre == "Space" && g.detailedElement.Subgenre == "Exo"
 }
 
-func (g *G3nDetailedElement) IsBackgroundColor() bool {
+func (g *G3nDetailedElement) IsBackgroundElement() bool {
 	return g.detailedElement.Genre == "Space"
+}
+
+func (g *G3nDetailedElement) HasGenre(genre string) bool {
+	return g.detailedElement.Genre == genre
 }
 
 func (g *G3nDetailedElement) HasAttitudeAdjustment() bool {
@@ -150,6 +164,10 @@ func (g *G3nDetailedElement) GetChildElements() []int64 {
 
 func (g *G3nDetailedElement) SetChildElements(childIds []int64) {
 	g.detailedElement.Childids = childIds
+}
+
+func (g *G3nDetailedElement) SetParentElements(parentIds []int64) {
+	g.detailedElement.Parentids = parentIds
 }
 
 func (g *G3nDetailedElement) GetParentElements() []int64 {
