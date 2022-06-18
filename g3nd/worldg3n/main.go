@@ -48,7 +48,7 @@ func main() {
 				Name:        "{0}-AxialCircle",
 				Description: "",
 				Genre:       "Space",
-				Subgenre:    "Exo",
+				Subgenre:    "Ento",
 				Parentids:   []int64{-1},
 				Childids:    nil,
 			},

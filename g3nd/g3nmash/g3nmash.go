@@ -146,11 +146,11 @@ func (g *G3nDetailedElement) IsItemActive() bool {
 	return g.GetDisplayState() != mashupsdk.Rest
 }
 
-func (g *G3nDetailedElement) IsItemClicked(node core.INode) bool {
-	if node == nil {
+func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
+	if itemClicked == nil {
 		return false
 	} else {
-		return node.GetNode().LoaderID() == g.detailedElement.Name
+		return itemClicked.GetNode().LoaderID() == g.detailedElement.Name
 	}
 }
 

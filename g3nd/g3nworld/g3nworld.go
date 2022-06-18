@@ -284,6 +284,10 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 				}
 			}
 		} else {
+			if g3nDetailedElement.IsAbstract() {
+				continue
+			}
+
 			if g3nDetailedElement.IsBackground() {
 				if g3nDetailedElement.IsItemActive() {
 					// No items clicked means background is clicked.
