@@ -19,8 +19,22 @@ type G3nDetailedElement struct {
 	attitudes       []float32
 }
 
-func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *G3nDetailedElement {
-	g3n := G3nDetailedElement{detailedElement: detailedElement, meshComposite: map[string]*graphic.Mesh{}}
+func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, deepCopy bool) *G3nDetailedElement {
+	detailedRef := detailedElement
+	if deepCopy {
+		detailedRef = &mashupsdk.MashupDetailedElement{
+			Id:          detailedElement.Id,
+			State:       &mashupsdk.MashupElementState{Id: detailedElement.State.Id, State: detailedElement.State.State},
+			Name:        detailedElement.Name,
+			Description: detailedElement.Description,
+			Genre:       detailedElement.Genre,
+			Subgenre:    detailedElement.Subgenre,
+			Parentids:   detailedElement.Parentids,
+			Childids:    detailedElement.Childids,
+		}
+	}
+
+	g3n := G3nDetailedElement{detailedElement: detailedRef, meshComposite: map[string]*graphic.Mesh{}}
 	if detailedElement.GetGenre() == "Attitude" {
 		attitudes := detailedElement.GetSubgenre()
 		attutudeSlice := strings.Split(attitudes, ",")
@@ -34,9 +48,38 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *G3
 	return &g3n
 }
 
-func CloneG3nDetailedElement(newId int64, g3nElement *G3nDetailedElement) *G3nDetailedElement {
-	g3n := NewG3nDetailedElement(g3nElement.detailedElement)
-	g3n.detailedElement.Id = newId
+func CloneG3nDetailedElement(
+	getG3nDetailedLibraryElementById func(eid int64) (*G3nDetailedElement, error),
+	newIdPumpFunc func() int64,
+	g3nElement *G3nDetailedElement,
+	elementStates *[]interface{},
+) *G3nDetailedElement {
+	g3n := NewG3nDetailedElement(g3nElement.detailedElement, true)
+	if g3n.detailedElement.Id < 0 {
+		g3n.detailedElement.Id = newIdPumpFunc()
+		g3n.detailedElement.Name = strings.Replace(g3n.detailedElement.Name, "{0}", strconv.FormatInt(g3n.detailedElement.Id, 10), 1)
+	}
+
+	childStates := []interface{}{}
+	newChildIds := []int64{}
+	for _, childId := range g3n.GetChildElements() {
+		if childId < 0 {
+			if libElement, err := getG3nDetailedLibraryElementById(childId); err == nil {
+				clonedElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, newIdPumpFunc, libElement, elementStates)
+				newChildIds = append(newChildIds, clonedElement.GetDisplayId())
+				childStates = append(childStates, clonedElement.GetMashupElementState())
+			} else {
+				log.Printf("Missing child from library: %d\n", childId)
+			}
+		}
+	}
+	if len(childStates) > 0 {
+		*elementStates = append(*elementStates, childStates...)
+	}
+	if len(newChildIds) > 0 {
+		g3n.SetChildElements(newChildIds)
+	}
+
 	return g3n
 }
 

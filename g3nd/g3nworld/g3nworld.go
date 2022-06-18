@@ -84,7 +84,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 	if _, iOk := ev.(InitEvent); iOk {
 
-		torusG3ns, err := w.GetG3nDetailedFilteredElements("torus")
+		torusG3ns, err := w.GetG3nDetailedFilteredElements("Torus")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -140,14 +140,17 @@ func (w *WorldApp) ResetG3nDetailedElementStates() {
 	}
 }
 
-func (w *WorldApp) CloneG3nDetailedElement(g3nElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
+func (w *WorldApp) NewElementIdPump() int64 {
 	w.maxElementId = w.maxElementId + 1
-	// TODO: Recursively build....
-	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.maxElementId, g3nElement))
+	return w.maxElementId
 }
 
-func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement) *g3nmash.G3nDetailedElement {
-	return w.indexG3nDetailedElement(g3nmash.NewG3nDetailedElement(detailedElement))
+func (w *WorldApp) CloneG3nDetailedElement(g3nElement *g3nmash.G3nDetailedElement, elementStates *[]interface{}) *g3nmash.G3nDetailedElement {
+	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.GetG3nDetailedLibraryElementById, w.NewElementIdPump, g3nElement, elementStates))
+}
+
+func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, deepCopy bool) *g3nmash.G3nDetailedElement {
+	return w.indexG3nDetailedElement(g3nmash.NewG3nDetailedElement(detailedElement, deepCopy))
 }
 
 func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
@@ -183,6 +186,13 @@ func (w *WorldApp) GetG3nDetailedElement(elementName string) (*g3nmash.G3nDetail
 
 func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
 	if g3nElement, g3nElementOk := w.elementIndex[eid]; g3nElementOk {
+		return g3nElement, nil
+	}
+	return nil, fmt.Errorf("element does not exist: %d", eid)
+}
+
+func (w *WorldApp) GetG3nDetailedLibraryElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
+	if g3nElement, g3nElementOk := w.elementLibraryIndex[eid]; g3nElementOk {
 		return g3nElement, nil
 	}
 	return nil, fmt.Errorf("element does not exist: %d", eid)
@@ -464,7 +474,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	incompleteG3nElements := []*g3nmash.G3nDetailedElement{}
 
 	for _, detailedElement := range detailedElementBundle.DetailedElements {
-		g3nDetailedElement := worldApp.NewG3nDetailedElement(detailedElement)
+		g3nDetailedElement := worldApp.NewG3nDetailedElement(detailedElement, false)
 		if g3nDetailedElement.IsLibraryElement() {
 			continue
 		}
@@ -488,26 +498,27 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	}
 
 	if len(incompleteG3nElements) > 0 {
-		childStates := []*mashupsdk.MashupElementState{}
+		// Fill out incomplete g3n elements
+		newElementStates := []interface{}{}
 		for _, incompleteG3nElement := range incompleteG3nElements {
 			newChildIds := []int64{}
+
 			for _, childId := range incompleteG3nElement.GetChildElements() {
 				if childId < 0 {
-					if libElement, err := worldApp.GetG3nDetailedElementById(childId); err == nil {
-						clonedElement := worldApp.CloneG3nDetailedElement(libElement)
-						newChildIds = append(newChildIds, clonedElement.GetDisplayId())
-						childStates = append(childStates, clonedElement.GetMashupElementState())
+					if libElement, err := worldApp.GetG3nDetailedLibraryElementById(childId); err == nil {
+						clonedChild := worldApp.CloneG3nDetailedElement(libElement, &newElementStates)
+						newChildIds = append(newChildIds, clonedChild.GetDisplayId())
 					} else {
 						log.Printf("Missing child from library: %d\n", childId)
-					}
-					if len(childStates) > 0 {
-						result.ElementStates = append(result.ElementStates, childStates...)
 					}
 				}
 			}
 			if len(newChildIds) > 0 {
 				incompleteG3nElement.SetChildElements(newChildIds)
 			}
+		}
+		for _, newElementState := range newElementStates {
+			result.ElementStates = append(result.ElementStates, newElementState.(*mashupsdk.MashupElementState))
 		}
 	}
 
