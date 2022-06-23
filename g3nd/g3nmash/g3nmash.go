@@ -35,6 +35,10 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 		}
 	}
 
+	if detailedElement.Id > 0 {
+		detailedElement.State.Id = detailedElement.Id
+	}
+
 	g3n := G3nDetailedElement{detailedElement: detailedRef, meshComposite: map[string]*graphic.Mesh{}}
 	if detailedElement.GetGenre() == "Attitude" {
 		attitudes := detailedElement.GetSubgenre()
