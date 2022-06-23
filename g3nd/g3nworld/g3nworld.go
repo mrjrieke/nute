@@ -542,13 +542,14 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	worldApp.ResetG3nDetailedElementStates()
 
 	for _, es := range elementStateBundle.ElementStates {
-		fmt.Printf("Element with state change: %v\n", es.GetId())
 		if worldApp.elementDictionary[es.GetId()].GetDisplayState() != mashupsdk.DisplayElementState(es.State) {
 			worldApp.elementDictionary[es.GetId()].SetDisplayState(mashupsdk.DisplayElementState(es.State))
 		}
 	}
 	log.Printf("G3n dispatching focus\n")
-	worldApp.mainWin.Dispatch(gui.OnFocus, nil)
+	if worldApp.mainWin != nil {
+		worldApp.mainWin.Dispatch(gui.OnFocus, nil)
+	}
 	log.Printf("G3n End UpsertMashupElementsState called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }

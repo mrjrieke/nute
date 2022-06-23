@@ -102,7 +102,6 @@ func main() {
 		if genErr != nil {
 			log.Fatal(genErr)
 		} else {
-			//fmt.Println("Got something: %v\n", generatedElements)
 			generatedElements.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
 
 			elementStateBundle := mashupsdk.MashupElementStateBundle{

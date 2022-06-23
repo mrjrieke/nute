@@ -48,7 +48,6 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 				g3n.attitudes = append(g3n.attitudes, float32(a))
 			}
 		}
-		log.Printf("We have attitude: %v\n", g3n.attitudes)
 	}
 	return &g3n
 }
@@ -203,7 +202,6 @@ func (g *G3nDetailedElement) GetDisplayState() mashupsdk.DisplayElementState {
 }
 
 func (g *G3nDetailedElement) SetDisplayState(x mashupsdk.DisplayElementState) bool {
-	log.Printf("G3n check de state: %v\n", g.detailedElement)
 	if g.detailedElement.State.State != int64(x) {
 		g.detailedElement.State.State = int64(x)
 		return true
