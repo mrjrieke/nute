@@ -118,7 +118,7 @@ func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.Ma
 	return nil, nil
 }
 
-func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
+func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	log.Printf("UpsertMashupElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		log.Printf(spew.Sdump(c.mashupApiHandler))

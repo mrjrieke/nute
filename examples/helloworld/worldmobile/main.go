@@ -92,14 +92,14 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	}
 }
 
-func (c *worldApiHandler) UpsertMashupElements(detailedElementBundle *sdk.MashupDetailedElementBundle) (*sdk.MashupElementStateBundle, error) {
+func (c *worldApiHandler) UpsertMashupElements(detailedElementBundle *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	// Not implemented.
-	return nil, errors.New("Could capture items.")
+	return nil, errors.New("Could not capture items.")
 }
 
 func (c *worldApiHandler) UpsertMashupElementsState(elementStateBundle *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	// Not implemented.
-	return nil, errors.New("Could capture items.")
+	return nil, errors.New("Could not capture items.")
 }
 
 func main() {

@@ -90,7 +90,7 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 // other mashups.
 type MashupApiHandler interface {
 	OnResize(displayHint *MashupDisplayHint)
-	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
+	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 }
 

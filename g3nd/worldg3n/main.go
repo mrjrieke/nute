@@ -33,7 +33,7 @@ func main() {
 	if *headless {
 		DetailedElements := []*mashupsdk.MashupDetailedElement{
 			{
-				Id:          -1,
+				Basisid:     -1,
 				State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
 				Name:        "{0}-Torus",
 				Description: "",
@@ -43,7 +43,7 @@ func main() {
 				Childids:    []int64{-2, -3},
 			},
 			{
-				Id:          -2,
+				Basisid:     -2,
 				State:       &mashupsdk.MashupElementState{Id: -2, State: int64(mashupsdk.Mutable)},
 				Name:        "{0}-AxialCircle",
 				Description: "",
@@ -53,17 +53,7 @@ func main() {
 				Childids:    nil,
 			},
 			{
-				Id:          -3,
-				State:       &mashupsdk.MashupElementState{Id: -3, State: int64(mashupsdk.Mutable)},
-				Name:        "{0}-Body",
-				Description: "",
-				Genre:       "Solid",
-				Subgenre:    "Ento",
-				Parentids:   []int64{-1},
-				Childids:    nil,
-			},
-			{
-				Id:          -4,
+				Basisid:     -3,
 				State:       &mashupsdk.MashupElementState{Id: -4, State: int64(mashupsdk.Mutable)},
 				Name:        "{0}-SharedAttitude",
 				Description: "",
@@ -75,6 +65,26 @@ func main() {
 			{
 				Id:          4,
 				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+				Name:        "ToriOne",
+				Description: "Tori",
+				Genre:       "",
+				Subgenre:    "",
+				Parentids:   []int64{},
+				Childids:    []int64{6},
+			},
+			{
+				Id:          5,
+				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
+			{
+				Id:          6,
+				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
 				Name:        "Outside",
 				Description: "",
 				Genre:       "Space",
@@ -82,33 +92,27 @@ func main() {
 				Parentids:   nil,
 				Childids:    nil,
 			},
-			{
-				Id:          5,
-				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
-				Name:        "ToriOne",
-				Description: "Tori",
-				Genre:       "",
-				Subgenre:    "",
-				Parentids:   []int64{},
-				Childids:    []int64{6, 7},
-			},
-			{
-				Id:          6,
-				State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
-				Name:        "Torus",
-				Description: "",
-				Genre:       "Abstract",
-				Subgenre:    "",
-				Parentids:   []int64{5},
-				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
-			},
 		}
-
-		_, _ = worldApp.MSdkApiHandler.UpsertMashupElements(
+		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        "",
 				DetailedElements: DetailedElements,
 			})
+
+		if genErr != nil {
+			log.Fatal(genErr)
+		} else {
+			//fmt.Println("Got something: %v\n", generatedElements)
+			generatedElements.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
+
+			elementStateBundle := mashupsdk.MashupElementStateBundle{
+				AuthToken:     "",
+				ElementStates: []*mashupsdk.MashupElementState{generatedElements.DetailedElements[3].State},
+			}
+
+			worldApp.MSdkApiHandler.UpsertMashupElementsState(&elementStateBundle)
+
+		}
 
 	}
 

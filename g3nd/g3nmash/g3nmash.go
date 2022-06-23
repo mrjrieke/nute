@@ -23,6 +23,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 	detailedRef := detailedElement
 	if deepCopy {
 		detailedRef = &mashupsdk.MashupDetailedElement{
+			Basisid:     detailedElement.Basisid,
 			Id:          detailedElement.Id,
 			State:       &mashupsdk.MashupElementState{Id: detailedElement.State.Id, State: detailedElement.State.State},
 			Name:        detailedElement.Name,
@@ -53,33 +54,32 @@ func CloneG3nDetailedElement(
 	indexG3nDetailedElement func(*G3nDetailedElement) *G3nDetailedElement,
 	newIdPumpFunc func() int64,
 	g3nElement *G3nDetailedElement,
-	elementStates *[]interface{},
+	generatedElements *[]interface{},
 ) *G3nDetailedElement {
 	g3n := NewG3nDetailedElement(g3nElement.detailedElement, true)
-	if g3n.detailedElement.Id < 0 {
+	if g3n.detailedElement.Basisid < 0 {
+		// Convert from library to generated.
 		g3n.detailedElement.Id = newIdPumpFunc()
+		// Id state must match detailed element id.
+		g3n.detailedElement.State.Id = g3n.detailedElement.Id
 		g3n.detailedElement.Name = strings.Replace(g3n.detailedElement.Name, "{0}", strconv.FormatInt(g3n.detailedElement.Id, 10), 1)
 		// Converted from mutable to instance...
 		// Upgrade state to Init.
 		g3n.SetDisplayState(mashupsdk.Init)
+		*generatedElements = append(*generatedElements, g3n.GetDetailedElement())
 	}
 
-	childStates := []interface{}{}
 	newChildIds := []int64{}
 	for _, childId := range g3n.GetChildElements() {
 		if childId < 0 {
 			if libElement, err := getG3nDetailedLibraryElementById(childId); err == nil {
-				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, elementStates)
+				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, generatedElements)
 				clonedChildElement.SetParentElements([]int64{g3n.GetDisplayId()})
 				newChildIds = append(newChildIds, clonedChildElement.GetDisplayId())
-				childStates = append(childStates, clonedChildElement.GetMashupElementState())
 			} else {
 				log.Printf("Missing child from library: %d\n", childId)
 			}
 		}
-	}
-	if len(childStates) > 0 {
-		*elementStates = append(*elementStates, childStates...)
 	}
 	if len(newChildIds) > 0 {
 		g3n.SetChildElements(newChildIds)
@@ -91,6 +91,14 @@ func CloneG3nDetailedElement(
 
 func (g *G3nDetailedElement) SetNamedMesh(meshName string, mesh *graphic.Mesh) {
 	g.meshComposite[meshName] = mesh
+}
+
+func (g *G3nDetailedElement) GetDetailedElement() *mashupsdk.MashupDetailedElement {
+	return g.detailedElement
+}
+
+func (g *G3nDetailedElement) GetBasisId() int64 {
+	return g.detailedElement.Basisid
 }
 
 func (g *G3nDetailedElement) GetDisplayId() int64 {
@@ -134,7 +142,7 @@ func (g *G3nDetailedElement) AdjustAttitude(parentG3Elements []*G3nDetailedEleme
 }
 
 func (g *G3nDetailedElement) IsLibraryElement() bool {
-	return g.detailedElement.State.State == int64(mashupsdk.Mutable)
+	return g.detailedElement.Basisid < 0 && g.detailedElement.Id == 0
 }
 
 // TODO: Find a better name for this.
@@ -191,6 +199,7 @@ func (g *G3nDetailedElement) GetDisplayState() mashupsdk.DisplayElementState {
 }
 
 func (g *G3nDetailedElement) SetDisplayState(x mashupsdk.DisplayElementState) bool {
+	log.Printf("G3n check de state: %v\n", g.detailedElement)
 	if g.detailedElement.State.State != int64(x) {
 		g.detailedElement.State.State = int64(x)
 		return true
