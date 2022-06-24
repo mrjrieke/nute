@@ -66,18 +66,10 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 
 func (ha *HelloApp) TorusParser(childId int64) {
 	child := helloApp.mashupDetailedElementLibrary[childId]
-	if child.Basisid < 0 {
-		switch child.Basisid {
-		case -1:
-			helloApp.fyneWidgetElements["It"].MashupDetailedElement = child
-		case -2:
-			helloApp.fyneWidgetElements["Inside"].MashupDetailedElement = child
-		case -3:
-			helloApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement = child
-		}
-	} else {
-		helloApp.fyneWidgetElements[child.Name].MashupDetailedElement = child
+	if child.Alias != "" {
+		helloApp.fyneWidgetElements[child.Alias].MashupDetailedElement = child
 	}
+
 	if len(child.GetChildids()) > 0 {
 		for _, cId := range child.GetChildids() {
 			ha.TorusParser(cId)
@@ -153,35 +145,38 @@ func main() {
 						Basisid:     -1,
 						State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
 						Name:        "{0}-Torus",
+						Alias:       "It",
 						Description: "",
 						Genre:       "Solid",
 						Subgenre:    "Ento",
 						Parentids:   nil,
-						Childids:    []int64{-2, -3},
+						Childids:    []int64{-2, 4},
 					},
 					{
 						Basisid:     -2,
 						State:       &mashupsdk.MashupElementState{Id: -2, State: int64(mashupsdk.Mutable)},
 						Name:        "{0}-AxialCircle",
+						Alias:       "Inside",
 						Description: "",
 						Genre:       "Space",
 						Subgenre:    "Ento",
 						Parentids:   []int64{-1},
-						Childids:    []int64{-3},
+						Childids:    []int64{4},
 					},
 					{
-						Basisid:     -3,
-						State:       &mashupsdk.MashupElementState{Id: -4, State: int64(mashupsdk.Mutable)},
-						Name:        "{0}-SharedAttitude",
+						Id:          4,
+						State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
+						Name:        "Up-Side-Down",
+						Alias:       "Up-Side-Down",
 						Description: "",
 						Genre:       "Attitude",
 						Subgenre:    "180,0,0",
-						Parentids:   []int64{-1},
+						Parentids:   nil,
 						Childids:    nil,
 					},
 					{
 						Id:          5,
-						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
 						Name:        "ToriOne",
 						Description: "Tori",
 						Genre:       "",
@@ -191,7 +186,7 @@ func main() {
 					},
 					{
 						Id:          6,
-						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
 						Name:        "TorusEntity",
 						Description: "",
 						Genre:       "Abstract",
@@ -201,8 +196,9 @@ func main() {
 					},
 					{
 						Id:          7,
-						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
+						State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
 						Name:        "Outside",
+						Alias:       "Outside",
 						Description: "",
 						Genre:       "Space",
 						Subgenre:    "Exo",
@@ -323,7 +319,8 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 	log.Printf("Fyne UpsertMashupElementsState called\n")
 	for _, es := range elementStateBundle.ElementStates {
 		detailedElement := helloApp.mashupDetailedElementLibrary[es.GetId()]
-		fyneComponent := helloApp.fyneWidgetElements[detailedElement.GetName()]
+
+		fyneComponent := helloApp.fyneWidgetElements[detailedElement.GetAlias()]
 		fyneComponent.MashupDetailedElement.State.State = es.State
 		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)

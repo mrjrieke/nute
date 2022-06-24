@@ -27,6 +27,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 			Id:          detailedElement.Id,
 			State:       &mashupsdk.MashupElementState{Id: detailedElement.State.Id, State: detailedElement.State.State},
 			Name:        detailedElement.Name,
+			Alias:       detailedElement.Alias,
 			Description: detailedElement.Description,
 			Genre:       detailedElement.Genre,
 			Subgenre:    detailedElement.Subgenre,
@@ -53,6 +54,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 }
 
 func CloneG3nDetailedElement(
+	getG3nDetailedElementById func(eid int64) (*G3nDetailedElement, error),
 	getG3nDetailedLibraryElementById func(eid int64) (*G3nDetailedElement, error),
 	indexG3nDetailedElement func(*G3nDetailedElement) *G3nDetailedElement,
 	newIdPumpFunc func() int64,
@@ -76,11 +78,21 @@ func CloneG3nDetailedElement(
 	for _, childId := range g3n.GetChildElements() {
 		if childId < 0 {
 			if libElement, err := getG3nDetailedLibraryElementById(childId); err == nil {
-				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, generatedElements)
+				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedElementById, getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, generatedElements)
 				clonedChildElement.SetParentElements([]int64{g3n.GetDisplayId()})
 				newChildIds = append(newChildIds, clonedChildElement.GetDisplayId())
 			} else {
 				log.Printf("Missing child from library: %d\n", childId)
+			}
+		} else {
+			// Deal with concrete element.
+			if concreteElement, err := getG3nDetailedElementById(childId); err == nil {
+				newChildIds = append(newChildIds, concreteElement.GetDisplayId())
+				existingParents := concreteElement.GetParentElements()
+				if len(existingParents) == 0 {
+					existingParents = []int64{}
+				}
+				concreteElement.SetParentElements(append(existingParents, g3n.GetDisplayId()))
 			}
 		}
 	}
@@ -230,11 +242,15 @@ func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElemen
 	return errors.New("missing components")
 }
 
-func (g *G3nDetailedElement) SetColor(color *math32.Color) error {
+func (g *G3nDetailedElement) SetColor(color *math32.Color) bool {
 	if rootMesh, rootOk := g.meshComposite[g.detailedElement.Name]; rootOk {
 		if standardMaterial, ok := rootMesh.Graphic.GetMaterial(0).(*material.Standard); ok {
-			standardMaterial.SetColor(color)
+			ambient := standardMaterial.AmbientColor()
+			if !color.Equals(&ambient) {
+				standardMaterial.SetColor(color)
+				return true
+			}
 		}
 	}
-	return errors.New("missing components")
+	return false
 }

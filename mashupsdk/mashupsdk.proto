@@ -52,11 +52,12 @@ message MashupDetailedElement {
   int64 id = 2;
   MashupElementState state = 3;
   string name = 4;
-  string description = 5;
-  string genre = 6;
-  string subgenre = 7;
-  repeated int64 parentids = 8;
-  repeated int64 childids = 9;
+  string alias = 5;
+  string description = 6;
+  string genre = 7;
+  string subgenre = 8;
+  repeated int64 parentids = 9;
+  repeated int64 childids = 10;
 }
 
 message MashupDetailedElementBundle {

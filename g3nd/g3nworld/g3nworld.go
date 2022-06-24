@@ -147,7 +147,7 @@ func (w *WorldApp) NewElementIdPump() int64 {
 }
 
 func (w *WorldApp) CloneG3nDetailedElement(g3nElement *g3nmash.G3nDetailedElement, elementStates *[]interface{}) *g3nmash.G3nDetailedElement {
-	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.GetG3nDetailedLibraryElementById, w.indexG3nDetailedElement, w.NewElementIdPump, g3nElement, elementStates))
+	return w.indexG3nDetailedElement(g3nmash.CloneG3nDetailedElement(w.GetG3nDetailedElementById, w.GetG3nDetailedLibraryElementById, w.indexG3nDetailedElement, w.NewElementIdPump, g3nElement, elementStates))
 }
 
 func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, deepCopy bool) *g3nmash.G3nDetailedElement {
@@ -292,7 +292,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 				visitedNodes[g3nDetailedElement.GetDisplayId()] = true
 			}
 		}
-		g3nDetailedElement.SetColor(g3nColor)
+		changed = g3nDetailedElement.SetColor(g3nColor)
 
 		if changed {
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
@@ -399,6 +399,9 @@ func (w *WorldApp) InitMainWindow() {
 					backgroundG3n.SetDisplayState(mashupsdk.Rest)
 				}
 				changedElements := w.Transform()
+				if !itemMatched {
+					changedElements = append(changedElements, backgroundG3n.GetMashupElementState())
+				}
 
 				elementStateBundle := mashupsdk.MashupElementStateBundle{
 					AuthToken:     server.GetServerAuthToken(),
@@ -520,6 +523,11 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 						newChildIds = append(newChildIds, clonedChild.GetDisplayId())
 					} else {
 						log.Printf("Missing child from library: %d\n", childId)
+					}
+				} else {
+					// Deal with concrete element.
+					if concreteElement, err := worldApp.GetG3nDetailedElementById(childId); err == nil {
+						newChildIds = append(newChildIds, concreteElement.GetDisplayId())
 					}
 				}
 			}
