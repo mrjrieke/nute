@@ -11,6 +11,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/mrjrieke/nute/mashupsdk"
+	sdk "github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk/guiboot"
+	"github.com/mrjrieke/nute/mashupsdk/server"
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
@@ -20,10 +24,6 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
-	"tini.com/nute/mashupsdk"
-	sdk "tini.com/nute/mashupsdk"
-	"tini.com/nute/mashupsdk/guiboot"
-	"tini.com/nute/mashupsdk/server"
 )
 
 var (

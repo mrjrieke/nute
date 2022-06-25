@@ -10,10 +10,10 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/mrjrieke/nute/mashupsdk"
+	sdk "github.com/mrjrieke/nute/mashupsdk"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"tini.com/nute/mashupsdk"
-	sdk "tini.com/nute/mashupsdk"
 )
 
 // Server bootstrapping is concerned with establishing connection with

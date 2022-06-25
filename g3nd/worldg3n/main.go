@@ -9,8 +9,9 @@ import (
 	"log"
 	"os"
 
-	"tini.com/nute/g3nd/g3nworld"
-	"tini.com/nute/mashupsdk"
+	"github.com/mrjrieke/nute/g3nd/g3nworld"
+	"github.com/mrjrieke/nute/g3nd/worldg3n/g3nrender"
+	"github.com/mrjrieke/nute/mashupsdk"
 )
 
 var worldCompleteChan chan bool
@@ -26,7 +27,7 @@ func main() {
 	}
 	log.SetOutput(worldLog)
 
-	worldApp := g3nworld.NewWorldApp(*headless)
+	worldApp := g3nworld.NewWorldApp(*headless, &g3nrender.TorusRenderer{})
 
 	worldApp.InitServer(*callerCreds, *insecure)
 

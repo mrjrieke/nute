@@ -1,4 +1,4 @@
-module tini.com/nute
+module github.com/mrjrieke/nute
 
 go 1.17
 
@@ -23,7 +23,6 @@ require (
 	github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 // indirect
 	github.com/gioui/uax v0.2.1-0.20220325163150-e3d987515a12 // indirect
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec // indirect
 	github.com/go-text/typesetting v0.0.0-20220112121102-58fe93c84506 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
@@ -49,6 +48,8 @@ require (
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 )
+
+require github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
 
 // Uncomment for local development
 replace fyne.io/fyne/v2 v2.1.3 => ../../fyne // Use mashup_v1 branch

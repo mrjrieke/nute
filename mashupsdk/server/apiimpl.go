@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/mrjrieke/nute/mashupsdk"
+	sdk "github.com/mrjrieke/nute/mashupsdk"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"tini.com/nute/mashupsdk"
-	sdk "tini.com/nute/mashupsdk"
 )
 
 // server is used to implement server.MashupServer.

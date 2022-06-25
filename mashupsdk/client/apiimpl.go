@@ -11,11 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/mrjrieke/nute/mashupsdk"
+	sdk "github.com/mrjrieke/nute/mashupsdk"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"tini.com/nute/mashupsdk"
-	sdk "tini.com/nute/mashupsdk"
 )
 
 type MashupClient struct {
@@ -106,7 +105,6 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf(spew.Sdump(c.mashupApiHandler))
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
@@ -121,7 +119,6 @@ func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.Ma
 func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	log.Printf("UpsertMashupElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf(spew.Sdump(c.mashupApiHandler))
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
@@ -136,7 +133,6 @@ func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupD
 func (c *MashupClient) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
 	log.Printf("OnResize called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf(spew.Sdump(c.mashupApiHandler))
 		return nil, errors.New("Auth failure")
 	}
 	displayHint := in.MashupDisplayHint
