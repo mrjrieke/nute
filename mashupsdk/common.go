@@ -3,10 +3,12 @@ package mashupsdk
 type DisplayElementState int64
 
 const (
-	Init    DisplayElementState = 0
-	Rest    DisplayElementState = 1
-	Clicked DisplayElementState = 2
-	Moved   DisplayElementState = 3
+	Immutable DisplayElementState = 0 // For libraries
+	Mutable   DisplayElementState = 1 // For
+	Init      DisplayElementState = 2
+	Rest      DisplayElementState = 3
+	Clicked   DisplayElementState = 4
+	Moved     DisplayElementState = 5
 )
 
 type MashupDisplayState int
@@ -88,7 +90,7 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 // other mashups.
 type MashupApiHandler interface {
 	OnResize(displayHint *MashupDisplayHint)
-	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupElementStateBundle, error)
+	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 }
 

@@ -12,7 +12,7 @@ service MashupServer {
   // Indicates to mashup it is time to shutdown.
   rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
   rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
-  rpc UpsertMashupElements(MashupDetailedElementBundle) returns (MashupElementStateBundle) {}
+  rpc UpsertMashupElements(MashupDetailedElementBundle) returns (MashupDetailedElementBundle) {}
   rpc UpsertMashupElementsState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
 
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
@@ -48,14 +48,16 @@ message ShutdownReply {
 }
 
 message MashupDetailedElement {
-  int64 id = 1;
-  MashupElementState state = 2;
-  string name = 3;
-  string description = 4;
-  string genre = 5;
-  string subgenre = 6;
-  repeated int64 parentids = 7;
-  repeated int64 childids = 8;
+  int64 basisid = 1;
+  int64 id = 2;
+  MashupElementState state = 3;
+  string name = 4;
+  string alias = 5;
+  string description = 6;
+  string genre = 7;
+  string subgenre = 8;
+  repeated int64 parentids = 9;
+  repeated int64 childids = 10;
 }
 
 message MashupDetailedElementBundle {
