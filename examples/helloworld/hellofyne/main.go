@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -222,20 +223,19 @@ func main() {
 					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
 				}
 
-				var torusRoot *mashupsdk.MashupDetailedElement
 				for _, concreteElement := range concreteElementBundle.DetailedElements {
 					//helloApp.fyneComponentCache[generatedComponent.Basisid]
 					helloApp.mashupDetailedElementLibrary[concreteElement.Id] = concreteElement
-					switch concreteElement.GetName() {
-					case "TorusEntity":
-						torusRoot = concreteElement
-					case "Outside":
+					if concreteElement.GetName() == "Outside" {
 						helloApp.fyneWidgetElements["Outside"].MashupDetailedElement = concreteElement
 					}
 				}
-				if torusRoot != nil {
-					for _, childId := range torusRoot.Childids {
-						helloApp.TorusParser(childId)
+
+				for _, concreteElement := range concreteElementBundle.DetailedElements {
+					if strings.HasPrefix(concreteElement.GetName(), "TorusEntity") {
+						for _, childId := range concreteElement.Childids {
+							helloApp.TorusParser(childId)
+						}
 					}
 				}
 
