@@ -79,28 +79,37 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 	if _, iOk := ev.(InitEvent); iOk {
 
-		torusG3ns, err := w.GetG3nDetailedFilteredElements("Torus")
+		g3nCollection, err := w.GetG3nDetailedGenreFilteredElements("Collection")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, torusG3n := range torusG3ns {
-			torusConcreteG3n := torusG3n
-			if torusG3n.IsAbstract() {
-				if tc, tErr := worldApp.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tErr == nil {
-					torusConcreteG3n = tc
+		g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection[0].GetDetailedElement().Subgenre)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// TODO: Create layout function stub...
+		//  Hand it list of elements and let it decide how to render them.
+		// This might be in 3rd party library....
+
+		for _, g3nRenderableElement := range g3nRenderableElements {
+			concreteG3nRenderableElement := g3nRenderableElement
+			if g3nRenderableElement.IsAbstract() {
+				if tc, tErr := worldApp.GetG3nDetailedElementById(g3nRenderableElement.GetChildElements()[0]); tErr == nil {
+					concreteG3nRenderableElement = tc
 				}
 			}
 
+			// TODO: Call library to render this 'object'
 			torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 			mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 			torusMesh := graphic.NewMesh(torusGeom, mat)
-			torusMesh.SetLoaderID(torusConcreteG3n.GetDisplayName())
+			torusMesh.SetLoaderID(concreteG3nRenderableElement.GetDisplayName())
 			torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
 			w.scene.Add(torusMesh)
-			torusConcreteG3n.SetNamedMesh(torusConcreteG3n.GetDisplayName(), torusMesh)
+			concreteG3nRenderableElement.SetNamedMesh(concreteG3nRenderableElement.GetDisplayName(), torusMesh)
 
-			for _, torusInside := range w.GetG3nDetailedElementsByGenre(torusConcreteG3n, "Space") {
+			for _, torusInside := range w.GetG3nDetailedElementsByGenre(concreteG3nRenderableElement, "Space") {
 				diskGeom := geometry.NewDisk(1, 32)
 				diskMat := material.NewStandard(g3ndpalette.GREY)
 				diskMesh := graphic.NewMesh(diskGeom, diskMat)
@@ -170,6 +179,17 @@ func (w *WorldApp) GetG3nDetailedFilteredElements(elementPrefix string) ([]*g3nm
 	filteredElements := []*g3nmash.G3nDetailedElement{}
 	for _, element := range w.elementDictionary {
 		if strings.HasPrefix(element.GetDisplayName(), elementPrefix) {
+			filteredElements = append(filteredElements, element)
+		}
+	}
+
+	return filteredElements, nil
+}
+
+func (w *WorldApp) GetG3nDetailedGenreFilteredElements(genre string) ([]*g3nmash.G3nDetailedElement, error) {
+	filteredElements := []*g3nmash.G3nDetailedElement{}
+	for _, element := range w.elementDictionary {
+		if element.GetDetailedElement().GetGenre() == genre {
 			filteredElements = append(filteredElements, element)
 		}
 	}
