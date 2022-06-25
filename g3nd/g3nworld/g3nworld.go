@@ -10,29 +10,31 @@ import (
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/experimental/collision"
-	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
-	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
 	"github.com/g3n/engine/util"
 	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"tini.com/nute/g3nd/g3nmash"
-	g3ndpalette "tini.com/nute/g3nd/palette"
-	"tini.com/nute/mashupsdk"
-	"tini.com/nute/mashupsdk/guiboot"
-	"tini.com/nute/mashupsdk/server"
+	"github.com/mrjrieke/nute/g3nd/g3nmash"
+	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
+	"github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk/guiboot"
+	"github.com/mrjrieke/nute/mashupsdk/server"
 )
 
 type mashupSdkApiHandler struct {
 }
 
 type worldClientInitHandler struct {
+}
+
+type G3nRenderer interface {
+	Layout(worldApp *WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 }
 
 type WorldApp struct {
@@ -46,6 +48,7 @@ type WorldApp struct {
 	scene               *core.Node
 	cam                 *camera.Camera
 	oc                  *camera.OrbitControl
+	g3nrenderer         G3nRenderer
 
 	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 
@@ -59,7 +62,7 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp(headless bool) *WorldApp {
+func NewWorldApp(headless bool, renderer G3nRenderer) *WorldApp {
 	worldApp = WorldApp{
 		headless:                 headless,
 		MSdkApiHandler:           &mashupSdkApiHandler{},
@@ -67,6 +70,7 @@ func NewWorldApp(headless bool) *WorldApp {
 		elementDictionary:        map[int64]*g3nmash.G3nDetailedElement{},
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
+		g3nrenderer:              renderer,
 	}
 	return &worldApp
 }
@@ -79,37 +83,17 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 	if _, iOk := ev.(InitEvent); iOk {
 
-		torusG3ns, err := w.GetG3nDetailedFilteredElements("Torus")
+		g3nCollection, err := w.GetG3nDetailedGenreFilteredElements("Collection")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, torusG3n := range torusG3ns {
-			torusConcreteG3n := torusG3n
-			if torusG3n.IsAbstract() {
-				if tc, tErr := worldApp.GetG3nDetailedElementById(torusG3n.GetChildElements()[0]); tErr == nil {
-					torusConcreteG3n = tc
-				}
-			}
-
-			torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
-			mat := material.NewStandard(g3ndpalette.DARK_BLUE)
-			torusMesh := graphic.NewMesh(torusGeom, mat)
-			torusMesh.SetLoaderID(torusConcreteG3n.GetDisplayName())
-			torusMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
-			w.scene.Add(torusMesh)
-			torusConcreteG3n.SetNamedMesh(torusConcreteG3n.GetDisplayName(), torusMesh)
-
-			for _, torusInside := range w.GetG3nDetailedElementsByGenre(torusConcreteG3n, "Space") {
-				diskGeom := geometry.NewDisk(1, 32)
-				diskMat := material.NewStandard(g3ndpalette.GREY)
-				diskMesh := graphic.NewMesh(diskGeom, diskMat)
-				diskMesh.SetPositionVec(math32.NewVector3(float32(0.0), float32(0.0), float32(0.0)))
-				diskMesh.SetLoaderID(torusInside.GetDisplayName())
-				w.scene.Add(diskMesh)
-				torusInside.SetNamedMesh(torusInside.GetDisplayName(), diskMesh)
-			}
+		g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection[0].GetDetailedElement().Subgenre)
+		if err != nil {
+			log.Fatal(err)
 		}
+		// Handoff...
+		w.g3nrenderer.Layout(w, g3nRenderableElements)
 	} else {
 
 		// Focus gained...
@@ -177,6 +161,21 @@ func (w *WorldApp) GetG3nDetailedFilteredElements(elementPrefix string) ([]*g3nm
 	return filteredElements, nil
 }
 
+func (w *WorldApp) GetG3nDetailedGenreFilteredElements(genre string) ([]*g3nmash.G3nDetailedElement, error) {
+	filteredElements := []*g3nmash.G3nDetailedElement{}
+	for _, element := range w.elementDictionary {
+		if element.GetDetailedElement().GetGenre() == genre {
+			filteredElements = append(filteredElements, element)
+		}
+	}
+
+	return filteredElements, nil
+}
+
+func (w *WorldApp) AddToScene(node core.INode) *core.Node {
+	return w.scene.Add(node)
+}
+
 func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
 	if g3nElement, g3nElementOk := w.elementDictionary[eid]; g3nElementOk {
 		return g3nElement, nil
@@ -184,7 +183,7 @@ func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedEle
 	return nil, fmt.Errorf("element does not exist: %d", eid)
 }
 
-func (w *WorldApp) GetG3nDetailedElementsByGenre(g3n *g3nmash.G3nDetailedElement, genre string) []*g3nmash.G3nDetailedElement {
+func (w *WorldApp) GetG3nDetailedChildElementsByGenre(g3n *g3nmash.G3nDetailedElement, genre string) []*g3nmash.G3nDetailedElement {
 	results := []*g3nmash.G3nDetailedElement{}
 	for _, childId := range g3n.GetChildElements() {
 		if g3nChild, err := w.GetG3nDetailedElementById(childId); err == nil {

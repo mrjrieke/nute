@@ -9,9 +9,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"tini.com/nute/mashupsdk"
-	"tini.com/nute/mashupsdk/client"
-	"tini.com/nute/mashupsdk/guiboot"
+	"github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk/client"
+	"github.com/mrjrieke/nute/mashupsdk/guiboot"
 )
 
 type HelloContext struct {
@@ -179,8 +179,8 @@ func main() {
 						State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
 						Name:        "ToriOne",
 						Description: "Tori",
-						Genre:       "",
-						Subgenre:    "",
+						Genre:       "Collection",
+						Subgenre:    "Torus",
 						Parentids:   []int64{},
 						Childids:    []int64{6},
 					},

@@ -10,7 +10,7 @@ import (
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
-	"tini.com/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk"
 )
 
 type G3nDetailedElement struct {
