@@ -71,23 +71,13 @@ func main() {
 				State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
 				Name:        "ToriOne",
 				Description: "Tori",
-				Genre:       "",
+				Genre:       "Collection",
 				Subgenre:    "",
 				Parentids:   []int64{},
-				Childids:    []int64{6},
+				Childids:    []int64{7, 8},
 			},
 			{
 				Id:          6,
-				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
-				Name:        "TorusEntity",
-				Description: "",
-				Genre:       "Abstract",
-				Subgenre:    "",
-				Parentids:   []int64{5},
-				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
-			},
-			{
-				Id:          7,
 				State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
 				Name:        "Outside",
 				Alias:       "Outside",
@@ -96,6 +86,26 @@ func main() {
 				Subgenre:    "Exo",
 				Parentids:   nil,
 				Childids:    nil,
+			},
+			{
+				Id:          7,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity-One",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
+			{
+				Id:          8,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity-Two",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 			},
 		}
 		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(

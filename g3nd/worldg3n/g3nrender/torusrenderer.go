@@ -12,9 +12,10 @@ import (
 
 type TorusRenderer struct {
 	GenericRenderer
+	iOffset int
 }
 
-func (*TorusRenderer) NewSolidAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *TorusRenderer) NewSolidAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
 	torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 	mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 	torusMesh := graphic.NewMesh(torusGeom, mat)
@@ -23,7 +24,7 @@ func (*TorusRenderer) NewSolidAtPosition(displayName string, vpos *math32.Vector
 	return torusMesh
 }
 
-func (*TorusRenderer) NewInternalMeshAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *TorusRenderer) NewInternalMeshAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
 	diskGeom := geometry.NewDisk(1, 32)
 	diskMat := material.NewStandard(g3ndpalette.GREY)
 	diskMesh := graphic.NewMesh(diskGeom, diskMat)
@@ -32,8 +33,13 @@ func (*TorusRenderer) NewInternalMeshAtPosition(displayName string, vpos *math32
 	return diskMesh
 }
 
-func (*TorusRenderer) NextCoordinate() *math32.Vector3 {
-	return math32.NewVector3(float32(0.0), float32(0.0), float32(0.0))
+func (tr *TorusRenderer) NextCoordinate() *math32.Vector3 {
+	if tr.iOffset == 0 {
+		tr.iOffset = 1
+		return math32.NewVector3(float32(-2.0), float32(-2.0), float32(-2.0))
+	} else {
+		return math32.NewVector3(float32(2.0), float32(2.0), float32(2.0))
+	}
 }
 
 func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
