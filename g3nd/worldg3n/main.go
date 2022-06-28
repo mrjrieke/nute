@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"embed"
 	"flag"
 	"log"
 	"os"
@@ -16,6 +17,12 @@ import (
 
 var worldCompleteChan chan bool
 
+//go:embed tls/mashup.crt
+var mashupCert embed.FS
+
+//go:embed tls/mashup.key
+var mashupKey embed.FS
+
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
@@ -26,6 +33,8 @@ func main() {
 		log.Fatal(err)
 	}
 	log.SetOutput(worldLog)
+
+	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
 	worldApp := g3nworld.NewWorldApp(*headless, &g3nrender.TorusRenderer{})
 

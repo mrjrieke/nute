@@ -84,6 +84,12 @@ var helloApp HelloApp
 //go:embed gophericon.png
 var gopherIcon embed.FS
 
+//go:embed tls/mashup.crt
+var mashupCert embed.FS
+
+//go:embed tls/mashup.key
+var mashupKey embed.FS
+
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	flag.Parse()
@@ -93,6 +99,8 @@ func main() {
 		log.Fatal(err)
 	}
 	log.SetOutput(helloLog)
+
+	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
 	helloApp = HelloApp{
 		fyneMashupApiHandler:         &fyneMashupApiHandler{},

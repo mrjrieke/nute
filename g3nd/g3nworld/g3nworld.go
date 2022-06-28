@@ -386,6 +386,7 @@ func (w *WorldApp) InitMainWindow() {
 					} else {
 						if g3nDetailedElement.IsItemClicked(itemClicked) {
 							g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
+							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
 						} else {
 							g3nDetailedElement.SetDisplayState(mashupsdk.Rest)

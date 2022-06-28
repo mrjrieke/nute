@@ -8,11 +8,14 @@ import (
 	"math/rand"
 )
 
-//go:embed tls/mashup.crt
 var MashupCert embed.FS
 
-//go:embed tls/mashup.key
 var MashupKey embed.FS
+
+func InitCertKeyPair(mc embed.FS, mk embed.FS) {
+	MashupCert = mc
+	MashupKey = mk
+}
 
 type MashupContext struct {
 	context.Context
