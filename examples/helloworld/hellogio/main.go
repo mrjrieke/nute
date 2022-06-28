@@ -1,13 +1,13 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"image/color"
 	"log"
 	"os"
+	"strings"
 
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
@@ -46,6 +46,12 @@ type HelloApp struct {
 
 var helloApp HelloApp
 
+//go:embed tls/mashup.crt
+var mashupCert embed.FS
+
+//go:embed tls/mashup.key
+var mashupKey embed.FS
+
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
@@ -80,6 +86,8 @@ func main() {
 	}
 	log.SetOutput(helloLog)
 
+	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
+
 	helloApp = HelloApp{
 		gioMashupApiHandler: &gioMashupApiHandler{},
 		HelloContext:        &HelloContext{},
@@ -92,71 +100,33 @@ func main() {
 		gioWidgetElements: []*GioWidgetBundle{
 			{
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent: container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          1,
-						State:       &mashupsdk.MashupElementState{Id: 1, State: int64(mashupsdk.Init)},
-						Name:        "Inside",
-						Description: "",
-						Genre:       "Space",
-						Subgenre:    "Ento",
-						Parentids:   []int64{3},
-						Childids:    nil,
-					},
+					GuiComponent:          nil, //TODO: gio for container.NewTabItem("Inside", widget.NewLabel("The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.")),
+					MashupDetailedElement: nil, // mashupDetailedElementLibrary["{0}-AxialCircle"],
 				},
 			},
 			{
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent: container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          2,
-						State:       &mashupsdk.MashupElementState{Id: 2, State: int64(mashupsdk.Init)},
-						Name:        "Outside",
-						Description: "",
-						Genre:       "Space",
-						Subgenre:    "Exo",
-						Parentids:   nil,
-						Childids:    nil,
-					},
+					GuiComponent:          nil, //TODO: gio for container.NewTabItem("Outside", widget.NewLabel("The magnetic field at any point outside the toroid is zero.")),
+					MashupDetailedElement: nil, //mashupDetailedElementLibrary["Outside"],
+
 				},
 			},
 			{
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent: container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          3,
-						State:       &mashupsdk.MashupElementState{Id: 3, State: int64(mashupsdk.Init)},
-						Name:        "torus",
-						Description: "",
-						Genre:       "Solid",
-						Subgenre:    "Ento",
-						Parentids:   nil,
-						Childids:    []int64{4},
-					},
+					GuiComponent:          nil, //TODO: gio for container.NewTabItem("It", widget.NewLabel("The magnetic field inside the empty space surrounded by the toroid is zero.")),
+					MashupDetailedElement: nil, //mashupDetailedElementLibrary["{0}-Torus"],
+
 				},
 			},
 			{
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent: container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
-						Id:          4,
-						State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Init)},
-						Name:        "Up-Side-Down",
-						Description: "",
-						Genre:       "Attitude",
-						Subgenre:    "",
-						Parentids:   []int64{3},
-						Childids:    nil,
-					},
+					GuiComponent:          nil, // TODO: gio for container.NewTabItem("Up-side-down", widget.NewLabel("Torus is up-side-down")),
+					MashupDetailedElement: nil, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
+
 				},
 			},
 		},
 		gioComponentCache: map[int64]*GioWidgetBundle{},
-	}
-
-	// Build G3nDetailedElement cache.
-	for _, gc := range helloApp.gioWidgetElements {
-		helloApp.gioComponentCache[gc.MashupDetailedElement.Id] = gc
 	}
 
 	go func() {
@@ -164,20 +134,116 @@ func main() {
 		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 
-		DetailedElements := []*mashupsdk.MashupDetailedElement{}
+		DetailedElements := []*mashupsdk.MashupDetailedElement{
+			{
+				Basisid:     -1,
+				State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
+				Name:        "{0}-Torus",
+				Alias:       "It",
+				Description: "",
+				Genre:       "Solid",
+				Subgenre:    "Ento",
+				Parentids:   nil,
+				Childids:    []int64{-2, 4},
+			},
+			{
+				Basisid:     -2,
+				State:       &mashupsdk.MashupElementState{Id: -2, State: int64(mashupsdk.Mutable)},
+				Name:        "{0}-AxialCircle",
+				Alias:       "Inside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Ento",
+				Parentids:   []int64{-1},
+				Childids:    []int64{4},
+			},
+			{
+				Id:          4,
+				State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
+				Name:        "Up-Side-Down",
+				Alias:       "Up-Side-Down",
+				Description: "",
+				Genre:       "Attitude",
+				Subgenre:    "180,0,0",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			{
+				Id:          5,
+				State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
+				Name:        "ToriOne",
+				Description: "Tori",
+				Genre:       "Collection",
+				Subgenre:    "Torus",
+				Parentids:   []int64{},
+				Childids:    []int64{7, 8},
+			},
+			{
+				Id:          6,
+				State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
+				Name:        "Outside",
+				Alias:       "Outside",
+				Description: "",
+				Genre:       "Space",
+				Subgenre:    "Exo",
+				Parentids:   nil,
+				Childids:    nil,
+			},
+			{
+				Id:          7,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
+			{
+				Id:          8,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
+		}
 		for _, fyneComponent := range helloApp.gioComponentCache {
 			DetailedElements = append(DetailedElements, fyneComponent.MashupDetailedElement)
 		}
 		log.Printf("Delivering mashup elements: %d\n", len(DetailedElements))
 
 		var upsertErr error
+		var concreteElementBundle *mashupsdk.MashupDetailedElementBundle
 
 		// Connection with mashup fully established.  Initialize mashup elements.
-		_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
+		concreteElementBundle, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        client.GetServerAuthToken(),
 				DetailedElements: DetailedElements,
 			})
+
+		for _, concreteElement := range concreteElementBundle.DetailedElements {
+			//helloApp.fyneComponentCache[generatedComponent.Basisid]
+			helloApp.gioWidgetElements[concreteElement.Id] = concreteElement
+			if concreteElement.GetName() == "Outside" {
+				helloApp.gioWidgetElements["Outside"].MashupDetailedElement = concreteElement
+			}
+		}
+
+		for _, concreteElement := range concreteElementBundle.DetailedElements {
+			if strings.HasPrefix(concreteElement.GetName(), "TorusEntity") {
+				for _, childId := range concreteElement.Childids {
+					helloApp.TorusParser(childId)
+				}
+			}
+		}
+		// Build G3nDetailedElement cache.
+		for _, gc := range helloApp.gioWidgetElements {
+			helloApp.gioComponentCache[gc.MashupDetailedElement.Id] = gc
+		}
 
 		if upsertErr != nil {
 			log.Printf("Element state initialization failure: %s\n", upsertErr.Error())

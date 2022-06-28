@@ -6,6 +6,11 @@ mkdir -p examples/helloworld/hellofyne/tls
 cp mashup.key examples/helloworld/hellofyne/tls
 cp mashup.crt examples/helloworld/hellofyne/tls
 
+mkdir -p examples/helloworld/hellogio/tls
+cp mashup.key examples/helloworld/hellogio/tls
+cp mashup.crt examples/helloworld/hellogio/tls
+
 mkdir -p g3nd/worldg3n/tls
 cp mashup.key g3nd/worldg3n/tls
 cp mashup.crt g3nd/worldg3n/tls
+
