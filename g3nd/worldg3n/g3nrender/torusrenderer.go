@@ -1,6 +1,8 @@
 package g3nrender
 
 import (
+	"fmt"
+
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
@@ -19,6 +21,7 @@ func (tr *TorusRenderer) NewSolidAtPosition(displayName string, vpos *math32.Vec
 	torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 	mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 	torusMesh := graphic.NewMesh(torusGeom, mat)
+	fmt.Printf("LoaderID: %s\n", displayName)
 	torusMesh.SetLoaderID(displayName)
 	torusMesh.SetPositionVec(vpos)
 	return torusMesh

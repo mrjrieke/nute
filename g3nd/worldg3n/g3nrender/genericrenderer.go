@@ -1,6 +1,8 @@
 package g3nrender
 
 import (
+	"log"
+
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/math32"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
@@ -43,6 +45,9 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 		if g3nRenderableElement.IsAbstract() {
 			if tc, tErr := worldApp.GetG3nDetailedElementById(g3nRenderableElement.GetChildElements()[0]); tErr == nil {
 				concreteG3nRenderableElement = tc
+			} else {
+				log.Printf("Skipping non-concrete abstract element: %d\n", g3nRenderableElement.GetBasisId())
+				continue
 			}
 		}
 

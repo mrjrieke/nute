@@ -96,7 +96,7 @@ func main() {
 
 	helloLog, err := os.OpenFile("hellofyne.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(err.Error(), err)
 	}
 	log.SetOutput(helloLog)
 

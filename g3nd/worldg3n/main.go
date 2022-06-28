@@ -81,7 +81,7 @@ func main() {
 				Name:        "ToriOne",
 				Description: "Tori",
 				Genre:       "Collection",
-				Subgenre:    "",
+				Subgenre:    "Torus",
 				Parentids:   []int64{},
 				Childids:    []int64{7, 8},
 			},
@@ -124,7 +124,7 @@ func main() {
 			})
 
 		if genErr != nil {
-			log.Fatal(genErr)
+			log.Fatalf(genErr.Error(), genErr)
 		} else {
 			generatedElements.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
 
