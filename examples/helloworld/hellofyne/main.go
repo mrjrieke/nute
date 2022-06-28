@@ -84,15 +84,23 @@ var helloApp HelloApp
 //go:embed gophericon.png
 var gopherIcon embed.FS
 
+//go:embed tls/mashup.crt
+var mashupCert embed.FS
+
+//go:embed tls/mashup.key
+var mashupKey embed.FS
+
 func main() {
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	flag.Parse()
 
 	helloLog, err := os.OpenFile("hellofyne.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(err.Error(), err)
 	}
 	log.SetOutput(helloLog)
+
+	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
 	helloApp = HelloApp{
 		fyneMashupApiHandler:         &fyneMashupApiHandler{},
@@ -183,10 +191,21 @@ func main() {
 						Genre:       "Collection",
 						Subgenre:    "Torus",
 						Parentids:   []int64{},
-						Childids:    []int64{6},
+						Childids:    []int64{7, 8},
 					},
 					{
 						Id:          6,
+						State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
+						Name:        "Outside",
+						Alias:       "Outside",
+						Description: "",
+						Genre:       "Space",
+						Subgenre:    "Exo",
+						Parentids:   nil,
+						Childids:    nil,
+					},
+					{
+						Id:          7,
 						State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
 						Name:        "TorusEntity",
 						Description: "",
@@ -196,15 +215,14 @@ func main() {
 						Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 					},
 					{
-						Id:          7,
-						State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
-						Name:        "Outside",
-						Alias:       "Outside",
+						Id:          8,
+						State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+						Name:        "TorusEntity",
 						Description: "",
-						Genre:       "Space",
-						Subgenre:    "Exo",
-						Parentids:   nil,
-						Childids:    nil,
+						Genre:       "Abstract",
+						Subgenre:    "",
+						Parentids:   []int64{5},
+						Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 					},
 				}
 				for _, detailedElement := range helloApp.mashupDetailedElementLibrary {

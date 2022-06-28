@@ -1,6 +1,7 @@
 package g3nworld
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -85,12 +86,12 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 		g3nCollection, err := w.GetG3nDetailedGenreFilteredElements("Collection")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(err.Error(), err)
 		}
 
 		g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection[0].GetDetailedElement().Subgenre)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(err.Error(), err)
 		}
 		// Handoff...
 		w.g3nrenderer.Layout(w, g3nRenderableElements)
@@ -139,11 +140,11 @@ func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetail
 }
 
 func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
-	if g3nDetailedElement.GetBasisId() < 0 {
+	if g3nDetailedElement.GetBasisId() < 0 && g3nDetailedElement.GetDisplayId() == 0 {
 		w.elementLibraryDictionary[g3nDetailedElement.GetBasisId()] = g3nDetailedElement
-		if g3nDetailedElement.GetDisplayId() > 0 {
-			w.elementDictionary[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
-		}
+		// if g3nDetailedElement.GetDisplayId() > 0 {
+		// 	w.elementDictionary[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+		// }
 	} else {
 		w.elementDictionary[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
 	}
@@ -152,6 +153,10 @@ func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetail
 
 func (w *WorldApp) GetG3nDetailedFilteredElements(elementPrefix string) ([]*g3nmash.G3nDetailedElement, error) {
 	filteredElements := []*g3nmash.G3nDetailedElement{}
+	if elementPrefix == "" {
+		log.Printf("No filter provided.  No filtered elements found.\n")
+		return nil, errors.New("no filter provided - no filtered elements found")
+	}
 	for _, element := range w.elementDictionary {
 		if strings.HasPrefix(element.GetDisplayName(), elementPrefix) {
 			filteredElements = append(filteredElements, element)
@@ -386,6 +391,7 @@ func (w *WorldApp) InitMainWindow() {
 					} else {
 						if g3nDetailedElement.IsItemClicked(itemClicked) {
 							g3nDetailedElement.SetDisplayState(mashupsdk.Clicked)
+							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
 						} else {
 							g3nDetailedElement.SetDisplayState(mashupsdk.Rest)

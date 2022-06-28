@@ -108,7 +108,7 @@ func main() {
 	flag.Parse()
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(err.Error(), err)
 	}
 	log.SetOutput(worldLog)
 

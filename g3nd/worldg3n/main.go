@@ -5,6 +5,7 @@ package main
 
 // World is a basic gomobile app.
 import (
+	"embed"
 	"flag"
 	"log"
 	"os"
@@ -16,6 +17,12 @@ import (
 
 var worldCompleteChan chan bool
 
+//go:embed tls/mashup.crt
+var mashupCert embed.FS
+
+//go:embed tls/mashup.key
+var mashupKey embed.FS
+
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
@@ -26,6 +33,8 @@ func main() {
 		log.Fatal(err)
 	}
 	log.SetOutput(worldLog)
+
+	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
 	worldApp := g3nworld.NewWorldApp(*headless, &g3nrender.TorusRenderer{})
 
@@ -71,23 +80,13 @@ func main() {
 				State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
 				Name:        "ToriOne",
 				Description: "Tori",
-				Genre:       "",
-				Subgenre:    "",
+				Genre:       "Collection",
+				Subgenre:    "Torus",
 				Parentids:   []int64{},
-				Childids:    []int64{6},
+				Childids:    []int64{7, 8},
 			},
 			{
 				Id:          6,
-				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
-				Name:        "TorusEntity",
-				Description: "",
-				Genre:       "Abstract",
-				Subgenre:    "",
-				Parentids:   []int64{5},
-				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
-			},
-			{
-				Id:          7,
 				State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
 				Name:        "Outside",
 				Alias:       "Outside",
@@ -97,6 +96,26 @@ func main() {
 				Parentids:   nil,
 				Childids:    nil,
 			},
+			{
+				Id:          7,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity-One",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
+			{
+				Id:          8,
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity-Two",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
 		}
 		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{
@@ -105,7 +124,7 @@ func main() {
 			})
 
 		if genErr != nil {
-			log.Fatal(genErr)
+			log.Fatalf(genErr.Error(), genErr)
 		} else {
 			generatedElements.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
 
