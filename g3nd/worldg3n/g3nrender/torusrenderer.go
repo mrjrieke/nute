@@ -36,7 +36,7 @@ func (tr *TorusRenderer) NewInternalMeshAtPosition(displayName string, vpos *mat
 	return diskMesh
 }
 
-func (tr *TorusRenderer) NextCoordinate() *math32.Vector3 {
+func (tr *TorusRenderer) NextCoordinate(prevPos *math32.Vector3) *math32.Vector3 {
 	if tr.iOffset == 0 {
 		tr.iOffset = 1
 		return math32.NewVector3(float32(-2.0), float32(-2.0), float32(-2.0))
