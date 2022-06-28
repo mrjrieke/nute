@@ -11,5 +11,9 @@ mashupsdk/mashupsdk_grpc.pb.go
 mashupsdk/tls/mashup.crt
 mashupsdk/tls/mashup.key
 
+g3nd/worldg3n/tls/*
+examples/helloworld/hellofyne/tls/*
+
 *.key
+*.crt
 go.sum
