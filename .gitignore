@@ -15,3 +15,4 @@ examples/helloworld/hellofyne/tls/*
 *.key
 *.crt
 go.sum
+thoughtpad.txt
