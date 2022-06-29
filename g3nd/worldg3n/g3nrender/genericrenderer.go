@@ -10,25 +10,25 @@ import (
 )
 
 type G3nRenderer interface {
-	NewSolidAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh
-	NewInternalMeshAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh
-	NextCoordinate(prev *math32.Vector3) *math32.Vector3
+	NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
+	NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
+	NextCoordinate(g3n *g3nmash.G3nDetailedElement, prevG3n *g3nmash.G3nDetailedElement, prev *math32.Vector3) (*g3nmash.G3nDetailedElement, *math32.Vector3)
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 }
 
 type GenericRenderer struct {
 }
 
-func (*GenericRenderer) NewSolidAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
+func (*GenericRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
 	return nil
 }
 
-func (*GenericRenderer) NewInternalMeshAtPosition(displayName string, vpos *math32.Vector3) *graphic.Mesh {
+func (*GenericRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
 	return nil
 }
 
-func (*GenericRenderer) NextCoordinate(prev *math32.Vector3) *math32.Vector3 {
-	return math32.NewVector3(float32(0.0), float32(0.0), float32(0.0))
+func (*GenericRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, prevG3n *g3nmash.G3nDetailedElement, prev *math32.Vector3) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
+	return g3n, math32.NewVector3(float32(0.0), float32(0.0), float32(0.0))
 }
 
 func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
@@ -39,7 +39,8 @@ func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
 func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 	g3Renderer G3nRenderer,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
-	var pos *math32.Vector3
+	var prevPos *math32.Vector3
+	var prevG3n *g3nmash.G3nDetailedElement
 
 	for _, g3nRenderableElement := range g3nRenderableElements {
 		concreteG3nRenderableElement := g3nRenderableElement
@@ -52,15 +53,19 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 			}
 		}
 
-		pos = g3Renderer.NextCoordinate(pos)
-		solidMesh := g3Renderer.NewSolidAtPosition(concreteG3nRenderableElement.GetDisplayName(), pos)
-		worldApp.AddToScene(solidMesh)
-		concreteG3nRenderableElement.SetNamedMesh(concreteG3nRenderableElement.GetDisplayName(), solidMesh)
+		prevG3n, prevPos = g3Renderer.NextCoordinate(concreteG3nRenderableElement, prevG3n, prevPos)
+		solidMesh := g3Renderer.NewSolidAtPosition(concreteG3nRenderableElement, prevPos)
+		if solidMesh != nil {
+			worldApp.AddToScene(solidMesh)
+			concreteG3nRenderableElement.SetNamedMesh(concreteG3nRenderableElement.GetDisplayName(), solidMesh)
+		}
 
 		for _, innerG3n := range worldApp.GetG3nDetailedChildElementsByGenre(concreteG3nRenderableElement, "Space") {
-			negativeMesh := g3Renderer.NewInternalMeshAtPosition(innerG3n.GetDisplayName(), pos)
-			worldApp.AddToScene(negativeMesh)
-			innerG3n.SetNamedMesh(innerG3n.GetDisplayName(), negativeMesh)
+			negativeMesh := g3Renderer.NewInternalMeshAtPosition(innerG3n, prevPos)
+			if negativeMesh != nil {
+				worldApp.AddToScene(negativeMesh)
+				innerG3n.SetNamedMesh(innerG3n.GetDisplayName(), negativeMesh)
+			}
 		}
 	}
 }
