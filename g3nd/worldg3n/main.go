@@ -36,7 +36,10 @@ func main() {
 
 	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
-	worldApp := g3nworld.NewWorldApp(*headless, &g3nrender.TorusRenderer{})
+	mashupRenderer := &g3nrender.MashupRenderer{}
+	mashupRenderer.AddRenderer("Torus", &g3nrender.TorusRenderer{})
+
+	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
 
 	worldApp.InitServer(*callerCreds, *insecure)
 
@@ -48,6 +51,7 @@ func main() {
 				Name:        "{0}-Torus",
 				Alias:       "It",
 				Description: "",
+				Renderer:    "Torus",
 				Genre:       "Solid",
 				Subgenre:    "Ento",
 				Parentids:   nil,
@@ -59,6 +63,7 @@ func main() {
 				Name:        "{0}-AxialCircle",
 				Alias:       "Inside",
 				Description: "",
+				Renderer:    "Torus",
 				Genre:       "Space",
 				Subgenre:    "Ento",
 				Parentids:   []int64{-1},
