@@ -6,8 +6,6 @@ examples/helloworld/bin/*
 examples/helloworld/hellofyne/*.log
 examples/helloworld/hellogio/*.log
 
-mashupsdk/mashupsdk.pb.go
-mashupsdk/mashupsdk_grpc.pb.go
 mashupsdk/tls/mashup.crt
 mashupsdk/tls/mashup.key
 
