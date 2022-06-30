@@ -1,7 +1,8 @@
 package g3nrender
 
 import (
-	"log"
+	"sort"
+	"strings"
 
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/math32"
@@ -9,10 +10,19 @@ import (
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
 )
 
+type G3nCollection []*g3nmash.G3nDetailedElement
+
+func (a G3nCollection) Len() int { return len(a) }
+func (a G3nCollection) Less(i, j int) bool {
+	return strings.Compare(a[i].GetDisplayName(), a[j].GetDisplayName()) < 0
+}
+func (a G3nCollection) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
 type G3nRenderer interface {
 	NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
 	NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
 	NextCoordinate(g3n *g3nmash.G3nDetailedElement, prevG3n *g3nmash.G3nDetailedElement, prev *math32.Vector3) (*g3nmash.G3nDetailedElement, *math32.Vector3)
+	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 }
 
@@ -31,6 +41,11 @@ func (*GenericRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, prevG3n 
 	return g3n, math32.NewVector3(float32(0.0), float32(0.0), float32(0.0))
 }
 
+func (gr *GenericRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection {
+	sort.Sort(g3nRenderableElements)
+	return g3nRenderableElements
+}
+
 func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
 	gr.LayoutBase(worldApp, gr, g3nRenderableElements)
@@ -44,14 +59,6 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 
 	for _, g3nRenderableElement := range g3nRenderableElements {
 		concreteG3nRenderableElement := g3nRenderableElement
-		if g3nRenderableElement.IsAbstract() {
-			if tc, tErr := worldApp.GetG3nDetailedElementById(g3nRenderableElement.GetChildElements()[0]); tErr == nil {
-				concreteG3nRenderableElement = tc
-			} else {
-				log.Printf("Skipping non-concrete abstract element: %d\n", g3nRenderableElement.GetBasisId())
-				continue
-			}
-		}
 
 		prevG3n, prevPos = g3Renderer.NextCoordinate(concreteG3nRenderableElement, prevG3n, prevPos)
 		solidMesh := g3Renderer.NewSolidAtPosition(concreteG3nRenderableElement, prevPos)
