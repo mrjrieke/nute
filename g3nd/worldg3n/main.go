@@ -92,7 +92,7 @@ func main() {
 			},
 			{
 				Id:          6,
-				State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
+				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
 				Name:        "Outside",
 				Alias:       "Outside",
 				Description: "",
@@ -103,7 +103,7 @@ func main() {
 			},
 			{
 				Id:          7,
-				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				State:       &mashupsdk.MashupElementState{Id: 7, State: int64(mashupsdk.Init)},
 				Name:        "TorusEntity-One",
 				Description: "",
 				Genre:       "Abstract",
@@ -113,7 +113,7 @@ func main() {
 			},
 			{
 				Id:          8,
-				State:       &mashupsdk.MashupElementState{Id: 6, State: int64(mashupsdk.Init)},
+				State:       &mashupsdk.MashupElementState{Id: 8, State: int64(mashupsdk.Init)},
 				Name:        "TorusEntity-Two",
 				Description: "",
 				Genre:       "Abstract",
