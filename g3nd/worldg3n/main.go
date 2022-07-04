@@ -55,7 +55,7 @@ func main() {
 				Genre:       "Solid",
 				Subgenre:    "Ento",
 				Parentids:   nil,
-				Childids:    []int64{-2, 4},
+				Childids:    []int64{-2, -3},
 			},
 			{
 				Basisid:     -2,
@@ -67,10 +67,10 @@ func main() {
 				Genre:       "Space",
 				Subgenre:    "Ento",
 				Parentids:   []int64{-1},
-				Childids:    []int64{4},
+				Childids:    []int64{-3, -4},
 			},
 			{
-				Id:          4,
+				Id:          -3,
 				State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
 				Name:        "Up-Side-Down",
 				Alias:       "Up-Side-Down",
@@ -78,6 +78,16 @@ func main() {
 				Genre:       "Attitude",
 				Subgenre:    "180,0,0",
 				Parentids:   nil,
+				Childids:    nil,
+			},
+			{
+				Id:          -3,
+				State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
+				Name:        "Related",
+				Renderer:    "Related",
+				Description: "",
+				Genre:       "Relation",
+				Parentids:   []int64{-2},
 				Childids:    nil,
 			},
 			{

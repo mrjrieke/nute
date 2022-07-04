@@ -21,6 +21,7 @@ func (a G3nCollection) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 type G3nRenderer interface {
 	NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
 	NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
+	NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *graphic.Mesh
 	NextCoordinate(g3n *g3nmash.G3nDetailedElement) (*g3nmash.G3nDetailedElement, *math32.Vector3)
 	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
@@ -34,6 +35,10 @@ func (*GenericRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos
 }
 
 func (*GenericRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+	return nil
+}
+
+func (*GenericRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *graphic.Mesh {
 	return nil
 }
 
@@ -55,15 +60,26 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 	g3Renderer G3nRenderer,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
 	var nextPos *math32.Vector3
+	var prevSolidPos *math32.Vector3
 
 	for _, g3nRenderableElement := range g3nRenderableElements {
 		concreteG3nRenderableElement := g3nRenderableElement
 
+		prevSolidPos = nextPos
 		_, nextPos = g3Renderer.NextCoordinate(concreteG3nRenderableElement)
 		solidMesh := g3Renderer.NewSolidAtPosition(concreteG3nRenderableElement, nextPos)
 		if solidMesh != nil {
 			worldApp.AddToScene(solidMesh)
 			concreteG3nRenderableElement.SetNamedMesh(concreteG3nRenderableElement.GetDisplayName(), solidMesh)
+		}
+
+		for _, relatedG3n := range worldApp.GetG3nDetailedChildElementsByGenre(concreteG3nRenderableElement, "Space") {
+			relatedMesh := g3Renderer.NewRelatedMeshAtPosition(concreteG3nRenderableElement, nextPos, prevSolidPos)
+			if relatedMesh != nil {
+				worldApp.AddToScene(relatedMesh)
+				concreteG3nRenderableElement.SetNamedMesh(relatedG3n.GetDisplayName(), relatedMesh)
+			}
+
 		}
 
 		for _, innerG3n := range worldApp.GetG3nDetailedChildElementsByGenre(concreteG3nRenderableElement, "Space") {
