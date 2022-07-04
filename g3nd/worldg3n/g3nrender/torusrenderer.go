@@ -36,6 +36,10 @@ func (tr *TorusRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedEleme
 	return diskMesh
 }
 
+func (tr *TorusRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+	return nil
+}
+
 func (tr *TorusRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
 	if tr.iOffset == 0 {
 		tr.iOffset = 1

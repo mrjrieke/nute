@@ -44,6 +44,17 @@ func (mr *MashupRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElem
 	}
 }
 
+func (mr *MashupRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+	if g3n == nil {
+		return nil
+	}
+	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
+		return renderer.NewRelatedMeshAtPosition(g3n, vpos, vprevpos)
+	} else {
+		return nil
+	}
+}
+
 func (mr *MashupRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection {
 	if len(g3nRenderableElements) == 0 {
 		return g3nRenderableElements
@@ -80,6 +91,7 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 			}
 		}
 		rendererName := concreteG3nRenderableElement.GetDetailedElement().GetRenderer()
+
 		if _, ok := mr.renderers[rendererName]; ok {
 			if _, renderOk := elementsByRenderer[rendererName]; !renderOk {
 				elementsByRenderer[rendererName] = []*g3nmash.G3nDetailedElement{}
