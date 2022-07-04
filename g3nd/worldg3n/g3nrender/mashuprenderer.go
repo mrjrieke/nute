@@ -44,7 +44,7 @@ func (mr *MashupRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElem
 	}
 }
 
-func (mr *MashupRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *graphic.Mesh {
+func (mr *MashupRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
 	if g3n == nil {
 		return nil
 	}
@@ -67,9 +67,9 @@ func (mr *MashupRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElement
 	}
 }
 
-func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
+func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
 	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
-		return renderer.NextCoordinate(g3n)
+		return renderer.NextCoordinate(g3n, totalElements)
 	} else {
 		// Don't touch...
 		return g3n, nil

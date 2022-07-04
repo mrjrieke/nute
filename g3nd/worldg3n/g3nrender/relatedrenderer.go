@@ -28,7 +28,7 @@ func (tr *RelatedRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedEle
 	return nil
 }
 
-func (tr *RelatedRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) graphic.Mesh {
+func (tr *RelatedRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
 	spherGeom := geometry.NewSphere(1.0, 5, 5)
 	sphereMat := material.NewStandard(g3ndpalette.GREY)
 	sphereMesh := graphic.NewMesh(spherGeom, sphereMat)
@@ -36,10 +36,10 @@ func (tr *RelatedRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElem
 	sphereMesh.SetLoaderID(g3n.GetDisplayName())
 	relatedMesh := RelatedMesh{Mesh: *sphereMesh, PrevPos: vprevpos}
 
-	return relatedMesh
+	return &relatedMesh
 }
 
-func (tr *RelatedRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
+func (tr *RelatedRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
 	if tr.iOffset == 0 {
 		tr.iOffset = 1
 		return g3n, math32.NewVector3(float32(-2.0), float32(-2.0), float32(-2.0))
