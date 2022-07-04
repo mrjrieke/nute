@@ -56,12 +56,12 @@ func (mr *MashupRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElement
 	}
 }
 
-func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, prevG3n *g3nmash.G3nDetailedElement, prevPos *math32.Vector3) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
+func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
 	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
-		return renderer.NextCoordinate(g3n, prevG3n, prevPos)
+		return renderer.NextCoordinate(g3n)
 	} else {
 		// Don't touch...
-		return g3n, prevPos
+		return g3n, nil
 	}
 }
 
