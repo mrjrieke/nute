@@ -88,6 +88,9 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 		if err != nil {
 			log.Fatalf(err.Error(), err)
 		}
+		if len(g3nCollection) == 0 {
+			log.Fatalf("No elements to render.  If running standalone, provide -headless flag.")
+		}
 
 		g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection[0].GetDetailedElement().Subgenre)
 		if err != nil {
