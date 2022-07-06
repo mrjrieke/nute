@@ -76,7 +76,7 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 		}
 
 		for _, relatedG3n := range worldApp.GetG3nDetailedChildElementsByGenre(concreteG3nRenderableElement, "Related") {
-			relatedMesh := g3Renderer.NewRelatedMeshAtPosition(concreteG3nRenderableElement, nextPos, prevSolidPos)
+			relatedMesh := g3Renderer.NewRelatedMeshAtPosition(relatedG3n, nextPos, prevSolidPos)
 			if relatedMesh != nil {
 				worldApp.AddToScene(relatedMesh)
 				concreteG3nRenderableElement.SetNamedMesh(relatedG3n.GetDisplayName(), &relatedMesh.Mesh)
@@ -88,6 +88,13 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 			if negativeMesh != nil {
 				worldApp.AddToScene(negativeMesh)
 				innerG3n.SetNamedMesh(innerG3n.GetDisplayName(), negativeMesh)
+			}
+			for _, relatedG3n := range worldApp.GetG3nDetailedChildElementsByGenre(innerG3n, "Related") {
+				relatedMesh := g3Renderer.NewRelatedMeshAtPosition(relatedG3n, nextPos, prevSolidPos)
+				if relatedMesh != nil {
+					worldApp.AddToScene(relatedMesh)
+					innerG3n.SetNamedMesh(relatedG3n.GetDisplayName(), &relatedMesh.Mesh)
+				}
 			}
 		}
 	}

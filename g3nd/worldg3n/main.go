@@ -38,6 +38,7 @@ func main() {
 
 	mashupRenderer := &g3nrender.MashupRenderer{}
 	mashupRenderer.AddRenderer("Torus", &g3nrender.TorusRenderer{})
+	mashupRenderer.AddRenderer("Related", &g3nrender.RelatedRenderer{})
 
 	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
 
@@ -71,7 +72,7 @@ func main() {
 			},
 			{
 				Id:          -3,
-				State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
+				State:       &mashupsdk.MashupElementState{Id: -3, State: int64(mashupsdk.Mutable)},
 				Name:        "Up-Side-Down",
 				Alias:       "Up-Side-Down",
 				Description: "",
@@ -81,12 +82,12 @@ func main() {
 				Childids:    nil,
 			},
 			{
-				Id:          -3,
-				State:       &mashupsdk.MashupElementState{Id: 4, State: int64(mashupsdk.Mutable)},
-				Name:        "Related",
+				Basisid:     -4,
+				State:       &mashupsdk.MashupElementState{Id: -4, State: int64(mashupsdk.Mutable)},
+				Name:        "{0}-Related",
 				Renderer:    "Related",
 				Description: "",
-				Genre:       "Relation",
+				Genre:       "Related",
 				Parentids:   []int64{-2},
 				Childids:    nil,
 			},
