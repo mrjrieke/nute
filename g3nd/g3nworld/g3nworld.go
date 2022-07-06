@@ -329,7 +329,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.mainWin = a
 		}
 		log.Printf("Frame rater setup.")
-		w.frameRater = util.NewFrameRater(1)
+		w.frameRater = util.NewFrameRater(10)
 		log.Printf("Frame rater setup complete.")
 
 		displayHint := <-w.displaySetupChan
@@ -467,6 +467,7 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
+		w.frameRater.Start()
 		for _, g3nDetailedElement := range w.concreteElements {
 			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
 				if g3nDetailedElement.IsBackground() {

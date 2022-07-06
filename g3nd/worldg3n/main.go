@@ -131,6 +131,16 @@ func main() {
 				Parentids:   []int64{5},
 				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 			},
+			{
+				Id:          9,
+				State:       &mashupsdk.MashupElementState{Id: 9, State: int64(mashupsdk.Init)},
+				Name:        "TorusEntity-Three",
+				Description: "",
+				Genre:       "Abstract",
+				Subgenre:    "",
+				Parentids:   []int64{5},
+				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+			},
 		}
 		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{

@@ -41,12 +41,18 @@ func (tr *TorusRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElemen
 }
 
 func (tr *TorusRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
-	if tr.iOffset == 0 {
-		tr.iOffset = 1
+	switch tr.iOffset {
+	case 0:
+		tr.iOffset = tr.iOffset + 1
+		return g3n, math32.NewVector3(float32(1.0), float32(1.0), float32(1.0))
+	case 1:
+		tr.iOffset = tr.iOffset + 1
 		return g3n, math32.NewVector3(float32(-2.0), float32(-2.0), float32(-2.0))
-	} else {
-		return g3n, math32.NewVector3(float32(2.0), float32(2.0), float32(2.0))
+	case 2:
+		tr.iOffset = tr.iOffset + 1
+		return g3n, math32.NewVector3(float32(2.0), float32(-2.0), float32(2.0))
 	}
+	return nil, nil
 }
 
 func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
