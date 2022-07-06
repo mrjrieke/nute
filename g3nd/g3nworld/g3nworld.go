@@ -36,6 +36,7 @@ type worldClientInitHandler struct {
 
 type G3nRenderer interface {
 	Layout(worldApp *WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
+	HandleStateChange(worldApp *WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 }
 
 type WorldApp struct {
@@ -258,16 +259,15 @@ func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 }
 
 func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
-	itemColor := g3ndpalette.DARK_BLUE
-	itemClickedColor := g3ndpalette.DARK_RED
-
 	changedElements := []*mashupsdk.MashupElementState{}
-	visitedNodes := map[int64]bool{}
+	attitudeVisitedNodes := map[int64]bool{}
 	for _, g3nDetailedElement := range w.concreteElements {
-		var changed bool
-		g3nColor := itemColor
+		if g3nDetailedElement.IsAbstract() {
+			continue
+		}
+
+		changed := worldApp.g3nrenderer.HandleStateChange(w, g3nDetailedElement)
 		if g3nDetailedElement.IsItemActive() {
-			g3nColor = itemClickedColor
 			if g3nDetailedElement.HasAttitudeAdjustment() {
 				log.Printf("G3n Has parents\n")
 				parentIds := g3nDetailedElement.GetParentElements()
@@ -276,40 +276,23 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
 						g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
 					}
-					visitedNodes[parentId] = true
+					attitudeVisitedNodes[parentId] = true
 				}
 				log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
 
 				g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
 			} else {
-				if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+				if _, vOk := attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
 					g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
-					visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+					attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
 				}
 			}
 		} else {
-			if g3nDetailedElement.IsAbstract() {
-				continue
-			}
-
-			if g3nDetailedElement.IsBackground() {
-				if g3nDetailedElement.IsItemActive() {
-					// No items clicked means background is clicked.
-					g3nColor = itemClickedColor
-				} else {
-					g3nColor = g3ndpalette.GREY
-				}
-			} else {
-				if g3nDetailedElement.IsBackgroundElement() {
-					g3nColor = g3ndpalette.GREY
-				}
-			}
-			if _, vOk := visitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+			if _, vOk := attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
 				g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
-				visitedNodes[g3nDetailedElement.GetDisplayId()] = true
+				attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
 			}
 		}
-		changed = g3nDetailedElement.SetColor(g3nColor)
 
 		if changed {
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())

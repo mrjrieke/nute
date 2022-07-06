@@ -25,6 +25,7 @@ type G3nRenderer interface {
 	NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3)
 	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
+	HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 }
 
 type GenericRenderer struct {
@@ -49,6 +50,10 @@ func (*GenericRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalEle
 func (gr *GenericRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection {
 	sort.Sort(g3nRenderableElements)
 	return g3nRenderableElements
+}
+
+func (gr *GenericRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
+	return false
 }
 
 func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
