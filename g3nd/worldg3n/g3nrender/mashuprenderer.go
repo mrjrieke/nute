@@ -106,3 +106,12 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 	}
 
 }
+
+func (mr *MashupRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
+	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
+		return renderer.HandleStateChange(worldApp, g3n)
+	} else {
+		// Don't touch...
+		return false
+	}
+}

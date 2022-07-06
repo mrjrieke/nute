@@ -59,3 +59,28 @@ func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
 	tr.GenericRenderer.LayoutBase(worldApp, tr, g3nRenderableElements)
 }
+
+func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
+	itemColor := g3ndpalette.DARK_BLUE
+	itemClickedColor := g3ndpalette.DARK_RED
+	g3nColor := itemColor
+
+	if g3nDetailedElement.IsItemActive() {
+		g3nColor = itemClickedColor
+	} else {
+		if g3nDetailedElement.IsBackground() {
+			if g3nDetailedElement.IsItemActive() {
+				// No items clicked means background is clicked.
+				g3nColor = itemClickedColor
+			} else {
+				g3nColor = g3ndpalette.GREY
+			}
+		} else {
+			if g3nDetailedElement.IsBackgroundElement() {
+				g3nColor = g3ndpalette.GREY
+			}
+		}
+	}
+
+	return g3nDetailedElement.SetColor(g3nColor)
+}
