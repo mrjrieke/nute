@@ -295,7 +295,6 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 				}
 			}
 		} else {
-			// TODO>>>
 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
 		}
 
@@ -392,7 +391,9 @@ func (w *WorldApp) InitMainWindow() {
 							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
 							for _, clickedElement := range w.clickedElements {
-								clickedElement.SetDisplayState(mashupsdk.Rest)
+								if clickedElement.GetDisplayId() != g3nDetailedElement.GetDisplayId() {
+									clickedElement.SetDisplayState(mashupsdk.Rest)
+								}
 							}
 							for clickedId := range w.clickedElements {
 								delete(w.clickedElements, clickedId)
@@ -405,7 +406,9 @@ func (w *WorldApp) InitMainWindow() {
 				if !itemMatched {
 					w.backgroundG3n.SetDisplayState(mashupsdk.Clicked)
 					for _, clickedElement := range w.clickedElements {
-						clickedElement.SetDisplayState(mashupsdk.Rest)
+						if clickedElement.GetDisplayId() != w.backgroundG3n.GetDisplayId() {
+							clickedElement.SetDisplayState(mashupsdk.Rest)
+						}
 					}
 					for clickedId := range w.clickedElements {
 						delete(w.clickedElements, clickedId)
@@ -456,15 +459,13 @@ func (w *WorldApp) InitMainWindow() {
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		w.frameRater.Start()
-		// if backgroundIndex, iOk := w.elementLoaderIndex["Outside"]; iOk {
-		// 	if g3nDetailedElement, bgOk := w.concreteElements[backgroundIndex]; bgOk {
-		// 		if g3nDetailedElement.IsItemActive() {
-		// 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.DARK_RED, 1.0)
-		// 		} else {
-		// 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.GREY, 1.0)
-		// 		}
-		// 	}
-		// }
+		if backgroundIndex, iOk := w.elementLoaderIndex["Outside"]; iOk {
+			if g3nDetailedElement, bgOk := w.concreteElements[backgroundIndex]; bgOk {
+				if g3nDetailedElement.GetColor() != nil {
+					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
+				}
+			}
+		}
 		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
 
