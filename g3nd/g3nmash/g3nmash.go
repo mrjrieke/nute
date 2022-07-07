@@ -16,6 +16,7 @@ import (
 type G3nDetailedElement struct {
 	detailedElement *mashupsdk.MashupDetailedElement
 	meshComposite   map[string]*graphic.Mesh // One or more meshes associated with element.
+	color           *math32.Color
 	attitudes       []float32
 }
 
@@ -244,6 +245,10 @@ func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElemen
 }
 
 func (g *G3nDetailedElement) SetColor(color *math32.Color) bool {
+	g.color = color
+	if g.IsBackground() {
+		return true
+	}
 	if rootMesh, rootOk := g.meshComposite[g.detailedElement.Name]; rootOk {
 		if standardMaterial, ok := rootMesh.Graphic.GetMaterial(0).(*material.Standard); ok {
 			ambient := standardMaterial.AmbientColor()
@@ -254,4 +259,8 @@ func (g *G3nDetailedElement) SetColor(color *math32.Color) bool {
 		}
 	}
 	return false
+}
+
+func (g *G3nDetailedElement) GetColor() *math32.Color {
+	return g.color
 }

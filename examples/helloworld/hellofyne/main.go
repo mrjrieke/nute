@@ -201,6 +201,7 @@ func main() {
 						Name:        "Outside",
 						Alias:       "Outside",
 						Description: "",
+						Renderer:    "Background",
 						Genre:       "Space",
 						Subgenre:    "Exo",
 						Parentids:   nil,

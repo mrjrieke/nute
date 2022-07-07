@@ -267,20 +267,27 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 		}
 
 		changed := worldApp.g3nrenderer.HandleStateChange(w, g3nDetailedElement)
-		if g3nDetailedElement.IsItemActive() {
-			if g3nDetailedElement.HasAttitudeAdjustment() {
-				log.Printf("G3n Has parents\n")
-				parentIds := g3nDetailedElement.GetParentElements()
-				g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
-				for _, parentId := range parentIds {
-					if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
-						g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+		if !g3nDetailedElement.IsBackground() {
+			if g3nDetailedElement.IsItemActive() {
+				if g3nDetailedElement.HasAttitudeAdjustment() {
+					log.Printf("G3n Has parents\n")
+					parentIds := g3nDetailedElement.GetParentElements()
+					g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
+					for _, parentId := range parentIds {
+						if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
+							g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+						}
+						attitudeVisitedNodes[parentId] = true
 					}
-					attitudeVisitedNodes[parentId] = true
-				}
-				log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
+					log.Printf("G3n adjusting for parents: %d\n", len(g3nParentDetailedElements))
 
-				g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
+					g3nDetailedElement.AdjustAttitude(g3nParentDetailedElements)
+				} else {
+					if _, vOk := attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
+						g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
+						attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
+					}
+				}
 			} else {
 				if _, vOk := attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
 					g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
@@ -288,10 +295,8 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 				}
 			}
 		} else {
-			if _, vOk := attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()]; !vOk {
-				g3nDetailedElement.AdjustAttitude([]*g3nmash.G3nDetailedElement{g3nDetailedElement})
-				attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
-			}
+			// TODO>>>
+			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
 		}
 
 		if changed {
@@ -451,15 +456,15 @@ func (w *WorldApp) InitMainWindow() {
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		w.frameRater.Start()
-		for _, g3nDetailedElement := range w.concreteElements {
-			if g3nDetailedElement.GetDisplayState() != mashupsdk.Rest {
-				if g3nDetailedElement.IsBackground() {
-					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.DARK_RED, 1.0)
-				} else {
-					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.GREY, 1.0)
-				}
-			}
-		}
+		// if backgroundIndex, iOk := w.elementLoaderIndex["Outside"]; iOk {
+		// 	if g3nDetailedElement, bgOk := w.concreteElements[backgroundIndex]; bgOk {
+		// 		if g3nDetailedElement.IsItemActive() {
+		// 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.DARK_RED, 1.0)
+		// 		} else {
+		// 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3ndpalette.GREY, 1.0)
+		// 		}
+		// 	}
+		// }
 		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
 
