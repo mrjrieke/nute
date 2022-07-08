@@ -38,6 +38,7 @@ func main() {
 
 	mashupRenderer := &g3nrender.MashupRenderer{}
 	mashupRenderer.AddRenderer("Torus", &g3nrender.TorusRenderer{})
+	mashupRenderer.AddRenderer("Background", &g3nrender.BackgroundRenderer{})
 
 	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
 
@@ -96,6 +97,7 @@ func main() {
 				Name:        "Outside",
 				Alias:       "Outside",
 				Description: "",
+				Renderer:    "Background",
 				Genre:       "Space",
 				Subgenre:    "Exo",
 				Parentids:   nil,
