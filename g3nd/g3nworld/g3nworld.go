@@ -91,20 +91,22 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 	if _, iOk := ev.(InitEvent); iOk {
 
-		g3nCollection, err := w.GetG3nDetailedGenreFilteredElements("Collection")
+		g3nCollections, err := w.GetG3nDetailedGenreFilteredElements("Collection")
 		if err != nil {
 			log.Fatalf(err.Error(), err)
 		}
-		if len(g3nCollection) == 0 {
+		if len(g3nCollections) == 0 {
 			log.Fatalf("No elements to render.  If running standalone, provide -headless flag.")
 		}
 
-		g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection[0].GetDetailedElement().Subgenre)
-		if err != nil {
-			log.Fatalf(err.Error(), err)
+		for _, g3nCollection := range g3nCollections {
+			g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection.GetDetailedElement().Subgenre)
+			if err != nil {
+				log.Fatalf(err.Error(), err)
+			}
+			// Handoff...
+			w.g3nrenderer.Layout(w, g3nRenderableElements)
 		}
-		// Handoff...
-		w.g3nrenderer.Layout(w, g3nRenderableElements)
 	} else {
 
 		// Focus gained...
