@@ -75,28 +75,32 @@ func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalE
 		return g3n, nil
 	}
 }
+func (mr *MashupRenderer) LayoutElement(worldApp *g3nworld.WorldApp, elementsByRenderer map[string][]*g3nmash.G3nDetailedElement, concreteG3nRenderableElement *g3nmash.G3nDetailedElement) {
+	rendererName := concreteG3nRenderableElement.GetDetailedElement().GetRenderer()
+
+	if _, ok := mr.renderers[rendererName]; ok {
+		if _, renderOk := elementsByRenderer[rendererName]; !renderOk {
+			elementsByRenderer[rendererName] = []*g3nmash.G3nDetailedElement{}
+		}
+		elementsByRenderer[rendererName] = append(elementsByRenderer[rendererName], concreteG3nRenderableElement)
+	}
+}
 
 func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 	g3nRenderableElementCollection []*g3nmash.G3nDetailedElement) {
 	elementsByRenderer := map[string][]*g3nmash.G3nDetailedElement{}
 
 	for _, g3nRenderableElement := range g3nRenderableElementCollection {
-		concreteG3nRenderableElement := g3nRenderableElement
 		if g3nRenderableElement.IsAbstract() {
-			if tc, tErr := worldApp.GetG3nDetailedElementById(g3nRenderableElement.GetChildElements()[0]); tErr == nil {
-				concreteG3nRenderableElement = tc
-			} else {
-				log.Printf("Skipping non-concrete abstract element: %d\n", g3nRenderableElement.GetBasisId())
-				continue
+			for _, concreteComponentRenderable := range g3nRenderableElement.GetChildElements() {
+				if tc, tErr := worldApp.GetG3nDetailedElementById(concreteComponentRenderable); tErr == nil {
+					mr.LayoutElement(worldApp, elementsByRenderer, tc)
+				} else {
+					log.Printf("Skipping non-concrete abstract element: %d\n", g3nRenderableElement.GetBasisId())
+					continue
+				}
 			}
-		}
-		rendererName := concreteG3nRenderableElement.GetDetailedElement().GetRenderer()
-
-		if _, ok := mr.renderers[rendererName]; ok {
-			if _, renderOk := elementsByRenderer[rendererName]; !renderOk {
-				elementsByRenderer[rendererName] = []*g3nmash.G3nDetailedElement{}
-			}
-			elementsByRenderer[rendererName] = append(elementsByRenderer[rendererName], concreteG3nRenderableElement)
+			continue
 		}
 	}
 
