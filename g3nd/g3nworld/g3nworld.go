@@ -206,7 +206,7 @@ func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedEle
 
 func (w *WorldApp) GetG3nDetailedChildElementsByGenre(g3n *g3nmash.G3nDetailedElement, genre string) []*g3nmash.G3nDetailedElement {
 	results := []*g3nmash.G3nDetailedElement{}
-	for _, childId := range g3n.GetChildElements() {
+	for _, childId := range g3n.GetChildElementIds() {
 		if g3nChild, err := w.GetG3nDetailedElementById(childId); err == nil {
 			if g3nChild.HasGenre(genre) {
 				results = append(results, g3nChild)
@@ -221,6 +221,38 @@ func (w *WorldApp) GetG3nDetailedLibraryElementById(eid int64) (*g3nmash.G3nDeta
 		return g3nElement, nil
 	}
 	return nil, fmt.Errorf("element does not exist: %d", eid)
+}
+
+func (w *WorldApp) GetParentElements(g3nDetailedElement *g3nmash.G3nDetailedElement) []*g3nmash.G3nDetailedElement {
+	parentIds := g3nDetailedElement.GetParentElementIds()
+	g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
+	for _, parentId := range parentIds {
+		if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
+			g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+		}
+	}
+
+	return g3nParentDetailedElements
+}
+
+func (w *WorldApp) GetSiblingElements(g3nDetailedElement *g3nmash.G3nDetailedElement) []*g3nmash.G3nDetailedElement {
+	parentIds := g3nDetailedElement.GetParentElementIds()
+	g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
+	for _, parentId := range parentIds {
+		if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
+			g3nParentDetailedElements = append(g3nParentDetailedElements, g3parent)
+		}
+	}
+	g3nSiblingDetailedElements := []*g3nmash.G3nDetailedElement{}
+
+	for _, g3nParentDetailedElement := range g3nParentDetailedElements {
+		for _, childId := range g3nParentDetailedElement.GetChildElementIds() {
+			if g3nSibling, gsErr := w.GetG3nDetailedElementById(childId); gsErr == nil {
+				g3nSiblingDetailedElements = append(g3nSiblingDetailedElements, g3nSibling)
+			}
+		}
+	}
+	return g3nSiblingDetailedElements
 }
 
 func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INode, []collision.Intersect) {
@@ -273,7 +305,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 			if g3nDetailedElement.IsItemActive() {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
 					log.Printf("G3n Has parents\n")
-					parentIds := g3nDetailedElement.GetParentElements()
+					parentIds := g3nDetailedElement.GetParentElementIds()
 					g3nParentDetailedElements := []*g3nmash.G3nDetailedElement{}
 					for _, parentId := range parentIds {
 						if g3parent, gpErr := w.GetG3nDetailedElementById(parentId); gpErr == nil {
@@ -516,7 +548,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 			g3nDetailedElement.SetDisplayState(mashupsdk.Rest)
 		}
 
-		for _, childId := range g3nDetailedElement.GetChildElements() {
+		for _, childId := range g3nDetailedElement.GetChildElementIds() {
 			if childId < 0 {
 				incompleteG3nElements = append(incompleteG3nElements, g3nDetailedElement)
 				break
@@ -536,7 +568,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 		for _, incompleteG3nElement := range incompleteG3nElements {
 			newChildIds := []int64{}
 
-			for _, childId := range incompleteG3nElement.GetChildElements() {
+			for _, childId := range incompleteG3nElement.GetChildElementIds() {
 				if childId < 0 {
 					if libElement, err := worldApp.GetG3nDetailedLibraryElementById(childId); err == nil {
 						clonedChild := worldApp.CloneG3nDetailedElement(libElement, &generatedElements)

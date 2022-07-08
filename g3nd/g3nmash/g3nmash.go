@@ -77,7 +77,7 @@ func CloneG3nDetailedElement(
 	}
 
 	newChildIds := []int64{}
-	for _, childId := range g3n.GetChildElements() {
+	for _, childId := range g3n.GetChildElementIds() {
 		if childId < 0 {
 			if libElement, err := getG3nDetailedLibraryElementById(childId); err == nil {
 				clonedChildElement := CloneG3nDetailedElement(getG3nDetailedElementById, getG3nDetailedLibraryElementById, indexG3nDetailedElement, newIdPumpFunc, libElement, generatedElements)
@@ -90,7 +90,7 @@ func CloneG3nDetailedElement(
 			// Deal with concrete element.
 			if concreteElement, err := getG3nDetailedElementById(childId); err == nil {
 				newChildIds = append(newChildIds, concreteElement.GetDisplayId())
-				existingParents := concreteElement.GetParentElements()
+				existingParents := concreteElement.GetParentElementIds()
 				if len(existingParents) == 0 {
 					existingParents = []int64{}
 				}
@@ -179,7 +179,7 @@ func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
 	}
 }
 
-func (g *G3nDetailedElement) GetChildElements() []int64 {
+func (g *G3nDetailedElement) GetChildElementIds() []int64 {
 	if g.detailedElement.Childids != nil {
 		return g.detailedElement.Childids
 	} else {
@@ -195,7 +195,7 @@ func (g *G3nDetailedElement) SetParentElements(parentIds []int64) {
 	g.detailedElement.Parentids = parentIds
 }
 
-func (g *G3nDetailedElement) GetParentElements() []int64 {
+func (g *G3nDetailedElement) GetParentElementIds() []int64 {
 	if g.detailedElement.Parentids != nil {
 		return g.detailedElement.Parentids
 	} else {

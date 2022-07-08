@@ -75,7 +75,7 @@ func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalE
 		return g3n, nil
 	}
 }
-func (mr *MashupRenderer) LayoutElement(worldApp *g3nworld.WorldApp, elementsByRenderer map[string][]*g3nmash.G3nDetailedElement, concreteG3nRenderableElement *g3nmash.G3nDetailedElement) {
+func (mr *MashupRenderer) CollectElementByRenderer(worldApp *g3nworld.WorldApp, elementsByRenderer map[string][]*g3nmash.G3nDetailedElement, concreteG3nRenderableElement *g3nmash.G3nDetailedElement) {
 	rendererName := concreteG3nRenderableElement.GetDetailedElement().GetRenderer()
 
 	if _, ok := mr.renderers[rendererName]; ok {
@@ -92,9 +92,9 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 
 	for _, g3nRenderableElement := range g3nRenderableElementCollection {
 		if g3nRenderableElement.IsAbstract() {
-			for _, concreteComponentRenderable := range g3nRenderableElement.GetChildElements() {
+			for _, concreteComponentRenderable := range g3nRenderableElement.GetChildElementIds() {
 				if tc, tErr := worldApp.GetG3nDetailedElementById(concreteComponentRenderable); tErr == nil {
-					mr.LayoutElement(worldApp, elementsByRenderer, tc)
+					mr.CollectElementByRenderer(worldApp, elementsByRenderer, tc)
 				} else {
 					log.Printf("Skipping non-concrete abstract element: %d\n", g3nRenderableElement.GetBasisId())
 					continue
