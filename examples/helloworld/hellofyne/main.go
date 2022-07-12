@@ -34,6 +34,7 @@ type HelloApp struct {
 	mainWin                      fyne.Window
 	mashupDisplayContext         *mashupsdk.MashupDisplayContext
 	mashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
+	elementLoaderIndex           map[string]int64 // mashup indexes by Name
 	fyneWidgetElements           map[string]*FyneWidgetBundle
 }
 
@@ -108,6 +109,7 @@ func main() {
 		mainWin:                      nil,
 		mashupDisplayContext:         &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
 		mashupDetailedElementLibrary: map[int64]*mashupsdk.MashupDetailedElement{}, // mashupDetailedElementLibrary,
+		elementLoaderIndex:           map[string]int64{},                           // elementLoaderIndex
 		fyneWidgetElements: map[string]*FyneWidgetBundle{
 			"Inside": {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
@@ -227,6 +229,16 @@ func main() {
 						Parentids:   []int64{5},
 						Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 					},
+					{
+						Id:          9,
+						State:       &mashupsdk.MashupElementState{Id: 9, State: int64(mashupsdk.Init)},
+						Name:        "TorusEntity-Three",
+						Description: "",
+						Genre:       "Abstract",
+						Subgenre:    "",
+						Parentids:   []int64{5},
+						Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
+					},
 				}
 				for _, detailedElement := range helloApp.mashupDetailedElementLibrary {
 					DetailedElements = append(DetailedElements, detailedElement)
@@ -247,6 +259,8 @@ func main() {
 				for _, concreteElement := range concreteElementBundle.DetailedElements {
 					//helloApp.fyneComponentCache[generatedComponent.Basisid]
 					helloApp.mashupDetailedElementLibrary[concreteElement.Id] = concreteElement
+					helloApp.elementLoaderIndex[concreteElement.Name] = concreteElement.Id
+
 					if concreteElement.GetName() == "Outside" {
 						helloApp.fyneWidgetElements["Outside"].MashupDetailedElement = concreteElement
 					}
@@ -291,13 +305,20 @@ func main() {
 		torusMenu := container.NewAppTabs(
 			helloApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),       // inside
 			helloApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),      // outside
-			helloApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),           // IT
+			helloApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),           // It
 			helloApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem), // Upside down
 		)
 		torusMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
 			// Lookup by name instead and try to keep track of any name changes instead...
 			log.Printf("Selected: %s\n", tabItem.Text)
+			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[tabItem.Text]; miOk {
+				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
+				if mashupDetailedElement.Alias != "" {
+					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnClicked()
+					return
+				}
+			}
 			helloApp.fyneWidgetElements[tabItem.Text].OnClicked()
 		}
 
@@ -346,6 +367,7 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
 			// Select the item.
+			fyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
 			torusMenu.Select(fyneComponent.GuiComponent.(*container.TabItem))
 		}
 	}
