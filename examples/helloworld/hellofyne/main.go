@@ -363,8 +363,27 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 		detailedElement := helloApp.mashupDetailedElementLibrary[es.GetId()]
 
 		fyneComponent := helloApp.fyneWidgetElements[detailedElement.GetAlias()]
+		fyneComponent.MashupDetailedElement = detailedElement
 		fyneComponent.MashupDetailedElement.State.State = es.State
+
 		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+			for _, childId := range detailedElement.GetChildids() {
+				if childDetailedElement, childDetailOk := helloApp.mashupDetailedElementLibrary[childId]; childDetailOk {
+					if childFyneComponent, childFyneOk := helloApp.fyneWidgetElements[childDetailedElement.GetAlias()]; childFyneOk {
+						childFyneComponent.MashupDetailedElement = childDetailedElement
+						childFyneComponent.GuiComponent.(*container.TabItem).Text = childDetailedElement.Name
+					}
+				}
+			}
+			for _, parentId := range detailedElement.GetParentids() {
+				if parentDetailedElement, parentDetailOk := helloApp.mashupDetailedElementLibrary[parentId]; parentDetailOk {
+					if parentFyneComponent, parentFyneOk := helloApp.fyneWidgetElements[parentDetailedElement.GetAlias()]; parentFyneOk {
+						parentFyneComponent.MashupDetailedElement = parentDetailedElement
+						parentFyneComponent.GuiComponent.(*container.TabItem).Text = parentDetailedElement.Name
+					}
+				}
+			}
+
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
 			// Select the item.
 			fyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
