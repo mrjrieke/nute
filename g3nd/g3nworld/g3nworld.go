@@ -328,9 +328,10 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
 				}
 			}
-		} else {
-			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
-		}
+		} // else {
+		//			log.Printf("Refreshing background: %v\n", g3nDetailedElement.GetColor())
+		//			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
+		//		}
 
 		if changed {
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
@@ -493,12 +494,8 @@ func (w *WorldApp) InitMainWindow() {
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		w.frameRater.Start()
-		if backgroundIndex, iOk := w.elementLoaderIndex["Outside"]; iOk {
-			if g3nDetailedElement, bgOk := w.concreteElements[backgroundIndex]; bgOk {
-				if g3nDetailedElement.GetColor() != nil {
-					g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
-				}
-			}
+		if w.backgroundG3n != nil && w.backgroundG3n.GetColor() != nil {
+			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
 		}
 		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 		renderer.Render(w.scene, w.cam)
@@ -600,12 +597,42 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
 	worldApp.ResetG3nDetailedElementStates()
+	itemMatched := false
 
 	for _, es := range elementStateBundle.ElementStates {
-		if worldApp.concreteElements[es.GetId()].GetDisplayState() != mashupsdk.DisplayElementState(es.State) {
-			worldApp.concreteElements[es.GetId()].SetDisplayState(mashupsdk.DisplayElementState(es.State))
+		if g3nDetailedElement, ok := worldApp.concreteElements[es.GetId()]; ok {
+			g3nDetailedElement.SetDisplayState(mashupsdk.DisplayElementState(es.State))
+			log.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
+			if !g3nDetailedElement.IsBackground() {
+				itemMatched = true
+			}
+			for _, clickedElement := range worldApp.clickedElements {
+				if clickedElement.GetDisplayId() != g3nDetailedElement.GetDisplayId() {
+					clickedElement.SetDisplayState(mashupsdk.Rest)
+				}
+			}
+			for clickedId := range worldApp.clickedElements {
+				delete(worldApp.clickedElements, clickedId)
+			}
+			worldApp.clickedElements[es.GetId()] = g3nDetailedElement
 		}
 	}
+	if !itemMatched {
+		log.Printf("Background matched\n")
+		worldApp.backgroundG3n.SetDisplayState(mashupsdk.Clicked)
+		for _, clickedElement := range worldApp.clickedElements {
+			if clickedElement.GetDisplayId() != worldApp.backgroundG3n.GetDisplayId() {
+				clickedElement.SetDisplayState(mashupsdk.Rest)
+			}
+		}
+		for clickedId := range worldApp.clickedElements {
+			delete(worldApp.clickedElements, clickedId)
+		}
+		worldApp.clickedElements[worldApp.backgroundG3n.GetDisplayId()] = worldApp.backgroundG3n
+	} else {
+		worldApp.backgroundG3n.SetDisplayState(mashupsdk.Rest)
+	}
+
 	log.Printf("G3n dispatching focus\n")
 	if worldApp.mainWin != nil {
 		worldApp.mainWin.Dispatch(gui.OnFocus, nil)

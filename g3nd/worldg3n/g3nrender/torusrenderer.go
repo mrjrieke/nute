@@ -67,6 +67,7 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 		g3nColor = g3ndpalette.DARK_RED
 	} else {
 		if g3nDetailedElement.IsBackgroundElement() {
+			// Axial circle
 			g3nColor = g3ndpalette.GREY
 		} else {
 			g3nColor = g3ndpalette.DARK_BLUE
