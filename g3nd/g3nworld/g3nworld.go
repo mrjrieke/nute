@@ -421,6 +421,12 @@ func (w *WorldApp) InitMainWindow() {
 
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
 			mev := ev.(*window.MouseEvent)
+			if mev.Mods == window.ModControl {
+				w.Sticky = true
+			} else {
+				w.Sticky = false
+			}
+
 			g3Width, g3Height := w.mainWin.GetSize()
 
 			xPosNdc := 2*(mev.Xpos/float32(g3Width)) - 1
