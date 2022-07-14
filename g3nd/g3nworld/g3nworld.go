@@ -62,6 +62,7 @@ type WorldApp struct {
 	elementLoaderIndex map[string]int64                      // g3n indexes by loader id...
 	clickedElements    map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
+	Sticky             bool
 
 	isInit bool
 }
@@ -405,9 +406,27 @@ func (w *WorldApp) InitMainWindow() {
 				w.mashupContext.Client.Shutdown(w.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 			}
 		})
+		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
+			kev := ev.(*window.KeyEvent)
+			if kev.Key == window.KeyLeftControl {
+				w.Sticky = true
+			}
+		})
+		w.mainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
+			kev := ev.(*window.KeyEvent)
+			if kev.Key == window.KeyLeftControl {
+				w.Sticky = false
+			}
+		})
 
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
 			mev := ev.(*window.MouseEvent)
+			if mev.Mods == window.ModControl {
+				w.Sticky = true
+			} else {
+				w.Sticky = false
+			}
+
 			g3Width, g3Height := w.mainWin.GetSize()
 
 			xPosNdc := 2*(mev.Xpos/float32(g3Width)) - 1

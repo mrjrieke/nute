@@ -65,12 +65,21 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 
 	if g3nDetailedElement.IsItemActive() {
 		g3nColor = g3ndpalette.DARK_RED
+		mesh := g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName())
+		fmt.Printf("Active element centered at %v\n", mesh.GetGraphic().Position())
 	} else {
 		if g3nDetailedElement.IsBackgroundElement() {
 			// Axial circle
 			g3nColor = g3ndpalette.GREY
 		} else {
-			g3nColor = g3ndpalette.DARK_BLUE
+			if !worldApp.Sticky {
+				g3nColor = g3ndpalette.DARK_BLUE
+			} else {
+				g3nColor = g3nDetailedElement.GetColor()
+				if g3nColor == nil {
+					g3nColor = g3ndpalette.DARK_BLUE
+				}
+			}
 		}
 	}
 

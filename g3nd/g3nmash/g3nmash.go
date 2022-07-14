@@ -110,6 +110,10 @@ func (g *G3nDetailedElement) SetNamedMesh(meshName string, mesh *graphic.Mesh) {
 	g.meshComposite[meshName] = mesh
 }
 
+func (g *G3nDetailedElement) GetNamedMesh(meshName string) *graphic.Mesh {
+	return g.meshComposite[meshName]
+}
+
 func (g *G3nDetailedElement) GetDetailedElement() *mashupsdk.MashupDetailedElement {
 	return g.detailedElement
 }
