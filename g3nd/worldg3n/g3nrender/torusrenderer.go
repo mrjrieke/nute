@@ -14,7 +14,8 @@ import (
 
 type TorusRenderer struct {
 	GenericRenderer
-	iOffset int
+	iOffset   int
+	activeSet map[int64]*math32.Vector3
 }
 
 func (tr *TorusRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
@@ -66,7 +67,12 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 	if g3nDetailedElement.IsItemActive() {
 		g3nColor = g3ndpalette.DARK_RED
 		mesh := g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName())
-		fmt.Printf("Active element centered at %v\n", mesh.GetGraphic().Position())
+		if tr.activeSet == nil {
+			tr.activeSet = map[int64]*math32.Vector3{}
+		}
+		activePosition := mesh.GetGraphic().Position()
+		tr.activeSet[g3nDetailedElement.GetDetailedElement().GetId()] = &activePosition
+		fmt.Printf("Active element centered at %v\n", activePosition)
 	} else {
 		if g3nDetailedElement.IsBackgroundElement() {
 			// Axial circle
