@@ -329,10 +329,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 					attitudeVisitedNodes[g3nDetailedElement.GetDisplayId()] = true
 				}
 			}
-		} // else {
-		//			log.Printf("Refreshing background: %v\n", g3nDetailedElement.GetColor())
-		//			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), g3nDetailedElement.GetColor(), 1.0)
-		//		}
+		}
 
 		if changed {
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
@@ -499,7 +496,10 @@ func (w *WorldApp) InitMainWindow() {
 
 		w.frameRater.Start()
 		// Set background color to gray
-		g3ndpalette.RefreshBackgroundColor(a.Gls(), g3ndpalette.GREY, 1.0)
+		if w.backgroundG3n != nil {
+			w.g3nrenderer.HandleStateChange(w, w.backgroundG3n)
+			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
+		}
 		go func() {
 			log.Println("Watching position events.")
 			for displayHint := range w.displayPositionChan {
