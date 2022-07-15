@@ -102,9 +102,20 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 			if g3nCollection.GetDetailedElement().Colabrenderer != "" {
 				postPonedCollections = append(postPonedCollections, g3nCollection)
 			} else {
-				g3nCollectionElements, err := w.GetG3nDetailedChildElements(g3nCollection)
-				if err != nil {
-					log.Fatalf(err.Error(), err)
+				var g3nCollectionElements []*g3nmash.G3nDetailedElement
+				var g3nCollectionErr error
+
+				if g3nCollection.GetDetailedElement().GetRenderer() != "" {
+					g3nCollectionElements, g3nCollectionErr = w.GetG3nDetailedFilteredElements(g3nCollection.GetDetailedElement().GetRenderer(), true)
+					if len(g3nCollectionElements) == 0 {
+						// Try lookup by child elements instead...
+						g3nCollectionElements, g3nCollectionErr = w.GetG3nDetailedChildElements(g3nCollection)
+					}
+				} else {
+					g3nCollectionElements, g3nCollectionErr = w.GetG3nDetailedChildElements(g3nCollection)
+				}
+				if g3nCollectionErr != nil {
+					log.Fatalf(err.Error(), g3nCollectionErr)
 				}
 				// Handoff...
 				w.g3nrenderer.Layout(w, g3nCollectionElements)
@@ -176,7 +187,7 @@ func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetail
 	return g3nDetailedElement
 }
 
-func (w *WorldApp) GetG3nDetailedFilteredElements(renderer string) ([]*g3nmash.G3nDetailedElement, error) {
+func (w *WorldApp) GetG3nDetailedFilteredElements(renderer string, abstract bool) ([]*g3nmash.G3nDetailedElement, error) {
 	filteredElements := []*g3nmash.G3nDetailedElement{}
 	if renderer == "" {
 		log.Printf("No filter provided.  No filtered elements found.\n")
@@ -184,7 +195,13 @@ func (w *WorldApp) GetG3nDetailedFilteredElements(renderer string) ([]*g3nmash.G
 	}
 	for _, element := range w.concreteElements {
 		if element.GetDetailedElement().Renderer == renderer {
-			filteredElements = append(filteredElements, element)
+			if abstract {
+				if element.IsAbstract() {
+					filteredElements = append(filteredElements, element)
+				}
+			} else {
+				filteredElements = append(filteredElements, element)
+			}
 		}
 	}
 
