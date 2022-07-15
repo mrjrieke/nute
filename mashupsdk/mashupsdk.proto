@@ -55,10 +55,11 @@ message MashupDetailedElement {
   string alias = 5;
   string description = 6;
   string renderer = 7;
-  string genre = 8;
-  string subgenre = 9;
-  repeated int64 parentids = 10;
-  repeated int64 childids = 11;
+  string colabrenderer = 8;
+  string genre = 9;
+  string subgenre = 10;
+  repeated int64 parentids = 11;
+  repeated int64 childids = 12;
 }
 
 message MashupDetailedElementBundle {

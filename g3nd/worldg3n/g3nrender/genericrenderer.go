@@ -1,6 +1,7 @@
 package g3nrender
 
 import (
+	"log"
 	"sort"
 	"strings"
 
@@ -26,6 +27,8 @@ type G3nRenderer interface {
 	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 	HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
+	GetRenderer(rendererName string) G3nRenderer
+	Collaborate(worldApp *g3nworld.WorldApp, renderer interface{})
 }
 
 type GenericRenderer struct {
@@ -61,6 +64,14 @@ func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
 	gr.LayoutBase(worldApp, gr, g3nRenderableElements)
 }
 
+func (gr *GenericRenderer) GetRenderer(rendererName string) G3nRenderer {
+	return nil
+}
+
+func (gr *GenericRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+
+}
+
 func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 	g3Renderer G3nRenderer,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
@@ -68,6 +79,16 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 	var prevSolidPos *math32.Vector3
 
 	totalElements := len(g3nRenderableElements)
+
+	if totalElements > 0 {
+		if g3nRenderableElements[0].GetDetailedElement().Colabrenderer != "" {
+			log.Printf("Collab examine: %v\n", g3nRenderableElements[0])
+			log.Printf("Renderer name: %s\n", g3nRenderableElements[0].GetDetailedElement().GetRenderer())
+			protoRenderer := g3Renderer.GetRenderer(g3nRenderableElements[0].GetDetailedElement().GetRenderer())
+			log.Printf("Collaborating %v\n", protoRenderer)
+			g3Renderer.Collaborate(worldApp, protoRenderer)
+		}
+	}
 
 	for _, g3nRenderableElement := range g3nRenderableElements {
 		concreteG3nRenderableElement := g3nRenderableElement

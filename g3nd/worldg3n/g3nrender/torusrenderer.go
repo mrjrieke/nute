@@ -14,8 +14,9 @@ import (
 
 type TorusRenderer struct {
 	GenericRenderer
-	iOffset   int
-	activeSet map[int64]*math32.Vector3
+	iOffset     int
+	activeSet   map[int64]*math32.Vector3
+	ActiveColor **math32.Color
 }
 
 func (tr *TorusRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
@@ -65,7 +66,11 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 	var g3nColor *math32.Color
 
 	if g3nDetailedElement.IsItemActive() {
-		g3nColor = g3ndpalette.DARK_RED
+		if tr.ActiveColor != nil && *tr.ActiveColor != nil {
+			g3nColor = *tr.ActiveColor
+		} else {
+			g3nColor = g3ndpalette.DARK_RED
+		}
 		mesh := g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName())
 		if tr.activeSet == nil {
 			tr.activeSet = map[int64]*math32.Vector3{}
@@ -90,4 +95,10 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 	}
 
 	return g3nDetailedElement.SetColor(g3nColor)
+}
+
+func (tr *TorusRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+
+	backgroundRenderer := collaboratingRenderer.(*BackgroundRenderer)
+	tr.ActiveColor = &backgroundRenderer.ActiveColor
 }
