@@ -153,16 +153,17 @@ func main() {
 				var concreteElementBundle *mashupsdk.MashupDetailedElementBundle
 				DetailedElements := []*mashupsdk.MashupDetailedElement{
 					{
-						Basisid:     -1,
-						State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
-						Name:        "{0}-Torus",
-						Alias:       "It",
-						Description: "",
-						Renderer:    "Torus",
-						Genre:       "Solid",
-						Subgenre:    "Ento",
-						Parentids:   nil,
-						Childids:    []int64{-2, 4},
+						Basisid:       -1,
+						State:         &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
+						Name:          "{0}-Torus",
+						Alias:         "It",
+						Description:   "",
+						Renderer:      "Torus",
+						Colabrenderer: "Background",
+						Genre:         "Solid",
+						Subgenre:      "Ento",
+						Parentids:     nil,
+						Childids:      []int64{-2, 4},
 					},
 					{
 						Basisid:     -2,
