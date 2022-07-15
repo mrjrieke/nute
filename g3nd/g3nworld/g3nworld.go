@@ -368,6 +368,7 @@ func (w *WorldApp) InitMainWindow() {
 
 		// Set up orbit control for the camera
 		w.oc = camera.NewOrbitControl(w.cam)
+		w.oc.Zoom(60.0)
 		log.Printf("Finished Orbit Control setup.")
 
 		// Set up callback to update viewport and camera aspect ratio when the window is resized
