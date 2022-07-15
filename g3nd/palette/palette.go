@@ -7,6 +7,7 @@ import (
 
 var WHITE *math32.Color = &math32.Color{R: 1.0, G: 1.0, B: 1.0}
 var DARK_RED *math32.Color = math32.NewColor("DarkRed")
+var DARK_GREEN *math32.Color = math32.NewColor("DarkGreen")
 var DARK_BLUE *math32.Color = math32.NewColor("DarkBlue")
 var GREY *math32.Color = &math32.Color{R: 0.5, G: 0.5, B: 0.5}
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -91,7 +90,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 	log.Printf("G3nWorld Focus gained\n")
 
 	if _, iOk := ev.(InitEvent); iOk {
-
+		var postPonedCollections []*g3nmash.G3nDetailedElement
 		g3nCollections, err := w.GetG3nDetailedGenreFilteredElements("Collection")
 		if err != nil {
 			log.Fatalf(err.Error(), err)
@@ -99,14 +98,26 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 		if len(g3nCollections) == 0 {
 			log.Fatalf("No elements to render.  If running standalone, provide -headless flag.")
 		}
-
 		for _, g3nCollection := range g3nCollections {
-			g3nRenderableElements, err := w.GetG3nDetailedFilteredElements(g3nCollection.GetDetailedElement().Subgenre)
+			if g3nCollection.GetDetailedElement().Colabrenderer != "" {
+				postPonedCollections = append(postPonedCollections, g3nCollection)
+			} else {
+				g3nCollectionElements, err := w.GetG3nDetailedChildElements(g3nCollection)
+				if err != nil {
+					log.Fatalf(err.Error(), err)
+				}
+				// Handoff...
+				w.g3nrenderer.Layout(w, g3nCollectionElements)
+			}
+		}
+
+		for _, g3nCollection := range postPonedCollections {
+			g3nCollectionElements, err := w.GetG3nDetailedChildElements(g3nCollection)
 			if err != nil {
 				log.Fatalf(err.Error(), err)
 			}
 			// Handoff...
-			w.g3nrenderer.Layout(w, g3nRenderableElements)
+			w.g3nrenderer.Layout(w, g3nCollectionElements)
 		}
 	} else {
 
@@ -155,9 +166,6 @@ func (w *WorldApp) NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetail
 func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetailedElement) *g3nmash.G3nDetailedElement {
 	if g3nDetailedElement.GetBasisId() < 0 && g3nDetailedElement.GetDisplayId() == 0 {
 		w.elementLibraryDictionary[g3nDetailedElement.GetBasisId()] = g3nDetailedElement
-		// if g3nDetailedElement.GetDisplayId() > 0 {
-		// 	w.elementDictionary[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
-		// }
 	} else {
 		w.concreteElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
 		w.elementLoaderIndex[g3nDetailedElement.GetDisplayName()] = g3nDetailedElement.GetDisplayId()
@@ -168,15 +176,33 @@ func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetail
 	return g3nDetailedElement
 }
 
-func (w *WorldApp) GetG3nDetailedFilteredElements(elementPrefix string) ([]*g3nmash.G3nDetailedElement, error) {
+func (w *WorldApp) GetG3nDetailedFilteredElements(renderer string) ([]*g3nmash.G3nDetailedElement, error) {
 	filteredElements := []*g3nmash.G3nDetailedElement{}
-	if elementPrefix == "" {
+	if renderer == "" {
 		log.Printf("No filter provided.  No filtered elements found.\n")
 		return nil, errors.New("no filter provided - no filtered elements found")
 	}
 	for _, element := range w.concreteElements {
-		if strings.HasPrefix(element.GetDisplayName(), elementPrefix) {
+		if element.GetDetailedElement().Renderer == renderer {
 			filteredElements = append(filteredElements, element)
+		}
+	}
+
+	return filteredElements, nil
+}
+
+func (w *WorldApp) GetG3nDetailedChildElements(g3n *g3nmash.G3nDetailedElement) ([]*g3nmash.G3nDetailedElement, error) {
+	filteredElements := []*g3nmash.G3nDetailedElement{}
+	if g3n == nil {
+		log.Printf("No filter provided.  No filtered elements found.\n")
+		return nil, errors.New("no filter provided - no filtered elements found")
+	}
+	for _, childId := range g3n.GetChildElementIds() {
+		if tc, tErr := worldApp.GetG3nDetailedElementById(childId); tErr == nil {
+			filteredElements = append(filteredElements, tc)
+		} else {
+			log.Printf("Skipping non-concrete abstract element: %d\n", childId)
+			continue
 		}
 	}
 

@@ -22,6 +22,10 @@ func (mr *MashupRenderer) AddRenderer(genre string, renderer G3nRenderer) {
 	mr.renderers[genre] = renderer
 }
 
+func (mr *MashupRenderer) GetRenderer(rendererName string) G3nRenderer {
+	return mr.renderers[rendererName]
+}
+
 func (mr *MashupRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
 	if g3n == nil {
 		return nil
@@ -67,6 +71,10 @@ func (mr *MashupRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElement
 	}
 }
 
+func (mr *MashupRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+	collaboratingRenderer.(G3nRenderer).GetRenderer("").Collaborate(worldApp, collaboratingRenderer)
+}
+
 func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {
 	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
 		return renderer.NextCoordinate(g3n, totalElements)
@@ -101,6 +109,8 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 				}
 			}
 			continue
+		} else {
+			mr.CollectElementByRenderer(worldApp, elementsByRenderer, g3nRenderableElement)
 		}
 	}
 
