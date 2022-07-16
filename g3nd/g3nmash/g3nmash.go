@@ -24,17 +24,18 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 	detailedRef := detailedElement
 	if deepCopy {
 		detailedRef = &mashupsdk.MashupDetailedElement{
-			Basisid:     detailedElement.Basisid,
-			Id:          detailedElement.Id,
-			State:       &mashupsdk.MashupElementState{Id: detailedElement.State.Id, State: detailedElement.State.State},
-			Name:        detailedElement.Name,
-			Alias:       detailedElement.Alias,
-			Description: detailedElement.Description,
-			Renderer:    detailedElement.Renderer,
-			Genre:       detailedElement.Genre,
-			Subgenre:    detailedElement.Subgenre,
-			Parentids:   detailedElement.Parentids,
-			Childids:    detailedElement.Childids,
+			Basisid:       detailedElement.Basisid,
+			Id:            detailedElement.Id,
+			State:         &mashupsdk.MashupElementState{Id: detailedElement.State.Id, State: detailedElement.State.State},
+			Name:          detailedElement.Name,
+			Alias:         detailedElement.Alias,
+			Description:   detailedElement.Description,
+			Renderer:      detailedElement.Renderer,
+			Colabrenderer: detailedElement.Colabrenderer,
+			Genre:         detailedElement.Genre,
+			Subgenre:      detailedElement.Subgenre,
+			Parentids:     detailedElement.Parentids,
+			Childids:      detailedElement.Childids,
 		}
 	}
 
