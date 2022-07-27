@@ -4,7 +4,7 @@ import (
 	"log"
 	"sort"
 
-	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/math32"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
@@ -12,21 +12,21 @@ import (
 
 type MashupRenderer struct {
 	GenericRenderer
-	renderers map[string]G3nRenderer
+	renderers map[string]IG3nRenderer
 }
 
-func (mr *MashupRenderer) AddRenderer(genre string, renderer G3nRenderer) {
+func (mr *MashupRenderer) AddRenderer(genre string, renderer IG3nRenderer) {
 	if mr.renderers == nil {
-		mr.renderers = map[string]G3nRenderer{}
+		mr.renderers = map[string]IG3nRenderer{}
 	}
 	mr.renderers[genre] = renderer
 }
 
-func (mr *MashupRenderer) GetRenderer(rendererName string) G3nRenderer {
+func (mr *MashupRenderer) GetRenderer(rendererName string) IG3nRenderer {
 	return mr.renderers[rendererName]
 }
 
-func (mr *MashupRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (mr *MashupRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	if g3n == nil {
 		return nil
 	}
@@ -37,7 +37,7 @@ func (mr *MashupRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vp
 	}
 }
 
-func (mr *MashupRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (mr *MashupRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	if g3n == nil {
 		return nil
 	}
@@ -48,7 +48,7 @@ func (mr *MashupRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElem
 	}
 }
 
-func (mr *MashupRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+func (mr *MashupRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode {
 	if g3n == nil {
 		return nil
 	}
@@ -71,8 +71,8 @@ func (mr *MashupRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElement
 	}
 }
 
-func (mr *MashupRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
-	collaboratingRenderer.(G3nRenderer).GetRenderer("").Collaborate(worldApp, collaboratingRenderer)
+func (mr *MashupRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {
+	collaboratingRenderer.(IG3nRenderer).GetRenderer("").Collaborate(worldApp, collaboratingRenderer)
 }
 
 func (mr *MashupRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3) {

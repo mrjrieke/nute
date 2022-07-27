@@ -15,7 +15,7 @@ import (
 
 type G3nDetailedElement struct {
 	detailedElement *mashupsdk.MashupDetailedElement
-	meshComposite   map[string]*graphic.Mesh // One or more meshes associated with element.
+	meshComposite   map[string]core.INode // One or more meshes associated with element.
 	color           *math32.Color
 	attitudes       []float32
 }
@@ -43,7 +43,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 		detailedElement.State.Id = detailedElement.Id
 	}
 
-	g3n := G3nDetailedElement{detailedElement: detailedRef, meshComposite: map[string]*graphic.Mesh{}}
+	g3n := G3nDetailedElement{detailedElement: detailedRef, meshComposite: map[string]core.INode{}}
 	if detailedElement.GetGenre() == "Attitude" {
 		attitudes := detailedElement.GetSubgenre()
 		attutudeSlice := strings.Split(attitudes, ",")
@@ -107,11 +107,11 @@ func CloneG3nDetailedElement(
 	return g3n
 }
 
-func (g *G3nDetailedElement) SetNamedMesh(meshName string, mesh *graphic.Mesh) {
+func (g *G3nDetailedElement) SetNamedMesh(meshName string, mesh core.INode) {
 	g.meshComposite[meshName] = mesh
 }
 
-func (g *G3nDetailedElement) GetNamedMesh(meshName string) *graphic.Mesh {
+func (g *G3nDetailedElement) GetNamedMesh(meshName string) core.INode {
 	return g.meshComposite[meshName]
 }
 
@@ -230,7 +230,9 @@ func (g *G3nDetailedElement) SetDisplayState(x mashupsdk.DisplayElementState) bo
 
 func (g *G3nDetailedElement) SetRotationX(x float32) error {
 	if rootMesh, rootOk := g.meshComposite[g.detailedElement.Name]; rootOk {
-		rootMesh.SetRotationX(x)
+		if graphicMesh, isGraphicMesh := rootMesh.(*graphic.Mesh); isGraphicMesh {
+			graphicMesh.SetRotationX(x)
+		}
 		return nil
 	}
 	return errors.New("missing components")
@@ -241,9 +243,11 @@ func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElemen
 	for _, parentG3Element := range parentG3Elements {
 		if rootMesh, rootOk := parentG3Element.meshComposite[parentG3Element.detailedElement.Name]; rootOk { // Hello friend.
 			log.Printf("Apply rotation: %f %f %f\n", x, y, z)
-			rootMesh.SetRotationX(x)
-			rootMesh.SetRotationY(y)
-			rootMesh.SetRotationZ(z)
+			if graphicMesh, isGraphicMesh := rootMesh.(*graphic.Mesh); isGraphicMesh {
+				graphicMesh.SetRotationX(x)
+				graphicMesh.SetRotationY(y)
+				graphicMesh.SetRotationZ(z)
+			}
 		}
 	}
 	return errors.New("missing components")
@@ -255,11 +259,14 @@ func (g *G3nDetailedElement) SetColor(color *math32.Color) bool {
 		return true
 	}
 	if rootMesh, rootOk := g.meshComposite[g.detailedElement.Name]; rootOk {
-		if standardMaterial, ok := rootMesh.Graphic.GetMaterial(0).(*material.Standard); ok {
-			ambient := standardMaterial.AmbientColor()
-			if !color.Equals(&ambient) {
-				standardMaterial.SetColor(color)
-				return true
+
+		if graphicMesh, isGraphicMesh := rootMesh.(*graphic.Mesh); isGraphicMesh {
+			if standardMaterial, ok := graphicMesh.GetMaterial(0).(*material.Standard); ok {
+				ambient := standardMaterial.AmbientColor()
+				if !color.Equals(&ambient) {
+					standardMaterial.SetColor(color)
+					return true
+				}
 			}
 		}
 	}

@@ -33,7 +33,7 @@ type mashupSdkApiHandler struct {
 type worldClientInitHandler struct {
 }
 
-type G3nRenderer interface {
+type IG3nRenderer interface {
 	Layout(worldApp *WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 	HandleStateChange(worldApp *WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 }
@@ -49,7 +49,7 @@ type WorldApp struct {
 	scene               *core.Node
 	cam                 *camera.Camera
 	oc                  *camera.OrbitControl
-	g3nrenderer         G3nRenderer
+	IG3nRenderer        IG3nRenderer
 
 	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 
@@ -68,7 +68,7 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp(headless bool, renderer G3nRenderer) *WorldApp {
+func NewWorldApp(headless bool, renderer IG3nRenderer) *WorldApp {
 	worldApp = WorldApp{
 		headless:                 headless,
 		MSdkApiHandler:           &mashupSdkApiHandler{},
@@ -78,7 +78,7 @@ func NewWorldApp(headless bool, renderer G3nRenderer) *WorldApp {
 		clickedElements:          map[int64]*g3nmash.G3nDetailedElement{},
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
-		g3nrenderer:              renderer,
+		IG3nRenderer:             renderer,
 	}
 	return &worldApp
 }
@@ -118,7 +118,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 					log.Fatalf(err.Error(), g3nCollectionErr)
 				}
 				// Handoff...
-				w.g3nrenderer.Layout(w, g3nCollectionElements)
+				w.IG3nRenderer.Layout(w, g3nCollectionElements)
 			}
 		}
 
@@ -128,7 +128,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 				log.Fatalf(err.Error(), err)
 			}
 			// Handoff...
-			w.g3nrenderer.Layout(w, g3nCollectionElements)
+			w.IG3nRenderer.Layout(w, g3nCollectionElements)
 		}
 	} else {
 
@@ -344,7 +344,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 			continue
 		}
 
-		changed := worldApp.g3nrenderer.HandleStateChange(w, g3nDetailedElement)
+		changed := worldApp.IG3nRenderer.HandleStateChange(w, g3nDetailedElement)
 		if !g3nDetailedElement.IsBackground() {
 			if g3nDetailedElement.IsItemActive() {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
@@ -541,7 +541,7 @@ func (w *WorldApp) InitMainWindow() {
 		w.frameRater.Start()
 		// Set background color to gray
 		if w.backgroundG3n != nil {
-			w.g3nrenderer.HandleStateChange(w, w.backgroundG3n)
+			w.IG3nRenderer.HandleStateChange(w, w.backgroundG3n)
 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
 		}
 		go func() {

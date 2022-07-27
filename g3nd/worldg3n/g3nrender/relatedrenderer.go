@@ -1,6 +1,7 @@
 package g3nrender
 
 import (
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
@@ -20,15 +21,15 @@ type RelatedMesh struct {
 	PrevPos *math32.Vector3 // Position of related mesh
 }
 
-func (tr *RelatedRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *RelatedRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (tr *RelatedRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *RelatedRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (tr *RelatedRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+func (tr *RelatedRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode {
 	spherGeom := geometry.NewSphere(1.0, 5, 5)
 	sphereMat := material.NewStandard(g3ndpalette.GREY)
 	sphereMesh := graphic.NewMesh(spherGeom, sphereMat)
@@ -48,7 +49,7 @@ func (tr *RelatedRenderer) NextCoordinate(g3n *g3nmash.G3nDetailedElement, total
 	}
 }
 
-func (tr *RelatedRenderer) Layout(worldApp *g3nworld.WorldApp,
+func (rr *RelatedRenderer) Layout(worldApp *g3nworld.WorldApp,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
-	tr.GenericRenderer.LayoutBase(worldApp, tr, g3nRenderableElements)
+	rr.GenericRenderer.LayoutBase(worldApp, rr, g3nRenderableElements)
 }
