@@ -660,45 +660,30 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
 	worldApp.ResetG3nDetailedElementStates()
-	itemMatched := false
+	clickedElements := map[int64]*g3nmash.G3nDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.concreteElements[es.GetId()]; ok {
 			g3nDetailedElement.SetDisplayState(mashupsdk.DisplayElementState(es.State))
-			log.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
-			if !g3nDetailedElement.IsBackground() {
-				itemMatched = true
-			}
-			for _, clickedElement := range worldApp.clickedElements {
-				if clickedElement.GetDisplayId() != g3nDetailedElement.GetDisplayId() {
-					clickedElement.SetDisplayState(mashupsdk.Rest)
-				}
-			}
-			for clickedId := range worldApp.clickedElements {
-				delete(worldApp.clickedElements, clickedId)
-			}
 			if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
-				worldApp.clickedElements[es.GetId()] = g3nDetailedElement
+				clickedElements[es.GetId()] = g3nDetailedElement
 			}
 		}
 	}
-	if !itemMatched {
-		log.Printf("Background matched\n")
-		if len(worldApp.clickedElements) > 0 {
-			worldApp.backgroundG3n.SetDisplayState(mashupsdk.Clicked)
 
-			for _, clickedElement := range worldApp.clickedElements {
-				if clickedElement.GetDisplayId() != worldApp.backgroundG3n.GetDisplayId() {
-					clickedElement.SetDisplayState(mashupsdk.Rest)
-				}
+	if len(clickedElements) > 0 {
+		for _, clickedElement := range worldApp.clickedElements {
+			if _, ok := clickedElements[clickedElement.GetDisplayId()]; !ok {
+				clickedElement.SetDisplayState(mashupsdk.Rest)
 			}
-			for clickedId := range worldApp.clickedElements {
-				delete(worldApp.clickedElements, clickedId)
-			}
-			worldApp.clickedElements[worldApp.backgroundG3n.GetDisplayId()] = worldApp.backgroundG3n
 		}
-	} else {
-		worldApp.backgroundG3n.SetDisplayState(mashupsdk.Rest)
+		for clickedId := range worldApp.clickedElements {
+			delete(worldApp.clickedElements, clickedId)
+		}
+
+		for _, g3nDetailedElement := range clickedElements {
+			worldApp.clickedElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+		}
 	}
 
 	log.Printf("G3n dispatching focus\n")
