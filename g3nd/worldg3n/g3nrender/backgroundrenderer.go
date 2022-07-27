@@ -3,7 +3,7 @@ package g3nrender
 import (
 	"log"
 
-	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/math32"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
@@ -12,19 +12,19 @@ import (
 
 type BackgroundRenderer struct {
 	GenericRenderer
-	CollaboratingRenderer G3nRenderer
+	CollaboratingRenderer IG3nRenderer
 	ActiveColor           *math32.Color
 }
 
-func (br *BackgroundRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (br *BackgroundRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (br *BackgroundRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (br *BackgroundRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (br *BackgroundRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+func (br *BackgroundRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode {
 	return nil
 }
 
@@ -37,7 +37,7 @@ func (br *BackgroundRenderer) Layout(worldApp *g3nworld.WorldApp,
 	return
 }
 
-func (br *BackgroundRenderer) GetRenderer(rendererName string) G3nRenderer {
+func (br *BackgroundRenderer) GetRenderer(rendererName string) IG3nRenderer {
 	if br.CollaboratingRenderer != nil {
 		return br.CollaboratingRenderer
 	}
@@ -66,6 +66,6 @@ func (br *BackgroundRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n
 	return g3nDetailedElement.SetColor(g3nColor)
 }
 
-func (br *BackgroundRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+func (br *BackgroundRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {
 	br.CollaboratingRenderer.Collaborate(worldApp, br)
 }

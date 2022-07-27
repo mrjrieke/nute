@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/g3n/engine/graphic"
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/math32"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
@@ -19,30 +19,30 @@ func (a G3nCollection) Less(i, j int) bool {
 }
 func (a G3nCollection) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-type G3nRenderer interface {
-	NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
-	NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh
-	NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh
+type IG3nRenderer interface {
+	NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode
+	NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode
+	NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode
 	NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3)
 	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 	HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
-	GetRenderer(rendererName string) G3nRenderer
-	Collaborate(worldApp *g3nworld.WorldApp, renderer interface{})
+	GetRenderer(rendererName string) IG3nRenderer
+	Collaborate(worldApp *g3nworld.WorldApp, renderer IG3nRenderer)
 }
 
 type GenericRenderer struct {
 }
 
-func (*GenericRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (*GenericRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (*GenericRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (*GenericRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	return nil
 }
 
-func (*GenericRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+func (*GenericRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode {
 	return nil
 }
 
@@ -64,16 +64,16 @@ func (gr *GenericRenderer) Layout(worldApp *g3nworld.WorldApp,
 	gr.LayoutBase(worldApp, gr, g3nRenderableElements)
 }
 
-func (gr *GenericRenderer) GetRenderer(rendererName string) G3nRenderer {
+func (gr *GenericRenderer) GetRenderer(rendererName string) IG3nRenderer {
 	return nil
 }
 
-func (gr *GenericRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+func (gr *GenericRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {
 
 }
 
 func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
-	g3Renderer G3nRenderer,
+	g3Renderer IG3nRenderer,
 	g3nRenderableElements []*g3nmash.G3nDetailedElement) {
 	var nextPos *math32.Vector3
 	var prevSolidPos *math32.Vector3
@@ -105,7 +105,7 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 			relatedMesh := g3Renderer.NewRelatedMeshAtPosition(concreteG3nRenderableElement, nextPos, prevSolidPos)
 			if relatedMesh != nil {
 				worldApp.AddToScene(relatedMesh)
-				concreteG3nRenderableElement.SetNamedMesh(relatedG3n.GetDisplayName(), &relatedMesh.Mesh)
+				concreteG3nRenderableElement.SetNamedMesh(relatedG3n.GetDisplayName(), relatedMesh)
 			}
 		}
 

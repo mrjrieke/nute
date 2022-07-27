@@ -3,6 +3,7 @@ package g3nrender
 import (
 	"fmt"
 
+	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/material"
@@ -19,7 +20,7 @@ type TorusRenderer struct {
 	ActiveColor **math32.Color
 }
 
-func (tr *TorusRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *TorusRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	torusGeom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 	mat := material.NewStandard(g3ndpalette.DARK_BLUE)
 	torusMesh := graphic.NewMesh(torusGeom, mat)
@@ -29,7 +30,7 @@ func (tr *TorusRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpo
 	return torusMesh
 }
 
-func (tr *TorusRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) *graphic.Mesh {
+func (tr *TorusRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
 	diskGeom := geometry.NewDisk(1, 32)
 	diskMat := material.NewStandard(g3ndpalette.GREY)
 	diskMesh := graphic.NewMesh(diskGeom, diskMat)
@@ -38,7 +39,7 @@ func (tr *TorusRenderer) NewInternalMeshAtPosition(g3n *g3nmash.G3nDetailedEleme
 	return diskMesh
 }
 
-func (tr *TorusRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) *RelatedMesh {
+func (tr *TorusRenderer) NewRelatedMeshAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3, vprevpos *math32.Vector3) core.INode {
 	return nil
 }
 
@@ -75,9 +76,12 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 		if tr.activeSet == nil {
 			tr.activeSet = map[int64]*math32.Vector3{}
 		}
-		activePosition := mesh.GetGraphic().Position()
-		tr.activeSet[g3nDetailedElement.GetDetailedElement().GetId()] = &activePosition
-		fmt.Printf("Active element centered at %v\n", activePosition)
+		if graphicMesh, isGraphicMesh := mesh.(*graphic.Mesh); isGraphicMesh {
+			activePosition := graphicMesh.GetGraphic().Position()
+			tr.activeSet[g3nDetailedElement.GetDetailedElement().GetId()] = &activePosition
+			fmt.Printf("Active element centered at %v\n", activePosition)
+		}
+
 	} else {
 		if g3nDetailedElement.IsBackgroundElement() {
 			// Axial circle
@@ -97,7 +101,7 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 	return g3nDetailedElement.SetColor(g3nColor)
 }
 
-func (tr *TorusRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer interface{}) {
+func (tr *TorusRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {
 
 	backgroundRenderer := collaboratingRenderer.(*BackgroundRenderer)
 	tr.ActiveColor = &backgroundRenderer.ActiveColor
