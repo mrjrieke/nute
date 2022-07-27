@@ -677,21 +677,26 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			for clickedId := range worldApp.clickedElements {
 				delete(worldApp.clickedElements, clickedId)
 			}
-			worldApp.clickedElements[es.GetId()] = g3nDetailedElement
+			if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+				worldApp.clickedElements[es.GetId()] = g3nDetailedElement
+			}
 		}
 	}
 	if !itemMatched {
 		log.Printf("Background matched\n")
-		worldApp.backgroundG3n.SetDisplayState(mashupsdk.Clicked)
-		for _, clickedElement := range worldApp.clickedElements {
-			if clickedElement.GetDisplayId() != worldApp.backgroundG3n.GetDisplayId() {
-				clickedElement.SetDisplayState(mashupsdk.Rest)
+		if len(worldApp.clickedElements) > 0 {
+			worldApp.backgroundG3n.SetDisplayState(mashupsdk.Clicked)
+
+			for _, clickedElement := range worldApp.clickedElements {
+				if clickedElement.GetDisplayId() != worldApp.backgroundG3n.GetDisplayId() {
+					clickedElement.SetDisplayState(mashupsdk.Rest)
+				}
 			}
+			for clickedId := range worldApp.clickedElements {
+				delete(worldApp.clickedElements, clickedId)
+			}
+			worldApp.clickedElements[worldApp.backgroundG3n.GetDisplayId()] = worldApp.backgroundG3n
 		}
-		for clickedId := range worldApp.clickedElements {
-			delete(worldApp.clickedElements, clickedId)
-		}
-		worldApp.clickedElements[worldApp.backgroundG3n.GetDisplayId()] = worldApp.backgroundG3n
 	} else {
 		worldApp.backgroundG3n.SetDisplayState(mashupsdk.Rest)
 	}
