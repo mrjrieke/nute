@@ -241,6 +241,20 @@ func (w *WorldApp) AddToScene(node core.INode) *core.Node {
 	return w.scene.Add(node)
 }
 
+func (w *WorldApp) UpsertToScene(node core.INode) *core.Node {
+	if node == nil {
+		return nil
+	}
+	if w.scene.FindLoaderID(node.GetNode().LoaderID()) == nil {
+		return w.scene.Add(node)
+	}
+	return nil
+}
+
+func (w *WorldApp) RemoveFromScene(node core.INode) bool {
+	return w.scene.Remove(node)
+}
+
 func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
 	if g3nElement, g3nElementOk := w.concreteElements[eid]; g3nElementOk {
 		return g3nElement, nil

@@ -39,11 +39,22 @@ type HelloApp struct {
 }
 
 func (fwb *FyneWidgetBundle) OnClicked() {
-	fwb.MashupDetailedElement.State.State = int64(mashupsdk.Clicked)
+	selectedDetailedElement := fwb.MashupDetailedElement
+
+	if fwb.MashupDetailedElement.Name == "Hide" {
+		currentTorus := helloApp.fyneWidgetElements["It"]
+		selectedDetailedElement = currentTorus.GuiWidgetBundle.MashupDetailedElement
+		selectedDetailedElement.State.State |= int64(mashupsdk.Hidden)
+	} else {
+		selectedDetailedElement.State.State = int64(mashupsdk.Clicked)
+		if (selectedDetailedElement.State.State & int64(mashupsdk.Hidden)) == int64(mashupsdk.Hidden) {
+			selectedDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
+		}
+	}
 
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
 		AuthToken:     client.GetServerAuthToken(),
-		ElementStates: []*mashupsdk.MashupElementState{fwb.MashupDetailedElement.State},
+		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
 	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
 }
@@ -133,6 +144,22 @@ func main() {
 				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 					GuiComponent:          container.NewTabItem("Up-Side-Down", widget.NewLabel("Torus is up-side-down")),
 					MashupDetailedElement: nil, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
+				},
+			},
+			"Hide": {
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("Hide", widget.NewLabel("Poof...")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{ // Client sided detailed element not communicated to server.
+						Id:          0,
+						State:       &mashupsdk.MashupElementState{Id: 0, State: int64(mashupsdk.Hidden)},
+						Name:        "Hide",
+						Alias:       "Hide",
+						Description: "",
+						Genre:       "Style",
+						Subgenre:    "Hidden",
+						Parentids:   nil,
+						Childids:    nil,
+					},
 				},
 			},
 		},
@@ -280,6 +307,8 @@ func main() {
 
 					if concreteElement.GetName() == "Outside" {
 						helloApp.fyneWidgetElements["Outside"].MashupDetailedElement = concreteElement
+					} else if concreteElement.GetName() == "Hide" {
+						helloApp.fyneWidgetElements["Hide"].MashupDetailedElement = concreteElement
 					}
 				}
 
@@ -324,6 +353,7 @@ func main() {
 			helloApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),      // outside
 			helloApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),           // It
 			helloApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem), // Upside down
+			helloApp.fyneWidgetElements["Hide"].GuiComponent.(*container.TabItem),         // Hide
 		)
 		torusMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...

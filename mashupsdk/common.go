@@ -9,6 +9,7 @@ const (
 	Rest      DisplayElementState = 4
 	Clicked   DisplayElementState = 8
 	Moved     DisplayElementState = 16
+	Hidden    DisplayElementState = 32 // Hidden objects are not clickable
 )
 
 type MashupDisplayState int

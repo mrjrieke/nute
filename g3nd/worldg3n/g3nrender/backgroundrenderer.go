@@ -63,7 +63,7 @@ func (br *BackgroundRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n
 		g3nColor = g3ndpalette.GREY
 	}
 
-	return g3nDetailedElement.SetColor(g3nColor)
+	return g3nDetailedElement.SetColor(g3nColor, 1.0)
 }
 
 func (br *BackgroundRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {
