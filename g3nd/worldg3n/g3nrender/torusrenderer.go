@@ -11,6 +11,7 @@ import (
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
+	"github.com/mrjrieke/nute/mashupsdk"
 )
 
 type TorusRenderer struct {
@@ -66,6 +67,12 @@ func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
 func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
 	var g3nColor *math32.Color
 
+	if (mashupsdk.DisplayElementState(g3nDetailedElement.GetMashupElementState().State) & mashupsdk.Hidden) == mashupsdk.Hidden {
+		worldApp.RemoveFromScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName()))
+	} else {
+		worldApp.UpsertToScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName()))
+	}
+
 	if g3nDetailedElement.IsItemActive() {
 		if tr.ActiveColor != nil && *tr.ActiveColor != nil {
 			g3nColor = *tr.ActiveColor
@@ -98,7 +105,7 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 		}
 	}
 
-	return g3nDetailedElement.SetColor(g3nColor)
+	return g3nDetailedElement.SetColor(g3nColor, 1.0)
 }
 
 func (tr *TorusRenderer) Collaborate(worldApp *g3nworld.WorldApp, collaboratingRenderer IG3nRenderer) {

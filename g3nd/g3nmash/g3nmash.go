@@ -265,15 +265,17 @@ func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElemen
 	return errors.New("missing components")
 }
 
-func (g *G3nDetailedElement) SetColor(color *math32.Color) bool {
+func (g *G3nDetailedElement) SetColor(color *math32.Color, opacity float32) bool {
 	g.color = color
 	if g.IsBackground() {
 		return true
 	}
+	// TODO: iterate and set???
 	if rootMesh, rootOk := g.meshComposite[g.detailedElement.Name]; rootOk {
 
 		if graphicMesh, isGraphicMesh := rootMesh.(*graphic.Mesh); isGraphicMesh {
 			if standardMaterial, ok := graphicMesh.GetMaterial(0).(*material.Standard); ok {
+				standardMaterial.SetOpacity(opacity)
 				ambient := standardMaterial.AmbientColor()
 				if !color.Equals(&ambient) {
 					standardMaterial.SetColor(color)

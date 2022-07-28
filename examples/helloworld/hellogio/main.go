@@ -150,6 +150,21 @@ func main() {
 					},
 				},
 			},
+			{
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent: container.NewTabItem("Hide", widget.NewLabel("Poof...")),
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{
+						Id:          5,
+						State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Hidden)},
+						Name:        "Hide",
+						Description: "",
+						Genre:       "Hidden",
+						Subgenre:    "",
+						Parentids:   []int64{3},
+						Childids:    nil,
+					},
+				},
+			},
 		},
 		gioComponentCache: map[int64]*GioWidgetBundle{},
 	}
