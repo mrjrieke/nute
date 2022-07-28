@@ -287,7 +287,7 @@ func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	for _, es := range elementStateBundle.ElementStates {
 		fyneComponent := helloApp.gioComponentCache[es.GetId()]
 		fyneComponent.MashupDetailedElement.State.State = es.State
-		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+		if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 			// TODO: Select the item.
 		}
 	}

@@ -173,7 +173,8 @@ func (g *G3nDetailedElement) IsComposite() bool {
 }
 
 func (g *G3nDetailedElement) IsItemActive() bool {
-	return g.GetDisplayState() != mashupsdk.Rest
+	displayState := g.GetDisplayState()
+	return displayState&mashupsdk.Rest == 0
 }
 
 func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
@@ -221,10 +222,21 @@ func (g *G3nDetailedElement) GetDisplayState() mashupsdk.DisplayElementState {
 }
 
 func (g *G3nDetailedElement) SetDisplayState(x mashupsdk.DisplayElementState) bool {
-	if g.detailedElement.State.State != int64(x) {
-		g.detailedElement.State.State = int64(x)
+	if (x & mashupsdk.Rest) == mashupsdk.Rest {
+		if (g.detailedElement.State.State & int64(mashupsdk.Clicked)) == int64(mashupsdk.Clicked) {
+			g.detailedElement.State.State &= ^int64(mashupsdk.Clicked)
+		}
+	} else if (x & mashupsdk.Clicked) == mashupsdk.Clicked {
+		if (g.detailedElement.State.State & int64(mashupsdk.Rest)) == int64(mashupsdk.Rest) {
+			g.detailedElement.State.State &= ^int64(mashupsdk.Rest)
+		}
+	}
+
+	if (g.detailedElement.State.State & int64(x)) != int64(x) {
+		g.detailedElement.State.State |= int64(x)
 		return true
 	}
+
 	return false
 }
 
