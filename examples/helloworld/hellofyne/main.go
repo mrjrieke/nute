@@ -383,7 +383,7 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 		fyneComponent.MashupDetailedElement = detailedElement
 		fyneComponent.MashupDetailedElement.State.State = es.State
 
-		if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+		if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 			for _, childId := range detailedElement.GetChildids() {
 				if childDetailedElement, childDetailOk := helloApp.mashupDetailedElementLibrary[childId]; childDetailOk {
 					if childFyneComponent, childFyneOk := helloApp.fyneWidgetElements[childDetailedElement.GetAlias()]; childFyneOk {

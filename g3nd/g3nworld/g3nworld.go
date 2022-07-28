@@ -665,7 +665,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.concreteElements[es.GetId()]; ok {
 			g3nDetailedElement.SetDisplayState(mashupsdk.DisplayElementState(es.State))
-			if mashupsdk.DisplayElementState(es.State) == mashupsdk.Clicked {
+			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 				clickedElements[es.GetId()] = g3nDetailedElement
 			}
 		}
