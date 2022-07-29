@@ -117,7 +117,7 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 	for rendererName, g3nRenderableElements := range elementsByRenderer {
 		g3nRenderableElements = mr.Sort(worldApp, G3nCollection(g3nRenderableElements))
 		if renderer := mr.GetRenderer(rendererName); renderer != nil {
-			if renderer.GetRendererType() == "Layout" {
+			if renderer.GetRendererType() == LAYOUT {
 				renderer.Layout(worldApp, g3nRenderableElements)
 			} else {
 				mr.GenericRenderer.LayoutBase(worldApp, mr, g3nRenderableElements)

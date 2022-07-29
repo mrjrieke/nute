@@ -41,7 +41,7 @@ func main() {
 	mashupRenderer := &g3nrender.MashupRenderer{}
 	var torusRenderer *g3nrender.TorusRenderer
 	if *torusLayout {
-		torusRenderer = &g3nrender.TorusRenderer{GenericRenderer: g3nrender.GenericRenderer{RendererType: "Layout"}, ActiveColor: &g3ndpalette.DARK_RED}
+		torusRenderer = &g3nrender.TorusRenderer{GenericRenderer: g3nrender.GenericRenderer{RendererType: g3nrender.LAYOUT}, ActiveColor: &g3ndpalette.DARK_RED}
 	} else {
 		torusRenderer = &g3nrender.TorusRenderer{ActiveColor: &g3ndpalette.DARK_RED}
 	}

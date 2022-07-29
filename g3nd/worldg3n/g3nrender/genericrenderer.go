@@ -28,12 +28,19 @@ type IG3nRenderer interface {
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 	HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 	GetRenderer(rendererName string) IG3nRenderer
-	GetRendererType() string
+	GetRendererType() G3nRenderType
 	Collaborate(worldApp *g3nworld.WorldApp, renderer IG3nRenderer)
 }
 
+type G3nRenderType string
+
+const (
+	NONE   G3nRenderType = ""
+	LAYOUT G3nRenderType = "Layout"
+)
+
 type GenericRenderer struct {
-	RendererType string
+	RendererType G3nRenderType
 }
 
 func (*GenericRenderer) NewSolidAtPosition(g3n *g3nmash.G3nDetailedElement, vpos *math32.Vector3) core.INode {
@@ -70,7 +77,7 @@ func (gr *GenericRenderer) GetRenderer(rendererName string) IG3nRenderer {
 	return nil
 }
 
-func (gr *GenericRenderer) GetRendererType() string {
+func (gr *GenericRenderer) GetRendererType() G3nRenderType {
 	return gr.RendererType
 }
 
