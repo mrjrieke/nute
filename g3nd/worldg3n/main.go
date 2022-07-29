@@ -28,6 +28,7 @@ func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
+	torusLayout := flag.Bool("toruslayout", false, "Use torus layout insead.")
 	flag.Parse()
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
@@ -38,8 +39,14 @@ func main() {
 	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
 
 	mashupRenderer := &g3nrender.MashupRenderer{}
+	var torusRenderer *g3nrender.TorusRenderer
+	if *torusLayout {
+		torusRenderer = &g3nrender.TorusRenderer{GenericRenderer: g3nrender.GenericRenderer{RendererType: g3nrender.LAYOUT}, ActiveColor: &g3ndpalette.DARK_RED}
+	} else {
+		torusRenderer = &g3nrender.TorusRenderer{ActiveColor: &g3ndpalette.DARK_RED}
+	}
 	backgroundRenderer := &g3nrender.BackgroundRenderer{
-		CollaboratingRenderer: &g3nrender.TorusRenderer{ActiveColor: &g3ndpalette.DARK_RED}}
+		CollaboratingRenderer: torusRenderer}
 	mashupRenderer.AddRenderer("Torus", backgroundRenderer.CollaboratingRenderer)
 	mashupRenderer.AddRenderer("Background", backgroundRenderer)
 
