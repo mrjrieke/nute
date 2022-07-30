@@ -334,7 +334,7 @@ func main() {
 
 		helloApp.fyneWidgetElements["Inside"].GuiComponent = detailMappedFyneComponent("Inside", "The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.", helloApp.fyneWidgetElements["Inside"].MashupDetailedElement)
 		helloApp.fyneWidgetElements["Outside"].GuiComponent = detailMappedFyneComponent("Outside", "The magnetic field at any point outside the toroid is zero.", helloApp.fyneWidgetElements["Outside"].MashupDetailedElement)
-		helloApp.fyneWidgetElements["It"].GuiComponent = detailMappedFyneComponent("It", "The magnetic field at any point outside the toroid is zero.", helloApp.fyneWidgetElements["It"].MashupDetailedElement)
+		helloApp.fyneWidgetElements["It"].GuiComponent = detailMappedFyneComponent("It", "The magnetic field inside the empty space surrounded by the toroid is zero.", helloApp.fyneWidgetElements["It"].MashupDetailedElement)
 		helloApp.fyneWidgetElements["Up-Side-Down"].GuiComponent = detailMappedFyneComponent("Up-Side-Down", "Torus is up-side-down", helloApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement)
 
 		torusMenu := container.NewAppTabs(
