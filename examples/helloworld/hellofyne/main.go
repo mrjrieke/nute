@@ -42,17 +42,6 @@ type HelloApp struct {
 func (fwb *FyneWidgetBundle) OnClicked() {
 	selectedDetailedElement := fwb.MashupDetailedElement
 
-	if fwb.MashupDetailedElement.Name == "Hide" {
-		currentTorus := helloApp.fyneWidgetElements["It"]
-		selectedDetailedElement = currentTorus.GuiWidgetBundle.MashupDetailedElement
-		selectedDetailedElement.State.State |= int64(mashupsdk.Hidden)
-	} else {
-		selectedDetailedElement.State.State = int64(mashupsdk.Clicked)
-		if (selectedDetailedElement.State.State & int64(mashupsdk.Hidden)) == int64(mashupsdk.Hidden) {
-			selectedDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
-		}
-	}
-
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
 		AuthToken:     client.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
@@ -109,8 +98,10 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
 			de.State.State &= ^int64(mashupsdk.Hidden)
+			helloApp.fyneWidgetElements[de.Alias].OnClicked()
 		}), widget.NewButton("Hide", func() {
 			de.State.State |= int64(mashupsdk.Hidden)
+			helloApp.fyneWidgetElements[de.Alias].OnClicked()
 		})))),
 	)
 	return tabItem
