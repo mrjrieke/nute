@@ -39,7 +39,7 @@ type HelloApp struct {
 	fyneWidgetElements           map[string]*FyneWidgetBundle
 }
 
-func (fwb *FyneWidgetBundle) OnClicked() {
+func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	selectedDetailedElement := fwb.MashupDetailedElement
 
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
@@ -98,10 +98,10 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
 			de.State.State &= ^int64(mashupsdk.Hidden)
-			helloApp.fyneWidgetElements[de.Alias].OnClicked()
+			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
 			de.State.State |= int64(mashupsdk.Hidden)
-			helloApp.fyneWidgetElements[de.Alias].OnClicked()
+			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		})))),
 	)
 	return tabItem
@@ -350,11 +350,11 @@ func main() {
 			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[tabItem.Text]; miOk {
 				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
 				if mashupDetailedElement.Alias != "" {
-					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnClicked()
+					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
 					return
 				}
 			}
-			helloApp.fyneWidgetElements[tabItem.Text].OnClicked()
+			helloApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
 		}
 
 		torusMenu.SetTabLocation(container.TabLocationTop)
@@ -418,7 +418,12 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 					}
 				}
 			}
-
+			if detailedLookupElement, detailLookupOk := helloApp.mashupDetailedElementLibrary[detailedElement.Id]; detailLookupOk {
+				if detailedFyneComponent, detailedFyneOk := helloApp.fyneWidgetElements[detailedLookupElement.GetAlias()]; detailedFyneOk {
+					detailedFyneComponent.MashupDetailedElement = detailedElement
+					detailedFyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
+				}
+			}
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
 			// Select the item.
 			fyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
