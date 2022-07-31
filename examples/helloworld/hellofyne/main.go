@@ -350,6 +350,7 @@ func main() {
 			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[tabItem.Text]; miOk {
 				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
 				if mashupDetailedElement.Alias != "" {
+					mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
 					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
 					return
 				}

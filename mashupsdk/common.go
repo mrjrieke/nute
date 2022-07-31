@@ -6,10 +6,9 @@ const (
 	Immutable DisplayElementState = 0 // For libraries
 	Mutable   DisplayElementState = 1 // For
 	Init      DisplayElementState = 2
-	Rest      DisplayElementState = 4
-	Clicked   DisplayElementState = 8
-	Moved     DisplayElementState = 16
-	Hidden    DisplayElementState = 32 // Hidden objects are not clickable
+	Clicked   DisplayElementState = 4
+	Moved     DisplayElementState = 8
+	Hidden    DisplayElementState = 12 // Hidden objects are not clickable
 )
 
 type MashupDisplayState int
