@@ -2,6 +2,7 @@ package g3nrender
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
@@ -67,13 +68,14 @@ func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
 func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
 	var g3nColor *math32.Color
 
-	if (mashupsdk.DisplayElementState(g3nDetailedElement.GetMashupElementState().State) & mashupsdk.Hidden) == mashupsdk.Hidden {
-		worldApp.RemoveFromScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName()))
+	if g3nDetailedElement.IsStateSet(mashupsdk.Hidden) {
+		log.Printf("Item removed %s: %v", g3nDetailedElement.GetDisplayName(), worldApp.RemoveFromScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName())))
+		return true
 	} else {
 		worldApp.UpsertToScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName()))
 	}
 
-	if g3nDetailedElement.IsItemActive() {
+	if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 		if tr.ActiveColor != nil && *tr.ActiveColor != nil {
 			g3nColor = *tr.ActiveColor
 		} else {

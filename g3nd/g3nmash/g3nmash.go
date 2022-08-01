@@ -177,6 +177,11 @@ func (g *G3nDetailedElement) IsItemActive() bool {
 	return (displayState & mashupsdk.Clicked) == mashupsdk.Clicked
 }
 
+func (g *G3nDetailedElement) IsStateSet(stateBit mashupsdk.DisplayElementState) bool {
+	displayState := g.GetDisplayState()
+	return (displayState & stateBit) == stateBit
+}
+
 func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
 	if itemClicked == nil {
 		return false
@@ -221,6 +226,10 @@ func (g *G3nDetailedElement) GetDisplayState() mashupsdk.DisplayElementState {
 	return mashupsdk.DisplayElementState(g.detailedElement.State.State)
 }
 
+func (g *G3nDetailedElement) SetElementState(x mashupsdk.DisplayElementState) {
+	g.detailedElement.State.State = int64(x)
+}
+
 func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, remove bool) bool {
 	if x == mashupsdk.Init {
 		g.detailedElement.State.State = int64(x)
@@ -252,7 +261,6 @@ func (g *G3nDetailedElement) SetRotationX(x float32) error {
 }
 
 func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElement, x float32, y float32, z float32) error {
-	log.Printf("Apply rotation: %d\n", len(parentG3Elements))
 	for _, parentG3Element := range parentG3Elements {
 		if rootMesh, rootOk := parentG3Element.meshComposite[parentG3Element.detailedElement.Name]; rootOk { // Hello friend.
 			log.Printf("Apply rotation: %f %f %f\n", x, y, z)
