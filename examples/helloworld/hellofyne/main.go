@@ -351,6 +351,7 @@ func main() {
 				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
 				if mashupDetailedElement.Alias != "" {
 					mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
 					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
 					return
 				}
