@@ -73,7 +73,7 @@ func CloneG3nDetailedElement(
 		g3n.detailedElement.Name = strings.Replace(g3n.detailedElement.Name, "{0}", strconv.FormatInt(g3n.detailedElement.Id, 10), 1)
 		// Converted from mutable to instance...
 		// Upgrade state to Init.
-		g3n.SetDisplayState(mashupsdk.Init)
+		g3n.ApplyState(mashupsdk.Init, false)
 		*generatedElements = append(*generatedElements, g3n.GetDetailedElement())
 	}
 
@@ -174,7 +174,7 @@ func (g *G3nDetailedElement) IsComposite() bool {
 
 func (g *G3nDetailedElement) IsItemActive() bool {
 	displayState := g.GetDisplayState()
-	return displayState&mashupsdk.Rest == 0
+	return (displayState & mashupsdk.Clicked) == mashupsdk.Clicked
 }
 
 func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
@@ -221,20 +221,21 @@ func (g *G3nDetailedElement) GetDisplayState() mashupsdk.DisplayElementState {
 	return mashupsdk.DisplayElementState(g.detailedElement.State.State)
 }
 
-func (g *G3nDetailedElement) SetDisplayState(x mashupsdk.DisplayElementState) bool {
-	if (x & mashupsdk.Rest) == mashupsdk.Rest {
-		if (g.detailedElement.State.State & int64(mashupsdk.Clicked)) == int64(mashupsdk.Clicked) {
-			g.detailedElement.State.State &= ^int64(mashupsdk.Clicked)
-		}
-	} else if (x & mashupsdk.Clicked) == mashupsdk.Clicked {
-		if (g.detailedElement.State.State & int64(mashupsdk.Rest)) == int64(mashupsdk.Rest) {
-			g.detailedElement.State.State &= ^int64(mashupsdk.Rest)
-		}
-	}
-
-	if (g.detailedElement.State.State & int64(x)) != int64(x) {
-		g.detailedElement.State.State |= int64(x)
+func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, remove bool) bool {
+	if x == mashupsdk.Init {
+		g.detailedElement.State.State = int64(x)
 		return true
+	}
+	if (g.detailedElement.State.State & int64(x)) != int64(x) {
+		if !remove {
+			g.detailedElement.State.State |= int64(x)
+			return true
+		}
+	} else {
+		if remove {
+			g.detailedElement.State.State &= ^int64(x)
+			return true
+		}
 	}
 
 	return false
