@@ -360,7 +360,7 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 
 		changed := worldApp.IG3nRenderer.HandleStateChange(w, g3nDetailedElement)
 		if !g3nDetailedElement.IsBackground() {
-			if g3nDetailedElement.IsItemActive() {
+			if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
 					log.Printf("G3n Has parents\n")
 					parentIds := g3nDetailedElement.GetParentElementIds()
@@ -678,7 +678,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.concreteElements[es.GetId()]; ok {
-			g3nDetailedElement.ApplyState(mashupsdk.DisplayElementState(es.State), false)
+			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
+			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 				clickedElements[es.GetId()] = g3nDetailedElement
 			}

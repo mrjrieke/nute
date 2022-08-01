@@ -8,6 +8,7 @@ import (
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
+	"github.com/mrjrieke/nute/mashupsdk"
 )
 
 type BackgroundRenderer struct {
@@ -51,7 +52,7 @@ func (br *BackgroundRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n
 		br.ActiveColor = g3ndpalette.DARK_RED
 	}
 
-	if g3nDetailedElement.IsItemActive() {
+	if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 		g3nColor = g3ndpalette.DARK_RED
 		if br.ActiveColor == g3ndpalette.DARK_RED {
 			br.ActiveColor = g3ndpalette.DARK_GREEN

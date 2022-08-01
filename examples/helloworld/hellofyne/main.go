@@ -46,6 +46,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 		AuthToken:     client.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
+	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
 }
 
@@ -71,6 +72,7 @@ func (ha *HelloApp) TorusParser(childId int64) {
 	child := helloApp.mashupDetailedElementLibrary[childId]
 	if child.Alias != "" {
 		helloApp.fyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
+		helloApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
 	}
 
 	if len(child.GetChildids()) > 0 {
@@ -97,10 +99,10 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabLabel.Wrapping = fyne.TextWrapWord
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
-			de.State.State &= ^int64(mashupsdk.Hidden)
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
-			de.State.State |= int64(mashupsdk.Hidden)
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State |= int64(mashupsdk.Hidden)
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		})))),
 	)
