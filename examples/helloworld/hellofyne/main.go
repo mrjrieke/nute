@@ -98,7 +98,9 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabLabel.Wrapping = fyne.TextWrapWord
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
-			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
+			if (mashupsdk.DisplayElementState(helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State) & mashupsdk.Hidden) == mashupsdk.Hidden {
+				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
+			}
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
 			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State |= int64(mashupsdk.Hidden)
