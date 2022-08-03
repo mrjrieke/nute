@@ -57,7 +57,7 @@ type WorldApp struct {
 	elementLibraryDictionary map[int64]*g3nmash.G3nDetailedElement
 
 	maxElementId       int64
-	concreteElements   map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
+	ConcreteElements   map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementLoaderIndex map[string]int64                      // g3n indexes by loader id...
 	clickedElements    map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
@@ -73,7 +73,7 @@ func NewWorldApp(headless bool, renderer IG3nRenderer) *WorldApp {
 		headless:                 headless,
 		MSdkApiHandler:           &mashupSdkApiHandler{},
 		elementLibraryDictionary: map[int64]*g3nmash.G3nDetailedElement{},
-		concreteElements:         map[int64]*g3nmash.G3nDetailedElement{},
+		ConcreteElements:         map[int64]*g3nmash.G3nDetailedElement{},
 		elementLoaderIndex:       map[string]int64{},
 		clickedElements:          map[int64]*g3nmash.G3nDetailedElement{},
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
@@ -144,7 +144,7 @@ func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
 
 func (w *WorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 	changedElements := []*mashupsdk.MashupElementState{}
-	for _, g3nDetailedElement := range w.concreteElements {
+	for _, g3nDetailedElement := range w.ConcreteElements {
 		if g3nDetailedElement.GetDisplayState() != mashupsdk.Init {
 			g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
@@ -156,7 +156,7 @@ func (w *WorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 
 // Sets all elements to a "Rest state."
 func (w *WorldApp) ResetG3nDetailedElementStates() {
-	for _, wes := range w.concreteElements {
+	for _, wes := range w.ConcreteElements {
 		wes.ApplyState(mashupsdk.Init, false)
 	}
 }
@@ -178,7 +178,7 @@ func (w *WorldApp) indexG3nDetailedElement(g3nDetailedElement *g3nmash.G3nDetail
 	if g3nDetailedElement.GetBasisId() < 0 && g3nDetailedElement.GetDisplayId() == 0 {
 		w.elementLibraryDictionary[g3nDetailedElement.GetBasisId()] = g3nDetailedElement
 	} else {
-		w.concreteElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+		w.ConcreteElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
 		w.elementLoaderIndex[g3nDetailedElement.GetDisplayName()] = g3nDetailedElement.GetDisplayId()
 		if g3nDetailedElement.IsBackground() {
 			w.backgroundG3n = g3nDetailedElement
@@ -193,7 +193,7 @@ func (w *WorldApp) GetG3nDetailedFilteredElements(renderer string, abstract bool
 		log.Printf("No filter provided.  No filtered elements found.\n")
 		return nil, errors.New("no filter provided - no filtered elements found")
 	}
-	for _, element := range w.concreteElements {
+	for _, element := range w.ConcreteElements {
 		if element.GetDetailedElement().Renderer == renderer {
 			if abstract {
 				if element.IsAbstract() {
@@ -228,7 +228,7 @@ func (w *WorldApp) GetG3nDetailedChildElements(g3n *g3nmash.G3nDetailedElement) 
 
 func (w *WorldApp) GetG3nDetailedGenreFilteredElements(genre string) ([]*g3nmash.G3nDetailedElement, error) {
 	filteredElements := []*g3nmash.G3nDetailedElement{}
-	for _, element := range w.concreteElements {
+	for _, element := range w.ConcreteElements {
 		if element.GetDetailedElement().GetGenre() == genre {
 			filteredElements = append(filteredElements, element)
 		}
@@ -256,7 +256,7 @@ func (w *WorldApp) RemoveFromScene(node core.INode) bool {
 }
 
 func (w *WorldApp) GetG3nDetailedElementById(eid int64) (*g3nmash.G3nDetailedElement, error) {
-	if g3nElement, g3nElementOk := w.concreteElements[eid]; g3nElementOk {
+	if g3nElement, g3nElementOk := w.ConcreteElements[eid]; g3nElementOk {
 		return g3nElement, nil
 	}
 	return nil, fmt.Errorf("element does not exist: %d", eid)
@@ -353,7 +353,7 @@ func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 	changedElements := []*mashupsdk.MashupElementState{}
 	attitudeVisitedNodes := map[int64]bool{}
-	for _, g3nDetailedElement := range w.concreteElements {
+	for _, g3nDetailedElement := range w.ConcreteElements {
 		if g3nDetailedElement.IsAbstract() {
 			continue
 		}
@@ -495,7 +495,7 @@ func (w *WorldApp) InitMainWindow() {
 				itemMatched := false
 				if itemClicked != nil {
 					if g3nDetailedIndex, ok := w.elementLoaderIndex[itemClicked.GetNode().LoaderID()]; ok {
-						if g3nDetailedElement, ok := w.concreteElements[g3nDetailedIndex]; ok {
+						if g3nDetailedElement, ok := w.ConcreteElements[g3nDetailedIndex]; ok {
 							g3nDetailedElement.ApplyState(mashupsdk.Clicked, false)
 							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
@@ -677,7 +677,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	clickedElements := map[int64]*g3nmash.G3nDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
-		if g3nDetailedElement, ok := worldApp.concreteElements[es.GetId()]; ok {
+		if g3nDetailedElement, ok := worldApp.ConcreteElements[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {

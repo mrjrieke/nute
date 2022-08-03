@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -153,6 +152,12 @@ func main() {
 					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
 				},
 			},
+			"All": {
+				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+					GuiComponent:          nil,
+					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
+				},
+			},
 		},
 	}
 
@@ -206,12 +211,13 @@ func main() {
 						Id:          5,
 						State:       &mashupsdk.MashupElementState{Id: 5, State: int64(mashupsdk.Init)},
 						Name:        "ToriOne",
+						Alias:       "All",
 						Description: "Tori",
 						Renderer:    "Torus",
 						Genre:       "Collection",
 						Subgenre:    "Torus",
 						Parentids:   []int64{},
-						Childids:    []int64{8, 9},
+						Childids:    []int64{8, 9, 10},
 					},
 					{
 						Id:            6,
@@ -299,10 +305,8 @@ func main() {
 				}
 
 				for _, concreteElement := range concreteElementBundle.DetailedElements {
-					if strings.HasPrefix(concreteElement.GetName(), "TorusEntity") {
-						for _, childId := range concreteElement.Childids {
-							helloApp.TorusParser(childId)
-						}
+					if concreteElement.GetSubgenre() == "Torus" {
+						helloApp.TorusParser(concreteElement.Id)
 					}
 				}
 
@@ -338,12 +342,14 @@ func main() {
 		helloApp.fyneWidgetElements["Outside"].GuiComponent = detailMappedFyneComponent("Outside", "The magnetic field at any point outside the toroid is zero.", helloApp.fyneWidgetElements["Outside"].MashupDetailedElement)
 		helloApp.fyneWidgetElements["It"].GuiComponent = detailMappedFyneComponent("It", "The magnetic field inside the empty space surrounded by the toroid is zero.", helloApp.fyneWidgetElements["It"].MashupDetailedElement)
 		helloApp.fyneWidgetElements["Up-Side-Down"].GuiComponent = detailMappedFyneComponent("Up-Side-Down", "Torus is up-side-down", helloApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement)
+		helloApp.fyneWidgetElements["All"].GuiComponent = detailMappedFyneComponent("All", "A group of torus or a tori.", helloApp.fyneWidgetElements["All"].MashupDetailedElement)
 
 		torusMenu := container.NewAppTabs(
 			helloApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
 			helloApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),
 			helloApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),
 			helloApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem),
+			helloApp.fyneWidgetElements["All"].GuiComponent.(*container.TabItem),
 		)
 		torusMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
