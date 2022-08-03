@@ -66,16 +66,18 @@ func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
 }
 
 func (tr *TorusRenderer) TorusParser(worldApp *g3nworld.WorldApp, childId int64) {
-	child := worldApp.ConcreteElements[childId]
-	if !child.IsAbstract() {
-		log.Printf("Child Item removed %s: %v", child.GetDisplayName(), worldApp.RemoveFromScene(child.GetNamedMesh(child.GetDisplayName())))
-	}
+	if child, childOk := worldApp.ConcreteElements[childId]; childOk {
+		if !child.IsAbstract() {
+			log.Printf("Child Item removed %s: %v", child.GetDisplayName(), worldApp.RemoveFromScene(child.GetNamedMesh(child.GetDisplayName())))
+		}
 
-	if len(child.GetChildElementIds()) > 0 {
-		for _, cId := range child.GetChildElementIds() {
-			tr.TorusParser(worldApp, cId)
+		if len(child.GetChildElementIds()) > 0 {
+			for _, cId := range child.GetChildElementIds() {
+				tr.TorusParser(worldApp, cId)
+			}
 		}
 	}
+
 }
 
 func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
