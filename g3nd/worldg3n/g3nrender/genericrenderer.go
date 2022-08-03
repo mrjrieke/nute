@@ -110,6 +110,7 @@ func (gr *GenericRenderer) LayoutBase(worldApp *g3nworld.WorldApp,
 		_, nextPos = g3Renderer.NextCoordinate(concreteG3nRenderableElement, totalElements)
 		solidMesh := g3Renderer.NewSolidAtPosition(concreteG3nRenderableElement, nextPos)
 		if solidMesh != nil {
+			log.Printf("Adding %s\n", solidMesh.GetNode().LoaderID())
 			worldApp.AddToScene(solidMesh)
 			concreteG3nRenderableElement.SetNamedMesh(concreteG3nRenderableElement.GetDisplayName(), solidMesh)
 		}

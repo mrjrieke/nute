@@ -242,7 +242,9 @@ func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, remove 
 		}
 	} else {
 		if remove {
-			g.detailedElement.State.State &= ^int64(x)
+			if g.IsStateSet(x) {
+				g.detailedElement.State.State &= ^int64(x)
+			}
 			return true
 		}
 	}
