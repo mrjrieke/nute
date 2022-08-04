@@ -73,7 +73,9 @@ func CloneG3nDetailedElement(
 		g3n.detailedElement.Name = strings.Replace(g3n.detailedElement.Name, "{0}", strconv.FormatInt(g3n.detailedElement.Id, 10), 1)
 		// Converted from mutable to instance...
 		// Upgrade state to Init.
-		g3n.ApplyState(mashupsdk.Init, false)
+		if g3n.GetDetailedElement().State.State == int64(mashupsdk.Immutable) {
+			g3n.ApplyState(mashupsdk.Init, false)
+		}
 		*generatedElements = append(*generatedElements, g3n.GetDetailedElement())
 	}
 
@@ -265,7 +267,7 @@ func (g *G3nDetailedElement) SetRotationX(x float32) error {
 func (g *G3nDetailedElement) ApplyRotation(parentG3Elements []*G3nDetailedElement, x float32, y float32, z float32) error {
 	for _, parentG3Element := range parentG3Elements {
 		if rootMesh, rootOk := parentG3Element.meshComposite[parentG3Element.detailedElement.Name]; rootOk { // Hello friend.
-			log.Printf("Apply rotation: %f %f %f\n", x, y, z)
+			log.Printf("Apply rotation for %s: %f %f %f\n", g.GetDisplayName(), x, y, z)
 			if graphicMesh, isGraphicMesh := rootMesh.(*graphic.Mesh); isGraphicMesh {
 				graphicMesh.SetRotationX(x)
 				graphicMesh.SetRotationY(y)
