@@ -65,15 +65,17 @@ func (tr *TorusRenderer) Layout(worldApp *g3nworld.WorldApp,
 	tr.GenericRenderer.LayoutBase(worldApp, tr, g3nRenderableElements)
 }
 
-func (tr *TorusRenderer) TorusParser(worldApp *g3nworld.WorldApp, childId int64) {
+func (tr *TorusRenderer) RemoveAll(worldApp *g3nworld.WorldApp, childId int64) {
 	if child, childOk := worldApp.ConcreteElements[childId]; childOk {
 		if !child.IsAbstract() {
-			log.Printf("Child Item removed %s: %v", child.GetDisplayName(), worldApp.RemoveFromScene(child.GetNamedMesh(child.GetDisplayName())))
+			if childMesh := child.GetNamedMesh(child.GetDisplayName()); childMesh != nil {
+				log.Printf("Child Item removed %s: %v", child.GetDisplayName(), worldApp.RemoveFromScene(childMesh))
+			}
 		}
 
 		if len(child.GetChildElementIds()) > 0 {
 			for _, cId := range child.GetChildElementIds() {
-				tr.TorusParser(worldApp, cId)
+				tr.RemoveAll(worldApp, cId)
 			}
 		}
 	}
@@ -85,7 +87,7 @@ func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetai
 
 	if g3nDetailedElement.IsStateSet(mashupsdk.Hidden) {
 		if g3nDetailedElement.GetDetailedElement().Genre == "Collection" && g3nDetailedElement.GetDetailedElement().Subgenre == "Torus" {
-			tr.TorusParser(worldApp, g3nDetailedElement.GetDetailedElement().Id)
+			tr.RemoveAll(worldApp, g3nDetailedElement.GetDetailedElement().Id)
 		} else {
 			log.Printf("Item removed %s: %v", g3nDetailedElement.GetDisplayName(), worldApp.RemoveFromScene(g3nDetailedElement.GetNamedMesh(g3nDetailedElement.GetDisplayName())))
 		}

@@ -238,7 +238,15 @@ func (w *WorldApp) GetG3nDetailedGenreFilteredElements(genre string) ([]*g3nmash
 }
 
 func (w *WorldApp) AddToScene(node core.INode) *core.Node {
-	return w.scene.Add(node)
+	if node == nil {
+		return nil
+	}
+	if w.scene.FindLoaderID(node.GetNode().LoaderID()) == nil {
+		log.Printf("Item added %s: %v", node.GetNode().LoaderID(), w.scene.Add(node))
+		return w.scene.Add(node)
+	} else {
+		return nil
+	}
 }
 
 func (w *WorldApp) UpsertToScene(node core.INode) *core.Node {
@@ -357,9 +365,8 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 		if g3nDetailedElement.IsAbstract() {
 			continue
 		}
-
 		changed := worldApp.IG3nRenderer.HandleStateChange(w, g3nDetailedElement)
-		if !g3nDetailedElement.IsBackground() {
+		if !g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && !g3nDetailedElement.IsBackground() {
 			if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
 					log.Printf("G3n Has parents\n")
@@ -670,6 +677,18 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	return result, nil
 }
 
+func (mSdk *mashupSdkApiHandler) applyStateHelper(g3nId int64, x mashupsdk.DisplayElementState, remove bool) {
+
+	child := worldApp.ConcreteElements[g3nId]
+	child.ApplyState(mashupsdk.DisplayElementState(x), remove)
+
+	if len(child.GetDetailedElement().Childids) > 0 {
+		for _, cId := range child.GetDetailedElement().Childids {
+			mSdk.applyStateHelper(cId, x, remove)
+		}
+	}
+}
+
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
@@ -678,7 +697,20 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.ConcreteElements[es.GetId()]; ok {
+			hiddenChange := false
+			hiddenRemove := false
+
+			if (g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && (mashupsdk.DisplayElementState(es.State)&mashupsdk.Hidden) != mashupsdk.Hidden) ||
+				(!g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && (mashupsdk.DisplayElementState(es.State)&mashupsdk.Hidden) == mashupsdk.Hidden) {
+				hiddenChange = true
+				hiddenRemove = (mashupsdk.DisplayElementState(es.State) & mashupsdk.Hidden) != mashupsdk.Hidden
+			}
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
+			if hiddenChange && g3nDetailedElement.GetDetailedElement().GetGenre() == "Collection" {
+				// Apply this state change to all child elements.
+				mSdk.applyStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State), hiddenRemove)
+			}
+
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 				clickedElements[es.GetId()] = g3nDetailedElement
