@@ -365,10 +365,8 @@ func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 		if g3nDetailedElement.IsAbstract() {
 			continue
 		}
-		//		log.Printf("Node key: %d displayId: %s\n", concreteKey, g3nDetailedElement.GetDisplayName())
 		changed := worldApp.IG3nRenderer.HandleStateChange(w, g3nDetailedElement)
 		if !g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && !g3nDetailedElement.IsBackground() {
-			//			log.Printf("Active Node key: %d displayId: %s\n", concreteKey, g3nDetailedElement.GetDisplayName())
 			if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
 					log.Printf("G3n Has parents\n")
