@@ -706,7 +706,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 				hiddenRemove = (mashupsdk.DisplayElementState(es.State) & mashupsdk.Hidden) != mashupsdk.Hidden
 			}
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
-			if hiddenChange && g3nDetailedElement.GetDetailedElement().GetGenre() == "Collection" {
+			if hiddenChange && g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
 				// Apply this state change to all child elements.
 				mSdk.applyStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State), hiddenRemove)
 			}

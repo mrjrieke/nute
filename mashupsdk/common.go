@@ -8,7 +8,8 @@ const (
 	Init      DisplayElementState = 2
 	Clicked   DisplayElementState = 4
 	Moved     DisplayElementState = 8
-	Hidden    DisplayElementState = 12 // Hidden objects are not clickable
+	Hidden    DisplayElementState = 16 // Hidden objects are not clickable
+	Recursive DisplayElementState = 32 // Apply attributes recursively
 )
 
 type MashupDisplayState int
