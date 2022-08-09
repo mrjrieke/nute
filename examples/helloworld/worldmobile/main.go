@@ -92,6 +92,10 @@ func (w *worldApiHandler) OnResize(displayHint *sdk.MashupDisplayHint) {
 	}
 }
 
+func (c *worldApiHandler) ResetG3NDetailedElementStates() {
+	// Not implemented.
+}
+
 func (c *worldApiHandler) UpsertMashupElements(detailedElementBundle *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	// Not implemented.
 	return nil, errors.New("Could not capture items.")

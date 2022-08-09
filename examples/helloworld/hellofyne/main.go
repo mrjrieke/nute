@@ -45,6 +45,8 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 		AuthToken:     client.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
+	helloApp.HelloContext.mashupContext.Client.ResetG3NDetailedElementStates(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
 }
@@ -98,18 +100,16 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabLabel.Wrapping = fyne.TextWrapWord
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
 			if helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State |= int64(mashupsdk.Recursive)
-			}
-			if (mashupsdk.DisplayElementState(helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State) & mashupsdk.Hidden) == mashupsdk.Hidden {
-				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State &= ^int64(mashupsdk.Hidden)
+				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
 			}
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
 			if helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State |= int64(mashupsdk.Recursive)
+				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
 			}
-			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.State.State |= int64(mashupsdk.Hidden)
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		})))),
 	)
@@ -366,7 +366,9 @@ func main() {
 			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[tabItem.Text]; miOk {
 				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
 				if mashupDetailedElement.Alias != "" {
-					mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					if mashupDetailedElement.Genre != "Collection" {
+						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					}
 					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
 					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
 					return
@@ -408,6 +410,10 @@ func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayH
 func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("Fyne UpsertMashupElements - not implemented\n")
 	return &mashupsdk.MashupDetailedElementBundle{}, nil
+}
+
+func (mSdk *fyneMashupApiHandler) ResetG3NDetailedElementStates() {
+	log.Printf("Fyne ResetG3NDetailedElementStates - not implemented\n")
 }
 
 func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {

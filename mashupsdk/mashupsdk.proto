@@ -14,6 +14,7 @@ service MashupServer {
   rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
   rpc UpsertMashupElements(MashupDetailedElementBundle) returns (MashupDetailedElementBundle) {}
   rpc UpsertMashupElementsState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
+  rpc ResetG3nDetailedElementStates(MashupEmpty) returns (MashupEmpty) {}
 
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }

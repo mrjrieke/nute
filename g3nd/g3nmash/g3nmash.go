@@ -74,7 +74,7 @@ func CloneG3nDetailedElement(
 		// Converted from mutable to instance...
 		// Upgrade state to Init.
 		if g3n.GetDetailedElement().State.State == int64(mashupsdk.Immutable) {
-			g3n.ApplyState(mashupsdk.Init, false)
+			g3n.ApplyState(mashupsdk.Init, true)
 		}
 		*generatedElements = append(*generatedElements, g3n.GetDetailedElement())
 	}
@@ -232,26 +232,8 @@ func (g *G3nDetailedElement) SetElementState(x mashupsdk.DisplayElementState) {
 	g.detailedElement.State.State = int64(x)
 }
 
-func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, remove bool) bool {
-	if x == mashupsdk.Init {
-		g.detailedElement.State.State = int64(x)
-		return true
-	}
-	if (g.detailedElement.State.State & int64(x)) != int64(x) {
-		if !remove {
-			g.detailedElement.State.State |= int64(x)
-			return true
-		}
-	} else {
-		if remove {
-			if g.IsStateSet(x) {
-				g.detailedElement.State.State &= ^int64(x)
-			}
-			return true
-		}
-	}
-
-	return false
+func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, isset bool) bool {
+	return g.detailedElement.ApplyState(x, isset)
 }
 
 func (g *G3nDetailedElement) SetRotationX(x float32) error {

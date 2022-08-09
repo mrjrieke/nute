@@ -146,19 +146,12 @@ func (w *WorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 	changedElements := []*mashupsdk.MashupElementState{}
 	for _, g3nDetailedElement := range w.ConcreteElements {
 		if g3nDetailedElement.GetDisplayState() != mashupsdk.Init {
-			g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
+			g3nDetailedElement.ApplyState(mashupsdk.Clicked, false)
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
 		}
 	}
 
 	return changedElements
-}
-
-// Sets all elements to a "Rest state."
-func (w *WorldApp) ResetG3nDetailedElementStates() {
-	for _, wes := range w.ConcreteElements {
-		wes.ApplyState(mashupsdk.Init, false)
-	}
 }
 
 func (w *WorldApp) NewElementIdPump() int64 {
@@ -503,12 +496,12 @@ func (w *WorldApp) InitMainWindow() {
 				if itemClicked != nil {
 					if g3nDetailedIndex, ok := w.elementLoaderIndex[itemClicked.GetNode().LoaderID()]; ok {
 						if g3nDetailedElement, ok := w.ConcreteElements[g3nDetailedIndex]; ok {
-							g3nDetailedElement.ApplyState(mashupsdk.Clicked, false)
+							g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
 							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
 							for _, clickedElement := range w.clickedElements {
 								if clickedElement.GetDisplayId() != g3nDetailedElement.GetDisplayId() {
-									clickedElement.ApplyState(mashupsdk.Clicked, true)
+									clickedElement.ApplyState(mashupsdk.Clicked, false)
 								}
 							}
 							for clickedId := range w.clickedElements {
@@ -520,7 +513,7 @@ func (w *WorldApp) InitMainWindow() {
 				}
 
 				if !itemMatched {
-					w.backgroundG3n.ApplyState(mashupsdk.Clicked, false)
+					w.backgroundG3n.ApplyState(mashupsdk.Clicked, true)
 					for _, clickedElement := range w.clickedElements {
 						if clickedElement.GetDisplayId() != w.backgroundG3n.GetDisplayId() {
 							clickedElement.ApplyState(mashupsdk.Init, false)
@@ -531,7 +524,7 @@ func (w *WorldApp) InitMainWindow() {
 					}
 					w.clickedElements[w.backgroundG3n.GetDisplayId()] = w.backgroundG3n
 				} else {
-					w.backgroundG3n.ApplyState(mashupsdk.Clicked, true)
+					w.backgroundG3n.ApplyState(mashupsdk.Clicked, false)
 				}
 				changedElements := w.Transform()
 				if !itemMatched {
@@ -598,6 +591,15 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 	worldApp.mashupContext = context
 }
 
+// Sets all elements to a "Rest state."
+func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
+	log.Printf("G3n Received ResetG3NDetailedElementStates\n")
+	for _, wes := range worldApp.ConcreteElements {
+		wes.SetElementState(mashupsdk.Init)
+	}
+	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
+}
+
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
@@ -626,7 +628,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 		}
 
 		if detailedElement.State.Id != int64(mashupsdk.Immutable) {
-			g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
+			g3nDetailedElement.ApplyState(mashupsdk.Clicked, false)
 		}
 
 		for _, childId := range g3nDetailedElement.GetChildElementIds() {
@@ -677,14 +679,28 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	return result, nil
 }
 
-func (mSdk *mashupSdkApiHandler) applyStateHelper(g3nId int64, x mashupsdk.DisplayElementState, remove bool) {
+func (mSdk *mashupSdkApiHandler) applyStateHelper(g3nId int64, x mashupsdk.DisplayElementState, isset bool) {
 
 	child := worldApp.ConcreteElements[g3nId]
-	child.ApplyState(mashupsdk.DisplayElementState(x), remove)
+	child.ApplyState(mashupsdk.DisplayElementState(x), isset)
 
 	if len(child.GetDetailedElement().Childids) > 0 {
 		for _, cId := range child.GetDetailedElement().Childids {
-			mSdk.applyStateHelper(cId, x, remove)
+			mSdk.applyStateHelper(cId, x, isset)
+		}
+	}
+}
+
+func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
+
+	child := worldApp.ConcreteElements[g3nId]
+	if child.GetDetailedElement().Genre != "Attitude" {
+		child.SetElementState(mashupsdk.DisplayElementState(x))
+	}
+
+	if len(child.GetDetailedElement().Childids) > 0 {
+		for _, cId := range child.GetDetailedElement().Childids {
+			mSdk.setStateHelper(cId, x)
 		}
 	}
 }
@@ -696,18 +712,12 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.ConcreteElements[es.GetId()]; ok {
-			hiddenChange := false
-			hiddenRemove := false
-
-			if (g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && (mashupsdk.DisplayElementState(es.State)&mashupsdk.Hidden) != mashupsdk.Hidden) ||
-				(!g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && (mashupsdk.DisplayElementState(es.State)&mashupsdk.Hidden) == mashupsdk.Hidden) {
-				hiddenChange = true
-				hiddenRemove = (mashupsdk.DisplayElementState(es.State) & mashupsdk.Hidden) != mashupsdk.Hidden
-			}
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
-			if hiddenChange && g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
+			if g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
+				// Unset recursive for child elements
+				es.State &= ^int64(mashupsdk.Recursive)
 				// Apply this state change to all child elements.
-				mSdk.applyStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.Hidden, hiddenRemove)
+				mSdk.setStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State))
 			}
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
