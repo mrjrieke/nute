@@ -692,7 +692,6 @@ func (mSdk *mashupSdkApiHandler) applyStateHelper(g3nId int64, x mashupsdk.Displ
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
-	worldApp.ResetG3nDetailedElementStates()
 	clickedElements := map[int64]*g3nmash.G3nDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
@@ -708,7 +707,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			if hiddenChange && g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
 				// Apply this state change to all child elements.
-				mSdk.applyStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State), hiddenRemove)
+				mSdk.applyStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.Hidden, hiddenRemove)
 			}
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
