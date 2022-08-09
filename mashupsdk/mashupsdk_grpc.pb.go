@@ -27,6 +27,7 @@ type MashupServerClient interface {
 	OnResize(ctx context.Context, in *MashupDisplayBundle, opts ...grpc.CallOption) (*MashupDisplayHint, error)
 	UpsertMashupElements(ctx context.Context, in *MashupDetailedElementBundle, opts ...grpc.CallOption) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(ctx context.Context, in *MashupElementStateBundle, opts ...grpc.CallOption) (*MashupElementStateBundle, error)
+	ResetG3NDetailedElementStates(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupEmpty, error)
 	Shutdown(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupEmpty, error)
 }
 
@@ -74,6 +75,15 @@ func (c *mashupServerClient) UpsertMashupElementsState(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *mashupServerClient) ResetG3NDetailedElementStates(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupEmpty, error) {
+	out := new(MashupEmpty)
+	err := c.cc.Invoke(ctx, "/mashupsdk.MashupServer/ResetG3nDetailedElementStates", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *mashupServerClient) Shutdown(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupEmpty, error) {
 	out := new(MashupEmpty)
 	err := c.cc.Invoke(ctx, "/mashupsdk.MashupServer/Shutdown", in, out, opts...)
@@ -92,6 +102,7 @@ type MashupServerServer interface {
 	OnResize(context.Context, *MashupDisplayBundle) (*MashupDisplayHint, error)
 	UpsertMashupElements(context.Context, *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(context.Context, *MashupElementStateBundle) (*MashupElementStateBundle, error)
+	ResetG3NDetailedElementStates(context.Context, *MashupEmpty) (*MashupEmpty, error)
 	Shutdown(context.Context, *MashupEmpty) (*MashupEmpty, error)
 	mustEmbedUnimplementedMashupServerServer()
 }
@@ -111,6 +122,9 @@ func (UnimplementedMashupServerServer) UpsertMashupElements(context.Context, *Ma
 }
 func (UnimplementedMashupServerServer) UpsertMashupElementsState(context.Context, *MashupElementStateBundle) (*MashupElementStateBundle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupElementsState not implemented")
+}
+func (UnimplementedMashupServerServer) ResetG3NDetailedElementStates(context.Context, *MashupEmpty) (*MashupEmpty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetG3NDetailedElementStates not implemented")
 }
 func (UnimplementedMashupServerServer) Shutdown(context.Context, *MashupEmpty) (*MashupEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Shutdown not implemented")
@@ -200,6 +214,24 @@ func _MashupServer_UpsertMashupElementsState_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MashupServer_ResetG3NDetailedElementStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MashupEmpty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MashupServerServer).ResetG3NDetailedElementStates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mashupsdk.MashupServer/ResetG3nDetailedElementStates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MashupServerServer).ResetG3NDetailedElementStates(ctx, req.(*MashupEmpty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MashupServer_Shutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MashupEmpty)
 	if err := dec(in); err != nil {
@@ -240,6 +272,10 @@ var MashupServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertMashupElementsState",
 			Handler:    _MashupServer_UpsertMashupElementsState_Handler,
+		},
+		{
+			MethodName: "ResetG3nDetailedElementStates",
+			Handler:    _MashupServer_ResetG3NDetailedElementStates_Handler,
 		},
 		{
 			MethodName: "Shutdown",

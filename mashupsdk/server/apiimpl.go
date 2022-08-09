@@ -50,6 +50,20 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	return &sdk.MashupEmpty{}, nil
 }
 
+func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
+	log.Println("Shutdown called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	if s.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
+		s.mashupApiHandler.ResetG3NDetailedElementStates()
+	}
+
+	log.Println("Shutdown initiated.")
+	return &sdk.MashupEmpty{}, nil
+}
+
 // OnResize -- handles a request from the client to resize.
 func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
 	log.Printf("OnResize called")

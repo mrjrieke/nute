@@ -309,3 +309,7 @@ func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	log.Printf("Gio UpsertMashupElementsState complete\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
+
+func (mSdk *gioMashupApiHandler) ResetG3NDetailedElementStates() {
+	// Not implemented.
+}

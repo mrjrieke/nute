@@ -93,6 +93,7 @@ type MashupApiHandler interface {
 	OnResize(displayHint *MashupDisplayHint)
 	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
+	ResetG3NDetailedElementStates()
 }
 
 type MashupContextInitHandler interface {

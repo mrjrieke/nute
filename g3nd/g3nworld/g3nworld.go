@@ -154,13 +154,6 @@ func (w *WorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 	return changedElements
 }
 
-// Sets all elements to a "Rest state."
-func (w *WorldApp) ResetG3nDetailedElementStates() {
-	for _, wes := range w.ConcreteElements {
-		wes.ApplyState(mashupsdk.Init, false)
-	}
-}
-
 func (w *WorldApp) NewElementIdPump() int64 {
 	w.maxElementId = w.maxElementId + 1
 	return w.maxElementId
@@ -598,6 +591,15 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 	worldApp.mashupContext = context
 }
 
+// Sets all elements to a "Rest state."
+func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
+	log.Printf("G3n Received ResetG3NDetailedElementStates\n")
+	for _, wes := range worldApp.ConcreteElements {
+		wes.SetElementState(mashupsdk.Init)
+	}
+	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
+}
+
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
@@ -692,7 +694,9 @@ func (mSdk *mashupSdkApiHandler) applyStateHelper(g3nId int64, x mashupsdk.Displ
 func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
 
 	child := worldApp.ConcreteElements[g3nId]
-	child.SetElementState(mashupsdk.DisplayElementState(x))
+	if child.GetDetailedElement().Genre != "Attitude" {
+		child.SetElementState(mashupsdk.DisplayElementState(x))
+	}
 
 	if len(child.GetDetailedElement().Childids) > 0 {
 		for _, cId := range child.GetDetailedElement().Childids {
@@ -710,6 +714,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		if g3nDetailedElement, ok := worldApp.ConcreteElements[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			if g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
+				// Unset recursive for child elements
+				es.State &= ^int64(mashupsdk.Recursive)
 				// Apply this state change to all child elements.
 				mSdk.setStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State))
 			}

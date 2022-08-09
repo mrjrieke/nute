@@ -233,15 +233,7 @@ func (g *G3nDetailedElement) SetElementState(x mashupsdk.DisplayElementState) {
 }
 
 func (g *G3nDetailedElement) ApplyState(x mashupsdk.DisplayElementState, isset bool) bool {
-	if isset {
-		g.detailedElement.State.State |= int64(x)
-	} else {
-		if g.IsStateSet(x) {
-			g.detailedElement.State.State &= ^int64(x)
-		}
-	}
-
-	return false
+	return g.detailedElement.ApplyState(x, isset)
 }
 
 func (g *G3nDetailedElement) SetRotationX(x float32) error {
