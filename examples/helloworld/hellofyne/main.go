@@ -100,12 +100,20 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 	tabLabel.Wrapping = fyne.TextWrapWord
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
+			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
+			mashupIndex := helloApp.elementLoaderIndex[helloApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement = helloApp.mashupDetailedElementLibrary[mashupIndex]
+
 			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
 			if helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
 				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
 			}
 			helloApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
+			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
+			mashupIndex := helloApp.elementLoaderIndex[helloApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement = helloApp.mashupDetailedElementLibrary[mashupIndex]
+
 			helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
 			if helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
 				helloApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
@@ -421,16 +429,15 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 	for _, es := range elementStateBundle.ElementStates {
 		detailedElement := helloApp.mashupDetailedElementLibrary[es.GetId()]
 
-		fyneComponent := helloApp.fyneWidgetElements[detailedElement.GetAlias()]
-		fyneComponent.MashupDetailedElement = detailedElement
-		fyneComponent.MashupDetailedElement.State.State = es.State
+		helloApp.fyneWidgetElements[detailedElement.GetAlias()].MashupDetailedElement = detailedElement
+		helloApp.fyneWidgetElements[detailedElement.GetAlias()].MashupDetailedElement.State.State = es.State
 
 		if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 			for _, childId := range detailedElement.GetChildids() {
 				if childDetailedElement, childDetailOk := helloApp.mashupDetailedElementLibrary[childId]; childDetailOk {
 					if childFyneComponent, childFyneOk := helloApp.fyneWidgetElements[childDetailedElement.GetAlias()]; childFyneOk {
 						childFyneComponent.MashupDetailedElement = childDetailedElement
-						childFyneComponent.GuiComponent.(*container.TabItem).Text = childDetailedElement.Name
+						childFyneComponent.GuiComponent.(*container.TabItem).Text = childFyneComponent.MashupDetailedElement.Name
 					}
 				}
 			}
@@ -438,20 +445,20 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 				if parentDetailedElement, parentDetailOk := helloApp.mashupDetailedElementLibrary[parentId]; parentDetailOk {
 					if parentFyneComponent, parentFyneOk := helloApp.fyneWidgetElements[parentDetailedElement.GetAlias()]; parentFyneOk {
 						parentFyneComponent.MashupDetailedElement = parentDetailedElement
-						parentFyneComponent.GuiComponent.(*container.TabItem).Text = parentDetailedElement.Name
+						parentFyneComponent.GuiComponent.(*container.TabItem).Text = parentFyneComponent.MashupDetailedElement.Name
 					}
 				}
 			}
 			if detailedLookupElement, detailLookupOk := helloApp.mashupDetailedElementLibrary[detailedElement.Id]; detailLookupOk {
 				if detailedFyneComponent, detailedFyneOk := helloApp.fyneWidgetElements[detailedLookupElement.GetAlias()]; detailedFyneOk {
-					detailedFyneComponent.MashupDetailedElement = detailedElement
-					detailedFyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
+					detailedFyneComponent.MashupDetailedElement = detailedLookupElement
+					detailedFyneComponent.GuiComponent.(*container.TabItem).Text = detailedFyneComponent.MashupDetailedElement.Name
 				}
 			}
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
 			// Select the item.
-			fyneComponent.GuiComponent.(*container.TabItem).Text = detailedElement.Name
-			torusMenu.Select(fyneComponent.GuiComponent.(*container.TabItem))
+			helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem).Text = helloApp.fyneWidgetElements[detailedElement.GetAlias()].MashupDetailedElement.Name
+			torusMenu.Select(helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem))
 		}
 	}
 	log.Printf("Fyne UpsertMashupElementsState complete\n")
