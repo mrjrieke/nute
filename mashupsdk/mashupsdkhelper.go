@@ -25,13 +25,18 @@ func (m *MashupDetailedElement) IsStateSet(stateBit DisplayElementState) bool {
 }
 
 func (m *MashupDetailedElement) ApplyState(x DisplayElementState, isset bool) bool {
+	changed := false
 	if isset {
-		m.State.State |= int64(x)
+		if !m.IsStateSet(x) {
+			changed = true
+			m.State.State |= int64(x)
+		}
 	} else {
 		if m.IsStateSet(x) {
 			m.State.State &= ^int64(x)
+			changed = true
 		}
 	}
 
-	return false
+	return changed
 }
