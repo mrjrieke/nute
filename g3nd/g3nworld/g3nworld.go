@@ -709,15 +709,13 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
 	clickedElements := map[int64]*g3nmash.G3nDetailedElement{}
+	recursiveElements := map[int64]*g3nmash.G3nDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := worldApp.ConcreteElements[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			if g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
-				// Unset recursive for child elements
-				es.State &= ^int64(mashupsdk.Recursive)
-				// Apply this state change to all child elements.
-				mSdk.setStateHelper(g3nDetailedElement.GetDisplayId(), mashupsdk.DisplayElementState(es.State))
+				recursiveElements[es.GetId()] = g3nDetailedElement
 			}
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
@@ -728,9 +726,10 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	if len(clickedElements) > 0 {
+		// Remove existing clicks.
 		for _, clickedElement := range worldApp.clickedElements {
 			if _, ok := clickedElements[clickedElement.GetDisplayId()]; !ok {
-				clickedElement.ApplyState(mashupsdk.Clicked, true)
+				clickedElement.ApplyState(mashupsdk.Clicked, false)
 			}
 		}
 		for clickedId := range worldApp.clickedElements {
@@ -739,6 +738,16 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 		for _, g3nDetailedElement := range clickedElements {
 			worldApp.clickedElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+		}
+	}
+
+	if len(recursiveElements) > 0 {
+		for _, recursiveElement := range recursiveElements {
+			stateBits := recursiveElement.GetDetailedElement().State.State
+			// Unset recursive for child elements
+			stateBits &= ^int64(mashupsdk.Recursive)
+			// Apply this state change to all child elements.
+			mSdk.setStateHelper(recursiveElement.GetDisplayId(), mashupsdk.DisplayElementState(stateBits))
 		}
 	}
 
