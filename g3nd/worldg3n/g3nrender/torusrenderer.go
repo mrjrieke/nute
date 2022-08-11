@@ -82,7 +82,7 @@ func (tr *TorusRenderer) RemoveAll(worldApp *g3nworld.WorldApp, childId int64) {
 
 }
 
-func (tr *TorusRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
+func (tr *TorusRenderer) RenderElement(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
 	var g3nColor *math32.Color
 
 	if g3nDetailedElement.IsStateSet(mashupsdk.Hidden) {

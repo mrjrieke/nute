@@ -35,7 +35,8 @@ type worldClientInitHandler struct {
 
 type IG3nRenderer interface {
 	Layout(worldApp *WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
-	HandleStateChange(worldApp *WorldApp, g3n *g3nmash.G3nDetailedElement) bool
+	InitRenderLoop(worldApp *WorldApp) bool
+	RenderElement(worldApp *WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 }
 
 type WorldApp struct {
@@ -59,7 +60,7 @@ type WorldApp struct {
 	maxElementId       int64
 	ConcreteElements   map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementLoaderIndex map[string]int64                      // g3n indexes by loader id...
-	clickedElements    map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
+	ClickedElements    map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
 
@@ -75,7 +76,7 @@ func NewWorldApp(headless bool, renderer IG3nRenderer) *WorldApp {
 		elementLibraryDictionary: map[int64]*g3nmash.G3nDetailedElement{},
 		ConcreteElements:         map[int64]*g3nmash.G3nDetailedElement{},
 		elementLoaderIndex:       map[string]int64{},
-		clickedElements:          map[int64]*g3nmash.G3nDetailedElement{},
+		ClickedElements:          map[int64]*g3nmash.G3nDetailedElement{},
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
 		IG3nRenderer:             renderer,
@@ -354,11 +355,15 @@ func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
 func (w *WorldApp) Transform() []*mashupsdk.MashupElementState {
 	changedElements := []*mashupsdk.MashupElementState{}
 	attitudeVisitedNodes := map[int64]bool{}
+
+	// Notify renderers about to enter render loop.
+	worldApp.IG3nRenderer.InitRenderLoop(w)
+
 	for _, g3nDetailedElement := range w.ConcreteElements {
 		if g3nDetailedElement.IsAbstract() {
 			continue
 		}
-		changed := worldApp.IG3nRenderer.HandleStateChange(w, g3nDetailedElement)
+		changed := worldApp.IG3nRenderer.RenderElement(w, g3nDetailedElement)
 		if !g3nDetailedElement.IsStateSet(mashupsdk.Hidden) && !g3nDetailedElement.IsBackground() {
 			if g3nDetailedElement.IsStateSet(mashupsdk.Clicked) {
 				if g3nDetailedElement.HasAttitudeAdjustment() {
@@ -499,30 +504,30 @@ func (w *WorldApp) InitMainWindow() {
 							g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
 							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
 							itemMatched = true
-							for _, clickedElement := range w.clickedElements {
+							for _, clickedElement := range w.ClickedElements {
 								if clickedElement.GetDisplayId() != g3nDetailedElement.GetDisplayId() {
 									clickedElement.ApplyState(mashupsdk.Clicked, false)
 								}
 							}
-							for clickedId := range w.clickedElements {
-								delete(w.clickedElements, clickedId)
+							for clickedId := range w.ClickedElements {
+								delete(w.ClickedElements, clickedId)
 							}
-							w.clickedElements[g3nDetailedIndex] = g3nDetailedElement
+							w.ClickedElements[g3nDetailedIndex] = g3nDetailedElement
 						}
 					}
 				}
 
 				if !itemMatched {
 					w.backgroundG3n.ApplyState(mashupsdk.Clicked, true)
-					for _, clickedElement := range w.clickedElements {
+					for _, clickedElement := range w.ClickedElements {
 						if clickedElement.GetDisplayId() != w.backgroundG3n.GetDisplayId() {
 							clickedElement.ApplyState(mashupsdk.Init, false)
 						}
 					}
-					for clickedId := range w.clickedElements {
-						delete(w.clickedElements, clickedId)
+					for clickedId := range w.ClickedElements {
+						delete(w.ClickedElements, clickedId)
 					}
-					w.clickedElements[w.backgroundG3n.GetDisplayId()] = w.backgroundG3n
+					w.ClickedElements[w.backgroundG3n.GetDisplayId()] = w.backgroundG3n
 				} else {
 					w.backgroundG3n.ApplyState(mashupsdk.Clicked, false)
 				}
@@ -555,7 +560,7 @@ func (w *WorldApp) InitMainWindow() {
 		w.frameRater.Start()
 		// Set background color to gray
 		if w.backgroundG3n != nil {
-			w.IG3nRenderer.HandleStateChange(w, w.backgroundG3n)
+			w.IG3nRenderer.RenderElement(w, w.backgroundG3n)
 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
 		}
 		go func() {
@@ -708,7 +713,7 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("G3n UpsertMashupElementsState called\n")
 
-	clickedElements := map[int64]*g3nmash.G3nDetailedElement{}
+	ClickedElements := map[int64]*g3nmash.G3nDetailedElement{}
 	recursiveElements := map[int64]*g3nmash.G3nDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
@@ -720,24 +725,24 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
-				clickedElements[es.GetId()] = g3nDetailedElement
+				ClickedElements[es.GetId()] = g3nDetailedElement
 			}
 		}
 	}
 
-	if len(clickedElements) > 0 {
+	if len(ClickedElements) > 0 {
 		// Remove existing clicks.
-		for _, clickedElement := range worldApp.clickedElements {
-			if _, ok := clickedElements[clickedElement.GetDisplayId()]; !ok {
+		for _, clickedElement := range worldApp.ClickedElements {
+			if _, ok := ClickedElements[clickedElement.GetDisplayId()]; !ok {
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
 			}
 		}
-		for clickedId := range worldApp.clickedElements {
-			delete(worldApp.clickedElements, clickedId)
+		for clickedId := range worldApp.ClickedElements {
+			delete(worldApp.ClickedElements, clickedId)
 		}
 
-		for _, g3nDetailedElement := range clickedElements {
-			worldApp.clickedElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+		for _, g3nDetailedElement := range ClickedElements {
+			worldApp.ClickedElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
 		}
 	}
 

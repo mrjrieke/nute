@@ -45,7 +45,12 @@ func (br *BackgroundRenderer) GetRenderer(rendererName string) IG3nRenderer {
 	return nil
 }
 
-func (br *BackgroundRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
+func (br *BackgroundRenderer) InitRenderLoop(worldApp *g3nworld.WorldApp) bool {
+	// TODO: noop
+	return true
+}
+
+func (br *BackgroundRenderer) RenderElement(worldApp *g3nworld.WorldApp, g3nDetailedElement *g3nmash.G3nDetailedElement) bool {
 	var g3nColor *math32.Color
 
 	if br.ActiveColor == nil {
