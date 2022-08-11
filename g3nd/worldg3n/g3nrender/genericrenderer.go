@@ -26,7 +26,8 @@ type IG3nRenderer interface {
 	NextCoordinate(g3n *g3nmash.G3nDetailedElement, totalElements int) (*g3nmash.G3nDetailedElement, *math32.Vector3)
 	Sort(worldApp *g3nworld.WorldApp, g3nRenderableElements G3nCollection) G3nCollection
 	Layout(worldApp *g3nworld.WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
-	HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
+	InitRenderLoop(worldApp *g3nworld.WorldApp) bool
+	RenderElement(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool
 	GetRenderer(rendererName string) IG3nRenderer
 	GetRendererType() G3nRenderType
 	Collaborate(worldApp *g3nworld.WorldApp, renderer IG3nRenderer)
@@ -64,7 +65,12 @@ func (gr *GenericRenderer) Sort(worldApp *g3nworld.WorldApp, g3nRenderableElemen
 	return g3nRenderableElements
 }
 
-func (gr *GenericRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
+func (gr *GenericRenderer) InitRenderLoop(worldApp *g3nworld.WorldApp) bool {
+	// TODO: noop
+	return true
+}
+
+func (gr *GenericRenderer) RenderElement(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
 	return false
 }
 

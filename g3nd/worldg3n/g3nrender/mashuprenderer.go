@@ -128,9 +128,18 @@ func (mr *MashupRenderer) Layout(worldApp *g3nworld.WorldApp,
 	}
 }
 
-func (mr *MashupRenderer) HandleStateChange(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
+func (mr *MashupRenderer) InitRenderLoop(worldApp *g3nworld.WorldApp) bool {
+	result := true
+	for _, renderer := range mr.renderers {
+		result = result && renderer.InitRenderLoop(worldApp)
+	}
+
+	return result
+}
+
+func (mr *MashupRenderer) RenderElement(worldApp *g3nworld.WorldApp, g3n *g3nmash.G3nDetailedElement) bool {
 	if renderer, ok := mr.renderers[g3n.GetDetailedElement().GetRenderer()]; ok {
-		return renderer.HandleStateChange(worldApp, g3n)
+		return renderer.RenderElement(worldApp, g3n)
 	} else {
 		// Don't touch...
 		return false
