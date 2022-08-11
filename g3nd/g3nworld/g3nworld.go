@@ -60,7 +60,7 @@ type WorldApp struct {
 	maxElementId       int64
 	ConcreteElements   map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementLoaderIndex map[string]int64                      // g3n indexes by loader id...
-	ClickedElements    map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
+	ClickedElements    []*g3nmash.G3nDetailedElement         // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
 
@@ -76,7 +76,7 @@ func NewWorldApp(headless bool, renderer IG3nRenderer) *WorldApp {
 		elementLibraryDictionary: map[int64]*g3nmash.G3nDetailedElement{},
 		ConcreteElements:         map[int64]*g3nmash.G3nDetailedElement{},
 		elementLoaderIndex:       map[string]int64{},
-		ClickedElements:          map[int64]*g3nmash.G3nDetailedElement{},
+		ClickedElements:          []*g3nmash.G3nDetailedElement{},
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
 		IG3nRenderer:             renderer,
@@ -509,10 +509,10 @@ func (w *WorldApp) InitMainWindow() {
 									clickedElement.ApplyState(mashupsdk.Clicked, false)
 								}
 							}
-							for clickedId := range w.ClickedElements {
-								delete(w.ClickedElements, clickedId)
+							if !w.Sticky {
+								w.ClickedElements = w.ClickedElements[:0]
 							}
-							w.ClickedElements[g3nDetailedIndex] = g3nDetailedElement
+							w.ClickedElements = append(w.ClickedElements, g3nDetailedElement)
 						}
 					}
 				}
@@ -521,13 +521,13 @@ func (w *WorldApp) InitMainWindow() {
 					w.backgroundG3n.ApplyState(mashupsdk.Clicked, true)
 					for _, clickedElement := range w.ClickedElements {
 						if clickedElement.GetDisplayId() != w.backgroundG3n.GetDisplayId() {
-							clickedElement.ApplyState(mashupsdk.Init, false)
+							clickedElement.ApplyState(mashupsdk.Clicked, false)
 						}
 					}
-					for clickedId := range w.ClickedElements {
-						delete(w.ClickedElements, clickedId)
+					if !w.Sticky {
+						w.ClickedElements = w.ClickedElements[:0]
 					}
-					w.ClickedElements[w.backgroundG3n.GetDisplayId()] = w.backgroundG3n
+					w.ClickedElements = append(w.ClickedElements, w.backgroundG3n)
 				} else {
 					w.backgroundG3n.ApplyState(mashupsdk.Clicked, false)
 				}
@@ -737,12 +737,12 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
 			}
 		}
-		for clickedId := range worldApp.ClickedElements {
-			delete(worldApp.ClickedElements, clickedId)
-		}
 
+		worldApp.ClickedElements = worldApp.ClickedElements[:0]
+
+		// Impossible to determine ordering of clicks from upsert at this time.
 		for _, g3nDetailedElement := range ClickedElements {
-			worldApp.ClickedElements[g3nDetailedElement.GetDisplayId()] = g3nDetailedElement
+			worldApp.ClickedElements = append(worldApp.ClickedElements, g3nDetailedElement)
 		}
 	}
 
