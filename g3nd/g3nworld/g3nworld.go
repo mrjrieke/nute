@@ -460,6 +460,8 @@ func (w *WorldApp) InitMainWindow() {
 		onResize("", nil)
 
 		w.mainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
+		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Floating, 1)
+		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.FocusOnShow, 1)
 
 		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(glfwWindow *glfw.Window) {
 			if w.mashupContext != nil {
@@ -567,8 +569,20 @@ func (w *WorldApp) InitMainWindow() {
 			log.Println("Watching position events.")
 			for displayHint := range w.displayPositionChan {
 				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-				(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
-				(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+				if !w.headless {
+					if (w.mainWin != nil) && (w.mainWin.IWindow != nil) && ((*w.mainWin).IWindow.(*window.GlfwWindow).Window != nil) {
+						(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
+						if x, y := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
+							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+						}
+						if displayHint.Focused && (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetAttrib(glfw.Focused) == 0 {
+							log.Printf("G3n setting focus.")
+							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
+							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
+						}
+					}
+				}
 			}
 			log.Println("Exiting disply chan.")
 		}()

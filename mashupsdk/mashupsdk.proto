@@ -32,10 +32,11 @@ message MashupConnectionConfigs {
 
 // The query message with display position information.
 message MashupDisplayHint {
-  int64 xpos = 1;
-  int64 ypos = 2;
-  int64 width = 3;
-  int64 height = 4;
+  bool focused = 1;
+  int64 xpos = 2;
+  int64 ypos = 3;
+  int64 width = 4;
+  int64 height = 5;
 }
 
 message MashupDisplayBundle {
