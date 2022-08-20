@@ -580,6 +580,7 @@ func (w *WorldApp) InitMainWindow() {
 							log.Printf("G3n setting focus.")
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
+							displayHint.Focused = false
 						}
 					}
 				}
