@@ -52,6 +52,7 @@ func (m *MashupDisplayContext) ApplySettled(s MashupDisplayState, override bool)
 
 func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 	resize := false
+
 	if m.MainWinDisplay == nil {
 		resize = true
 		m.MainWinDisplay = &MashupDisplayHint{}
@@ -75,6 +76,10 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 	}
 	if displayHint.Height != 0 && (*m.MainWinDisplay).Height != displayHint.Height+int64(m.yOffset) {
 		m.MainWinDisplay.Height = displayHint.Height
+		resize = true
+	}
+
+	if displayHint.Focused {
 		resize = true
 	}
 

@@ -40,6 +40,9 @@ type HelloApp struct {
 
 func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	selectedDetailedElement := fwb.MashupDetailedElement
+	if helloApp.HelloContext.mashupContext == nil {
+		return
+	}
 
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
 		AuthToken:     client.GetServerAuthToken(),
@@ -330,8 +333,13 @@ func main() {
 
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
-			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+			if helloApp.mashupDisplayContext.MainWinDisplay != nil {
+				helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
+				helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+				helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
+			}
 		})
+
 		a.Lifecycle().SetOnResized(func(xpos int, ypos int, yoffset int, width int, height int) {
 			log.Printf("Received resize: %d %d %d %d %d\n", xpos, ypos, yoffset, width, height)
 			helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured|mashupsdk.Position|mashupsdk.Frame, false)
@@ -339,13 +347,15 @@ func main() {
 			if helloApp.mashupDisplayContext.GetYoffset() == 0 {
 				helloApp.mashupDisplayContext.SetYoffset(yoffset + 3)
 			}
+			helloApp.mashupDisplayContext.MainWinDisplay = &mashupsdk.MashupDisplayHint{
+				Focused: false,
+				Xpos:    int64(xpos),
+				Ypos:    int64(ypos),
+				Width:   int64(width),
+				Height:  int64(height),
+			}
 
-			helloApp.OnResize(&mashupsdk.MashupDisplayHint{
-				Xpos:   int64(xpos),
-				Ypos:   int64(ypos),
-				Width:  int64(width),
-				Height: int64(height),
-			})
+			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
 		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
@@ -389,7 +399,9 @@ func main() {
 
 		helloApp.mainWin.SetContent(torusMenu)
 		helloApp.mainWin.SetCloseIntercept(func() {
-			helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+			if helloApp.HelloContext.mashupContext != nil {
+				helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+			}
 			os.Exit(0)
 		})
 	}
