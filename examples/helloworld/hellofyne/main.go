@@ -52,6 +52,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
+	helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -184,6 +185,11 @@ func main() {
 
 	// Sync initialization.
 	initHandler := func(a fyne.App) {
+		a.Lifecycle().SetOnExitedForeground(func() {
+			log.Printf("OnExitedForeground.\n")
+			helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
+		})
+
 		a.Lifecycle().SetOnEnteredForeground(func() {
 			if helloApp.HelloContext.mashupContext == nil {
 				helloApp.HelloContext.mashupContext = client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)
@@ -334,7 +340,6 @@ func main() {
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
 			if helloApp.mashupDisplayContext.MainWinDisplay != nil {
-				helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
 				helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
 				helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
 			}
@@ -347,8 +352,12 @@ func main() {
 			if helloApp.mashupDisplayContext.GetYoffset() == 0 {
 				helloApp.mashupDisplayContext.SetYoffset(yoffset + 3)
 			}
+			focused := false
+			if helloApp.mashupDisplayContext.MainWinDisplay != nil {
+				focused = helloApp.mashupDisplayContext.MainWinDisplay.Focused
+			}
 			helloApp.mashupDisplayContext.MainWinDisplay = &mashupsdk.MashupDisplayHint{
-				Focused: false,
+				Focused: focused,
 				Xpos:    int64(xpos),
 				Ypos:    int64(ypos),
 				Width:   int64(width),
@@ -356,6 +365,7 @@ func main() {
 			}
 
 			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+			helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
 		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
