@@ -46,12 +46,12 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 		os.Exit(-1)
 	}()
 
-	log.Println("Shutdown initiated.")
+	log.Println("Shutdown complete.")
 	return &sdk.MashupEmpty{}, nil
 }
 
 func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
-	log.Println("Shutdown called")
+	log.Println("ResetG3NDetailedElementStates called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
@@ -60,7 +60,7 @@ func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sd
 		s.mashupApiHandler.ResetG3NDetailedElementStates()
 	}
 
-	log.Println("Shutdown initiated.")
+	log.Println("ResetG3NDetailedElementStates complete.")
 	return &sdk.MashupEmpty{}, nil
 }
 
