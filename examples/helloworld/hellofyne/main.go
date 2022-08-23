@@ -52,24 +52,22 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
-	helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	resize := ha.mashupDisplayContext.OnResize(displayHint)
 
-	if resize {
-		if ha.HelloContext.mashupContext == nil {
-			return
-		}
+	if ha.HelloContext.mashupContext == nil {
+		return
+	}
 
-		if ha.HelloContext.mashupContext != nil {
-			ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
-				&mashupsdk.MashupDisplayBundle{
-					AuthToken:         client.GetServerAuthToken(),
-					MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
-				})
-		}
+	if resize || !ha.mashupDisplayContext.MainWinDisplay.Focused {
+		ha.mashupDisplayContext.MainWinDisplay.Focused = true
+		ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
+			&mashupsdk.MashupDisplayBundle{
+				AuthToken:         client.GetServerAuthToken(),
+				MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
+			})
 	}
 }
 
@@ -187,10 +185,15 @@ func main() {
 	initHandler := func(a fyne.App) {
 		a.Lifecycle().SetOnExitedForeground(func() {
 			log.Printf("OnExitedForeground.\n")
-			helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
+			helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
+		})
+
+		a.Lifecycle().SetOnStarted(func() {
+			log.Printf("SetOnEnteredForeground: %v\n", helloApp.mashupDisplayContext.MainWinDisplay.Focused)
 		})
 
 		a.Lifecycle().SetOnEnteredForeground(func() {
+			log.Printf("SetOnEnteredForeground: %v\n", helloApp.mashupDisplayContext.MainWinDisplay.Focused)
 			if helloApp.HelloContext.mashupContext == nil {
 				helloApp.HelloContext.mashupContext = client.BootstrapInit("worldg3n", helloApp.fyneMashupApiHandler, nil, nil, insecure)
 
@@ -341,7 +344,7 @@ func main() {
 			}
 			if helloApp.mashupDisplayContext.MainWinDisplay != nil {
 				helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
-				helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
+				helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
 			}
 		})
 
@@ -365,7 +368,6 @@ func main() {
 			}
 
 			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
-			helloApp.mashupDisplayContext.MainWinDisplay.Focused = false
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
 		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
@@ -427,6 +429,7 @@ func main() {
 func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	log.Printf("Fyne OnResize - not implemented yet..\n")
 	if helloApp.mainWin != nil {
+		helloApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
 		// Which then wants to resize fyne ad-infinitum

@@ -64,6 +64,8 @@ type WorldApp struct {
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
 
+	Focused bool // Whether current window has focus.
+
 	isInit bool
 }
 
@@ -480,6 +482,20 @@ func (w *WorldApp) InitMainWindow() {
 				w.Sticky = false
 			}
 		})
+		w.mainWin.Subscribe(window.OnWindowFocus, func(name string, ev interface{}) {
+			wev := ev.(*window.FocusEvent)
+			w.Focused = wev.Focused
+			// Tell fyne not to try to regain focus.
+			if w.mashupContext != nil && wev.Focused {
+				w.mashupContext.Client.OnResize(w.mashupContext,
+					&mashupsdk.MashupDisplayBundle{
+						AuthToken: server.GetServerAuthToken(),
+						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
+							Focused: wev.Focused,
+						},
+					})
+			}
+		})
 
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
 			mev := ev.(*window.MouseEvent)
@@ -576,11 +592,12 @@ func (w *WorldApp) InitMainWindow() {
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
 						}
-						if displayHint.Focused && (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetAttrib(glfw.Focused) == 0 {
+						if !w.Focused && displayHint.Focused {
 							log.Printf("G3n setting focus.")
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
 							displayHint.Focused = false
+							w.Focused = true
 						}
 					}
 				}
