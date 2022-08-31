@@ -28,6 +28,7 @@ func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
+	custos := flag.Bool("custos", false, "Run in guardian mode.")
 	torusLayout := flag.Bool("toruslayout", false, "Use torus layout insead.")
 	flag.Parse()
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
