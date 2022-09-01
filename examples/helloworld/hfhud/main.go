@@ -148,7 +148,7 @@ func main() {
 	hfWorld.InitServer(*callerCreds, *insecure)
 
 	// Initialize the main window.
-	go hfWorld.InitMainWindow()
+	hfWorld.InitMainWindow()
 
 	<-worldCompleteChan
 }

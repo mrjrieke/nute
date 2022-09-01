@@ -1,10 +1,14 @@
 package hfworld
 
 import (
+	"embed"
 	"log"
+	"os"
 
 	"fyne.io/fyne/v2"
-	"github.com/g3n/engine/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
@@ -35,6 +39,23 @@ type FyneWidgetBundle struct {
 	mashupsdk.GuiWidgetBundle
 }
 
+func (fwb *FyneWidgetBundle) OnStatusChanged() {
+	selectedDetailedElement := fwb.MashupDetailedElement
+	if hfWorldApp.HeadsupFyneContext.mashupContext == nil {
+		return
+	}
+
+	elementStateBundle := mashupsdk.MashupElementStateBundle{
+		AuthToken:     client.GetServerAuthToken(),
+		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
+	}
+	hfWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(hfWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+
+	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
+	hfWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(hfWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
+
+}
+
 type HFWorldApp struct {
 	mashupSdkApiHandler          *mashupSdkApiHandler
 	wClientInitHandler           *worldClientInitHandler
@@ -48,7 +69,10 @@ type HFWorldApp struct {
 	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
 }
 
-var hfWorld HFWorldApp
+//go:embed gophericon.png
+var gopherIcon embed.FS
+
+var hfWorldApp *HFWorldApp
 
 func (w *HFWorldApp) InitServer(callerCreds string, insecure bool) {
 	if callerCreds != "" {
@@ -63,7 +87,7 @@ func (w *HFWorldApp) InitServer(callerCreds string, insecure bool) {
 
 func NewHFWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedElement, renderer IG3nRenderer) *HFWorldApp {
 
-	hfWorld = HFWorldApp{
+	hfWorldApp = &HFWorldApp{
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
 		HeadsupFyneContext:           &HFContext{},
 		DetailedElements:             detailedElements,
@@ -104,7 +128,7 @@ func NewHFWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedEl
 			},
 		},
 	}
-	return &hfWorld
+	return hfWorldApp
 }
 
 type InitEvent struct {
@@ -125,38 +149,89 @@ func (w *HFWorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 func (w *HFWorldApp) InitMainWindow() {
 	log.Printf("Initializing mainWin.")
 
-	initHandler := func(a *app.Application) {
+	initHandler := func(a fyne.App) {
 		log.Printf("InitHandler.")
+		hfWorldApp.mainWin = a.NewWindow("Hello Fyne Headsup")
+		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
+
+		hfWorldApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
+		hfWorldApp.mainWin.Resize(fyne.NewSize(800, 100))
+		hfWorldApp.mainWin.SetFixedSize(false)
+
+		hfWorldApp.fyneWidgetElements["Inside"].GuiComponent = hfWorldApp.detailMappedFyneComponent("Inside", "The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.", hfWorldApp.fyneWidgetElements["Inside"].MashupDetailedElement)
+		hfWorldApp.fyneWidgetElements["Outside"].GuiComponent = hfWorldApp.detailMappedFyneComponent("Outside", "The magnetic field at any point outside the toroid is zero.", hfWorldApp.fyneWidgetElements["Outside"].MashupDetailedElement)
+		hfWorldApp.fyneWidgetElements["It"].GuiComponent = hfWorldApp.detailMappedFyneComponent("It", "The magnetic field inside the empty space surrounded by the toroid is zero.", hfWorldApp.fyneWidgetElements["It"].MashupDetailedElement)
+		hfWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent = hfWorldApp.detailMappedFyneComponent("Up-Side-Down", "Torus is up-side-down", hfWorldApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement)
+		hfWorldApp.fyneWidgetElements["All"].GuiComponent = hfWorldApp.detailMappedFyneComponent("All", "A group of torus or a tori.", hfWorldApp.fyneWidgetElements["All"].MashupDetailedElement)
+
+		torusMenu := container.NewAppTabs(
+			hfWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
+			hfWorldApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),
+			hfWorldApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),
+			hfWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem),
+			hfWorldApp.fyneWidgetElements["All"].GuiComponent.(*container.TabItem),
+		)
+		torusMenu.OnSelected = func(tabItem *container.TabItem) {
+			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
+			// Lookup by name instead and try to keep track of any name changes instead...
+			log.Printf("Selected: %s\n", tabItem.Text)
+			if mashupItemIndex, miOk := hfWorldApp.elementLoaderIndex[tabItem.Text]; miOk {
+				mashupDetailedElement := hfWorldApp.mashupDetailedElementLibrary[mashupItemIndex]
+				if mashupDetailedElement.Alias != "" {
+					if mashupDetailedElement.Genre != "Collection" {
+						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					}
+					hfWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
+					hfWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+					return
+				}
+			}
+			hfWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
+		}
+
+		torusMenu.SetTabLocation(container.TabLocationTop)
+
+		hfWorldApp.mainWin.SetContent(torusMenu)
+		hfWorldApp.mainWin.SetCloseIntercept(func() {
+			if hfWorldApp.HeadsupFyneContext.mashupContext != nil {
+				hfWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(hfWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+			}
+			os.Exit(0)
+		})
 	}
 	runtimeHandler := func() {
+		go func() {
+			w.mainWin.Hide()
+		}()
+
 		w.mainWin.ShowAndRun()
 	}
 
-	guiboot.InitMainWindow(guiboot.G3n, initHandler, runtimeHandler)
+	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
 }
 
 func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContext) {
-	hfWorld.HeadsupFyneContext.mashupContext = context
+	hfWorldApp.HeadsupFyneContext.mashupContext = context
 }
 
 // Sets all elements to a "Rest state."
 func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 	log.Printf("G3n Received ResetG3NDetailedElementStates\n")
-	for _, wes := range hfWorld.mashupDetailedElementLibrary {
+	for _, wes := range hfWorldApp.mashupDetailedElementLibrary {
 		wes.SetElementState(mashupsdk.Init)
 	}
 	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
 }
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	// if hfWorld.mainWin != nil && (*hfWorld.mainWin).IWindow != nil {
+	// if hfWorldApp.mainWin != nil && (*hfWorldApp.mainWin).IWindow != nil {
 	// 	log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-	// 	hfWorld.displayPositionChan <- displayHint
+	// 	hfWorldApp.displayPositionChan <- displayHint
 	// } else {
 	// 	if displayHint.Width != 0 && displayHint.Height != 0 {
 	// 		log.Printf("G3n initializing with: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-	// 		hfWorld.displaySetupChan <- displayHint
-	// 		hfWorld.displayPositionChan <- displayHint
+	// 		hfWorldApp.displaySetupChan <- displayHint
+	// 		hfWorldApp.displayPositionChan <- displayHint
 	// 	} else {
 	// 		log.Printf("G3n Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	// 	}
@@ -164,12 +239,41 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 	// }
 }
 
+func (hfWorldApp *HFWorldApp) detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetailedElement) *container.TabItem {
+	tabLabel := widget.NewLabel(description)
+	tabLabel.Wrapping = fyne.TextWrapWord
+	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
+		widget.NewButton("Show", func() {
+			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
+			mashupIndex := hfWorldApp.elementLoaderIndex[hfWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+			hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = hfWorldApp.mashupDetailedElementLibrary[mashupIndex]
+
+			hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
+			if hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
+				hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+			}
+			hfWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
+		}), widget.NewButton("Hide", func() {
+			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
+			mashupIndex := hfWorldApp.elementLoaderIndex[hfWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+			hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = hfWorldApp.mashupDetailedElementLibrary[mashupIndex]
+
+			hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
+			if hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
+				hfWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+			}
+			hfWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
+		})))),
+	)
+	return tabItem
+}
+
 func (mSdk *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("HFWorld Received GetMashupElements\n")
 	var concreteElementBundle *mashupsdk.MashupDetailedElementBundle
 	DetailedElements := []*mashupsdk.MashupDetailedElement{}
 
-	for _, detailedElement := range hfWorld.mashupDetailedElementLibrary {
+	for _, detailedElement := range hfWorldApp.mashupDetailedElementLibrary {
 		DetailedElements = append(DetailedElements, detailedElement)
 	}
 	concreteElementBundle = &mashupsdk.MashupDetailedElementBundle{
@@ -190,7 +294,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 }
 func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
 
-	child := hfWorld.mashupDetailedElementLibrary[g3nId]
+	child := hfWorldApp.mashupDetailedElementLibrary[g3nId]
 	if child.Genre != "Attitude" {
 		child.SetElementState(mashupsdk.DisplayElementState(x))
 	}
@@ -209,7 +313,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
-		if g3nDetailedElement, ok := hfWorld.mashupDetailedElementLibrary[es.GetId()]; ok {
+		if g3nDetailedElement, ok := hfWorldApp.mashupDetailedElementLibrary[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			if g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
 				recursiveElements[es.GetId()] = g3nDetailedElement
@@ -224,17 +328,17 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	if len(ClickedElements) > 0 {
 		// Remove existing clicks.
-		for _, clickedElement := range hfWorld.ClickedElements {
+		for _, clickedElement := range hfWorldApp.ClickedElements {
 			if _, ok := ClickedElements[clickedElement.GetId()]; !ok {
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
 			}
 		}
 
-		hfWorld.ClickedElements = hfWorld.ClickedElements[:0]
+		hfWorldApp.ClickedElements = hfWorldApp.ClickedElements[:0]
 
 		// Impossible to determine ordering of clicks from upsert at this time.
 		for _, g3nDetailedElement := range ClickedElements {
-			hfWorld.ClickedElements = append(hfWorld.ClickedElements, g3nDetailedElement)
+			hfWorldApp.ClickedElements = append(hfWorldApp.ClickedElements, g3nDetailedElement)
 		}
 	}
 
@@ -249,9 +353,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	log.Printf("HFWorld dispatching focus\n")
-	if hfWorld.mainWin != nil {
-		// TODO: Can we get rid of this?
-		//		hfWorld.mainWin.Dispatch(gui.OnFocus, nil)
+	if hfWorldApp.mainWin != nil {
+		hfWorldApp.mainWin.Hide()
 	}
 	log.Printf("HFWorld End UpsertMashupElementsState called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
