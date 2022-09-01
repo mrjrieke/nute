@@ -52,11 +52,13 @@ func main() {
 	mashupRenderer.AddRenderer("Background", backgroundRenderer)
 
 	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
+	var DetailedElements []*mashupsdk.MashupDetailedElement
 
-	worldApp.InitServer(*callerCreds, *insecure)
+	if *custos {
+		// TODO: Call hfhud to get the elements.
 
-	if *headless {
-		DetailedElements := []*mashupsdk.MashupDetailedElement{
+	} else if *headless {
+		DetailedElements = []*mashupsdk.MashupDetailedElement{
 			{
 				Basisid:     -1,
 				State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
@@ -162,6 +164,12 @@ func main() {
 				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 			},
 		}
+	} else {
+		// Running in 'server' mode means mashup elements will be posted to this server.
+		worldApp.InitServer(*callerCreds, *insecure)
+	}
+
+	if *custos || *headless {
 		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        "",
@@ -181,7 +189,6 @@ func main() {
 			worldApp.MSdkApiHandler.UpsertMashupElementsState(&elementStateBundle)
 		}
 		go worldApp.MSdkApiHandler.OnResize(&mashupsdk.MashupDisplayHint{Width: 1600, Height: 800})
-
 	}
 
 	// Initialize the main window.

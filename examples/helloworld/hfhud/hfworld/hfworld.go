@@ -200,11 +200,7 @@ func (w *HFWorldApp) InitMainWindow() {
 		})
 	}
 	runtimeHandler := func() {
-		go func() {
-			w.mainWin.Hide()
-		}()
-
-		w.mainWin.ShowAndRun()
+		//w.mainWin.Run()
 	}
 
 	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
