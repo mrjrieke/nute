@@ -28,6 +28,7 @@ func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
+	custos := flag.Bool("custos", false, "Run in guardian mode.")
 	torusLayout := flag.Bool("toruslayout", false, "Use torus layout insead.")
 	flag.Parse()
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -51,11 +52,13 @@ func main() {
 	mashupRenderer.AddRenderer("Background", backgroundRenderer)
 
 	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
+	var DetailedElements []*mashupsdk.MashupDetailedElement
 
-	worldApp.InitServer(*callerCreds, *insecure)
+	if *custos {
+		// TODO: Call hfhud to get the elements.
 
-	if *headless {
-		DetailedElements := []*mashupsdk.MashupDetailedElement{
+	} else if *headless {
+		DetailedElements = []*mashupsdk.MashupDetailedElement{
 			{
 				Basisid:     -1,
 				State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
@@ -161,6 +164,12 @@ func main() {
 				Childids:    []int64{-1}, // -1 -- generated and replaced by server since it is immutable.
 			},
 		}
+	} else {
+		// Running in 'server' mode means mashup elements will be posted to this server.
+		worldApp.InitServer(*callerCreds, *insecure)
+	}
+
+	if *custos || *headless {
 		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        "",
@@ -180,7 +189,6 @@ func main() {
 			worldApp.MSdkApiHandler.UpsertMashupElementsState(&elementStateBundle)
 		}
 		go worldApp.MSdkApiHandler.OnResize(&mashupsdk.MashupDisplayHint{Width: 1600, Height: 800})
-
 	}
 
 	// Initialize the main window.

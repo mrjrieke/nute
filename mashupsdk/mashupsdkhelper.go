@@ -40,3 +40,11 @@ func (m *MashupDetailedElement) ApplyState(x DisplayElementState, isset bool) bo
 
 	return changed
 }
+
+func (m *MashupDetailedElement) SetElementState(x DisplayElementState) {
+	m.State.State = int64(x)
+}
+
+func (m *MashupDetailedElement) GetMashupElementState() *MashupElementState {
+	return m.State
+}
