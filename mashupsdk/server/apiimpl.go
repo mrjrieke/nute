@@ -81,6 +81,18 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 	return nil, nil
 }
 
+func (s *MashupServer) GetMashupElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("GetMashupElements called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	if s.mashupApiHandler != nil {
+		log.Printf("GetMashupElements Delegate to api handler.")
+		return s.mashupApiHandler.GetMashupElements()
+	}
+	return nil, status.Errorf(codes.Unimplemented, "method GetMashupElements not implemented")
+}
+
 func (s *MashupServer) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	log.Printf("UpsertMashupElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {

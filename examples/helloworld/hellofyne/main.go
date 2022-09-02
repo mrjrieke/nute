@@ -440,6 +440,11 @@ func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayH
 	}
 }
 
+func (mSdk *fyneMashupApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Fyne GetMashupElements - not implemented\n")
+	return &mashupsdk.MashupDetailedElementBundle{}, nil
+}
+
 func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("Fyne UpsertMashupElements - not implemented\n")
 	return &mashupsdk.MashupDetailedElementBundle{}, nil

@@ -86,7 +86,6 @@ func (w *HFWorldApp) InitServer(callerCreds string, insecure bool) {
 }
 
 func NewHFWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedElement, renderer IG3nRenderer) *HFWorldApp {
-
 	hfWorldApp = &HFWorldApp{
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
 		HeadsupFyneContext:           &HFContext{},
@@ -128,6 +127,7 @@ func NewHFWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedEl
 			},
 		},
 	}
+
 	return hfWorldApp
 }
 
@@ -212,27 +212,25 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 
 // Sets all elements to a "Rest state."
 func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
-	log.Printf("G3n Received ResetG3NDetailedElementStates\n")
+	log.Printf("HFWorld Received ResetG3NDetailedElementStates\n")
 	for _, wes := range hfWorldApp.mashupDetailedElementLibrary {
 		wes.SetElementState(mashupsdk.Init)
 	}
-	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
+	log.Printf("HFWorld finished ResetG3NDetailedElementStates handle.\n")
 }
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	// if hfWorldApp.mainWin != nil && (*hfWorldApp.mainWin).IWindow != nil {
-	// 	log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-	// 	hfWorldApp.displayPositionChan <- displayHint
-	// } else {
-	// 	if displayHint.Width != 0 && displayHint.Height != 0 {
-	// 		log.Printf("G3n initializing with: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-	// 		hfWorldApp.displaySetupChan <- displayHint
-	// 		hfWorldApp.displayPositionChan <- displayHint
-	// 	} else {
-	// 		log.Printf("G3n Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
-	// 	}
-	// 	log.Printf("G3n finished onResize handle.")
-	// }
+	log.Printf("HFWorld OnResize - not implemented yet..\n")
+	if hfWorldApp.mainWin != nil {
+		hfWorldApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
+		// TODO: Resize without infinite looping....
+		// The moment fyne is resized, it'll want to resize g3n...
+		// Which then wants to resize fyne ad-infinitum
+		//hfWorldApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
+		log.Printf("HFWorld Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	} else {
+		log.Printf("HFWorld Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+	}
 }
 
 func (hfWorldApp *HFWorldApp) detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetailedElement) *container.TabItem {
@@ -264,29 +262,57 @@ func (hfWorldApp *HFWorldApp) detailMappedFyneComponent(id, description string, 
 	return tabItem
 }
 
+func (hfWorldApp *HFWorldApp) TorusParser(childId int64) {
+	child := hfWorldApp.mashupDetailedElementLibrary[childId]
+	if child.Alias != "" {
+		hfWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
+		hfWorldApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
+	}
+
+	if len(child.GetChildids()) > 0 {
+		for _, cId := range child.GetChildids() {
+			hfWorldApp.TorusParser(cId)
+		}
+	}
+}
+
 func (mSdk *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("HFWorld Received GetMashupElements\n")
-	var concreteElementBundle *mashupsdk.MashupDetailedElementBundle
-	DetailedElements := []*mashupsdk.MashupDetailedElement{}
 
-	for _, detailedElement := range hfWorldApp.mashupDetailedElementLibrary {
-		DetailedElements = append(DetailedElements, detailedElement)
-	}
-	concreteElementBundle = &mashupsdk.MashupDetailedElementBundle{
+	return &mashupsdk.MashupDetailedElementBundle{
 		AuthToken:        client.GetServerAuthToken(),
-		DetailedElements: DetailedElements,
-	}
-
-	log.Printf("HFWorld GetMashupElements finished\n")
-	return concreteElementBundle, nil
+		DetailedElements: hfWorldApp.DetailedElements,
+	}, nil
 }
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("HFWorld Received UpsertMashupElements\n")
-	// TODO: Implement
+
+	for _, concreteElement := range detailedElementBundle.DetailedElements {
+		//helloApp.fyneComponentCache[generatedComponent.Basisid]
+		hfWorldApp.mashupDetailedElementLibrary[concreteElement.Id] = concreteElement
+		hfWorldApp.elementLoaderIndex[concreteElement.Name] = concreteElement.Id
+
+		if concreteElement.GetName() == "Outside" {
+			hfWorldApp.fyneWidgetElements["Outside"].MashupDetailedElement.Copy(concreteElement)
+		}
+	}
+
+	for _, concreteElement := range detailedElementBundle.DetailedElements {
+		if concreteElement.GetSubgenre() == "Torus" {
+			hfWorldApp.TorusParser(concreteElement.Id)
+		}
+	}
+
+	log.Printf("Mashup elements delivered.\n")
+
+	hfWorldApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 
 	log.Printf("HFWorld UpsertMashupElements updated\n")
-	return nil, nil
+	return &mashupsdk.MashupDetailedElementBundle{
+		AuthToken:        client.GetServerAuthToken(),
+		DetailedElements: detailedElementBundle.DetailedElements,
+	}, nil
 }
 func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
 

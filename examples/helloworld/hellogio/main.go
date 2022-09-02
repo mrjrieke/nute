@@ -292,6 +292,11 @@ func (mSdk *gioMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 	}
 }
 
+func (mSdk *gioMashupApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Gio GetMashupElements - not implemented\n")
+	return &mashupsdk.MashupDetailedElementBundle{}, nil
+}
+
 func (mSdk *gioMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("Gio UpsertMashupElements - not implemented\n")
 	return nil, nil

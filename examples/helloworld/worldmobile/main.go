@@ -96,6 +96,11 @@ func (c *worldApiHandler) ResetG3NDetailedElementStates() {
 	// Not implemented.
 }
 
+func (c *worldApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	// Not implemented.
+	return &mashupsdk.MashupDetailedElementBundle{}, errors.New("Could not get items.")
+}
+
 func (c *worldApiHandler) UpsertMashupElements(detailedElementBundle *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
 	// Not implemented.
 	return nil, errors.New("Could not capture items.")

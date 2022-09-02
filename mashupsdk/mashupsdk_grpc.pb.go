@@ -25,6 +25,7 @@ type MashupServerClient interface {
 	// Indicates to mashup it is time to shutdown.
 	Shake(ctx context.Context, in *MashupConnectionConfigs, opts ...grpc.CallOption) (*MashupConnectionConfigs, error)
 	OnResize(ctx context.Context, in *MashupDisplayBundle, opts ...grpc.CallOption) (*MashupDisplayHint, error)
+	GetMashupElements(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupDetailedElementBundle, error)
 	UpsertMashupElements(ctx context.Context, in *MashupDetailedElementBundle, opts ...grpc.CallOption) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(ctx context.Context, in *MashupElementStateBundle, opts ...grpc.CallOption) (*MashupElementStateBundle, error)
 	ResetG3NDetailedElementStates(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupEmpty, error)
@@ -51,6 +52,15 @@ func (c *mashupServerClient) Shake(ctx context.Context, in *MashupConnectionConf
 func (c *mashupServerClient) OnResize(ctx context.Context, in *MashupDisplayBundle, opts ...grpc.CallOption) (*MashupDisplayHint, error) {
 	out := new(MashupDisplayHint)
 	err := c.cc.Invoke(ctx, "/mashupsdk.MashupServer/OnResize", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mashupServerClient) GetMashupElements(ctx context.Context, in *MashupEmpty, opts ...grpc.CallOption) (*MashupDetailedElementBundle, error) {
+	out := new(MashupDetailedElementBundle)
+	err := c.cc.Invoke(ctx, "/mashupsdk.MashupServer/GetMashupElements", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +110,7 @@ type MashupServerServer interface {
 	// Indicates to mashup it is time to shutdown.
 	Shake(context.Context, *MashupConnectionConfigs) (*MashupConnectionConfigs, error)
 	OnResize(context.Context, *MashupDisplayBundle) (*MashupDisplayHint, error)
+	GetMashupElements(context.Context, *MashupEmpty) (*MashupDetailedElementBundle, error)
 	UpsertMashupElements(context.Context, *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	UpsertMashupElementsState(context.Context, *MashupElementStateBundle) (*MashupElementStateBundle, error)
 	ResetG3NDetailedElementStates(context.Context, *MashupEmpty) (*MashupEmpty, error)
@@ -116,6 +127,9 @@ func (UnimplementedMashupServerServer) Shake(context.Context, *MashupConnectionC
 }
 func (UnimplementedMashupServerServer) OnResize(context.Context, *MashupDisplayBundle) (*MashupDisplayHint, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OnResize not implemented")
+}
+func (UnimplementedMashupServerServer) GetMashupElements(context.Context, *MashupEmpty) (*MashupDetailedElementBundle, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMashupElements not implemented")
 }
 func (UnimplementedMashupServerServer) UpsertMashupElements(context.Context, *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupElements not implemented")
@@ -174,6 +188,24 @@ func _MashupServer_OnResize_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MashupServerServer).OnResize(ctx, req.(*MashupDisplayBundle))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MashupServer_GetMashupElements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MashupEmpty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MashupServerServer).GetMashupElements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mashupsdk.MashupServer/GetMashupElements",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MashupServerServer).GetMashupElements(ctx, req.(*MashupEmpty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -264,6 +296,10 @@ var MashupServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OnResize",
 			Handler:    _MashupServer_OnResize_Handler,
+		},
+		{
+			MethodName: "GetMashupElements",
+			Handler:    _MashupServer_GetMashupElements_Handler,
 		},
 		{
 			MethodName: "UpsertMashupElements",

@@ -40,6 +40,7 @@ type IG3nRenderer interface {
 }
 
 type WorldApp struct {
+	custos              bool // Run in guardian mode
 	headless            bool // Mode for troubleshooting.
 	MSdkApiHandler      *mashupSdkApiHandler
 	wClientInitHandler  *worldClientInitHandler
@@ -52,7 +53,7 @@ type WorldApp struct {
 	oc                  *camera.OrbitControl
 	IG3nRenderer        IG3nRenderer
 
-	mashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
+	MashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 
 	// Library for mashup objects
 	elementLibraryDictionary map[int64]*g3nmash.G3nDetailedElement
@@ -71,8 +72,9 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp(headless bool, renderer IG3nRenderer) *WorldApp {
+func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer) *WorldApp {
 	worldApp = WorldApp{
+		custos:                   custos,
 		headless:                 headless,
 		MSdkApiHandler:           &mashupSdkApiHandler{},
 		elementLibraryDictionary: map[int64]*g3nmash.G3nDetailedElement{},
@@ -445,8 +447,8 @@ func (w *WorldApp) InitMainWindow() {
 
 			xpos, ypos := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
 
-			if w.mashupContext != nil {
-				w.mashupContext.Client.OnResize(w.mashupContext,
+			if w.MashupContext != nil {
+				w.MashupContext.Client.OnResize(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
 						AuthToken: server.GetServerAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
@@ -466,8 +468,8 @@ func (w *WorldApp) InitMainWindow() {
 		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.FocusOnShow, 1)
 
 		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(glfwWindow *glfw.Window) {
-			if w.mashupContext != nil {
-				w.mashupContext.Client.Shutdown(w.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+			if w.MashupContext != nil {
+				w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 			}
 		})
 		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
@@ -486,8 +488,8 @@ func (w *WorldApp) InitMainWindow() {
 			wev := ev.(*window.FocusEvent)
 			w.Focused = wev.Focused
 			// Tell fyne not to try to regain focus.
-			if w.mashupContext != nil && wev.Focused {
-				w.mashupContext.Client.OnResize(w.mashupContext,
+			if w.MashupContext != nil && wev.Focused {
+				w.MashupContext.Client.OnResize(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
 						AuthToken: server.GetServerAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
@@ -560,7 +562,7 @@ func (w *WorldApp) InitMainWindow() {
 				}
 
 				if !w.headless {
-					w.mashupContext.Client.UpsertMashupElementsState(w.mashupContext, &elementStateBundle)
+					w.MashupContext.Client.UpsertMashupElementsState(w.MashupContext, &elementStateBundle)
 				}
 			}
 
@@ -587,7 +589,9 @@ func (w *WorldApp) InitMainWindow() {
 				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 				if !w.headless {
 					if (w.mainWin != nil) && (w.mainWin.IWindow != nil) && ((*w.mainWin).IWindow.(*window.GlfwWindow).Window != nil) {
-						(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
+						if !w.custos {
+							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
+						}
 						if x, y := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
 							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
@@ -625,7 +629,7 @@ func (w *WorldApp) InitMainWindow() {
 }
 
 func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContext) {
-	worldApp.mashupContext = context
+	worldApp.MashupContext = context
 }
 
 // Sets all elements to a "Rest state."
@@ -651,6 +655,12 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 		}
 		log.Printf("G3n finished onResize handle.")
 	}
+}
+
+func (w *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("G3n Received GetMashupElements\n")
+	log.Printf("G3n finished GetMashupElements handle.\n")
+	return nil, nil
 }
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {

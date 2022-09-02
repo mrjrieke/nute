@@ -14,6 +14,7 @@ import (
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
 	"github.com/mrjrieke/nute/g3nd/worldg3n/g3nrender"
 	"github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk/client"
 )
 
 var worldCompleteChan chan bool
@@ -27,10 +28,13 @@ var mashupKey embed.FS
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
-	headless := flag.Bool("headless", false, "Run headless")
 	custos := flag.Bool("custos", false, "Run in guardian mode.")
+	headless := flag.Bool("headless", false, "Run headless")
 	torusLayout := flag.Bool("toruslayout", false, "Use torus layout insead.")
 	flag.Parse()
+
+	*custos = true
+
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
@@ -51,12 +55,21 @@ func main() {
 	mashupRenderer.AddRenderer("Torus", backgroundRenderer.CollaboratingRenderer)
 	mashupRenderer.AddRenderer("Background", backgroundRenderer)
 
-	worldApp := g3nworld.NewWorldApp(*headless, mashupRenderer)
-	var DetailedElements []*mashupsdk.MashupDetailedElement
+	worldApp := g3nworld.NewWorldApp(*headless, *custos, mashupRenderer)
+	DetailedElements := []*mashupsdk.MashupDetailedElement{}
 
 	if *custos {
-		// TODO: Call hfhud to get the elements.
+		worldApp.MashupContext = client.BootstrapInit("hfhud", worldApp.MSdkApiHandler, nil, nil, insecure)
 
+		libraryElementBundle, upsertErr := worldApp.MashupContext.Client.GetMashupElements(
+			worldApp.MashupContext,
+			&mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()},
+		)
+		if upsertErr != nil {
+			log.Printf("G3n Element initialization failure: %s\n", upsertErr.Error())
+		}
+
+		DetailedElements = libraryElementBundle.DetailedElements
 	} else if *headless {
 		DetailedElements = []*mashupsdk.MashupDetailedElement{
 			{
@@ -170,20 +183,34 @@ func main() {
 	}
 
 	if *custos || *headless {
-		generatedElements, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
+		generatedElementsBundle, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        "",
 				DetailedElements: DetailedElements,
 			})
 
+		if !*headless {
+			_, hfUpsertErr := worldApp.MashupContext.Client.UpsertMashupElements(
+				worldApp.MashupContext,
+				&mashupsdk.MashupDetailedElementBundle{
+					AuthToken:        client.GetServerAuthToken(),
+					DetailedElements: generatedElementsBundle.DetailedElements,
+				})
+
+			if hfUpsertErr != nil {
+				log.Fatalf(hfUpsertErr.Error(), hfUpsertErr)
+			}
+
+		}
+
 		if genErr != nil {
 			log.Fatalf(genErr.Error(), genErr)
 		} else {
-			generatedElements.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
+			generatedElementsBundle.DetailedElements[3].State.State = int64(mashupsdk.Clicked)
 
 			elementStateBundle := mashupsdk.MashupElementStateBundle{
 				AuthToken:     "",
-				ElementStates: []*mashupsdk.MashupElementState{generatedElements.DetailedElements[3].State},
+				ElementStates: []*mashupsdk.MashupElementState{generatedElementsBundle.DetailedElements[3].State},
 			}
 
 			worldApp.MSdkApiHandler.UpsertMashupElementsState(&elementStateBundle)

@@ -102,6 +102,21 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 	return clientConnectionConfigs, nil
 }
 
+// Shutdown -- handles request to shut down the mashup.
+func (c *MashupClient) GetMashupElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("GetMashupElements called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		return nil, errors.New("Auth failure")
+	}
+	if c.mashupApiHandler != nil {
+		log.Printf("Delegate to api handler.")
+		return c.mashupApiHandler.GetMashupElements()
+	} else {
+		log.Printf("No api handler provided.")
+	}
+	return nil, nil
+}
+
 func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
