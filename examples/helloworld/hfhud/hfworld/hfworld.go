@@ -200,7 +200,15 @@ func (w *HFWorldApp) InitMainWindow() {
 		})
 	}
 	runtimeHandler := func() {
-		//w.mainWin.Run()
+		if w.mainWin != nil {
+			log.Printf("HFWorld main win initialized\n")
+			if hfWorldApp.mashupDisplayContext != nil && (hfWorldApp.mashupDisplayContext.GetSettled()&mashupsdk.AppInitted) == mashupsdk.AppInitted {
+				log.Printf("HFWorld app settled... starting up.\n")
+				w.mainWin.ShowAndRun()
+			} else {
+				w.mainWin.Hide()
+			}
+		}
 	}
 
 	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
@@ -221,7 +229,7 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	log.Printf("HFWorld OnResize - not implemented yet..\n")
-	if hfWorldApp.mainWin != nil {
+	if hfWorldApp.mainWin != nil && hfWorldApp.mashupDisplayContext != nil && hfWorldApp.mashupDisplayContext.MainWinDisplay != nil {
 		hfWorldApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
@@ -265,8 +273,11 @@ func (hfWorldApp *HFWorldApp) detailMappedFyneComponent(id, description string, 
 func (hfWorldApp *HFWorldApp) TorusParser(childId int64) {
 	child := hfWorldApp.mashupDetailedElementLibrary[childId]
 	if child.Alias != "" {
-		hfWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
-		hfWorldApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
+		log.Printf("TorusParser lookup on: %s\n", child.Alias)
+		if hfWorldApp.fyneWidgetElements != nil && hfWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement != nil && hfWorldApp.fyneWidgetElements[child.Alias].GuiComponent != nil {
+			hfWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
+			hfWorldApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
+		}
 	}
 
 	if len(child.GetChildids()) > 0 {
@@ -297,6 +308,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 			hfWorldApp.fyneWidgetElements["Outside"].MashupDetailedElement.Copy(concreteElement)
 		}
 	}
+	log.Printf("HFWorld parsing tori.\n")
 
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
 		if concreteElement.GetSubgenre() == "Torus" {
