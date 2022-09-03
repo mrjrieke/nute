@@ -23,6 +23,7 @@ import (
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
 	"github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
 	"github.com/mrjrieke/nute/mashupsdk/server"
 )
@@ -557,7 +558,7 @@ func (w *WorldApp) InitMainWindow() {
 				}
 
 				elementStateBundle := mashupsdk.MashupElementStateBundle{
-					AuthToken:     server.GetServerAuthToken(),
+					AuthToken:     client.GetServerAuthToken(),
 					ElementStates: changedElements,
 				}
 
