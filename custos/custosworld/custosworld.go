@@ -183,13 +183,17 @@ func (w *CustosWorldApp) InitMainWindow() {
 						if mashupDetailedElement.Genre != "Collection" {
 							mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
 						}
-						CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
-						CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+						if fyneWidget, fOk := CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias]; fOk {
+							fyneWidget.MashupDetailedElement = mashupDetailedElement
+							fyneWidget.OnStatusChanged()
+						} else {
+							log.Printf("Unexpected widget request: %s\n", mashupDetailedElement.Alias)
+						}
 						return
 					}
 				}
 			}
-			CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
+			//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
 		}
 
 		torusMenu.SetTabLocation(container.TabLocationTop)
