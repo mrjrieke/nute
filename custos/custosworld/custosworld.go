@@ -68,6 +68,7 @@ type CustosWorldApp struct {
 	elementLoaderIndex           map[string]int64 // mashup indexes by Name
 	fyneWidgetElements           map[string]*FyneWidgetBundle
 	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
+	torusMenu                    *container.AppTabs
 }
 
 //go:embed gophericon.png
@@ -166,14 +167,12 @@ func (w *CustosWorldApp) InitMainWindow() {
 		CUWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent = CUWorldApp.detailMappedFyneComponent("Up-Side-Down", "Torus is up-side-down", CUWorldApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement)
 		CUWorldApp.fyneWidgetElements["All"].GuiComponent = CUWorldApp.detailMappedFyneComponent("All", "A group of torus or a tori.", CUWorldApp.fyneWidgetElements["All"].MashupDetailedElement)
 
-		torusMenu := container.NewAppTabs(
-			CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
+		CUWorldApp.torusMenu = container.NewAppTabs(
 			CUWorldApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),
-			CUWorldApp.fyneWidgetElements["It"].GuiComponent.(*container.TabItem),
 			CUWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem),
 			CUWorldApp.fyneWidgetElements["All"].GuiComponent.(*container.TabItem),
 		)
-		torusMenu.OnSelected = func(tabItem *container.TabItem) {
+		CUWorldApp.torusMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
 			// Lookup by name instead and try to keep track of any name changes instead...
 			log.Printf("Selected: %s\n", tabItem.Text)
@@ -196,9 +195,9 @@ func (w *CustosWorldApp) InitMainWindow() {
 			//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
 		}
 
-		torusMenu.SetTabLocation(container.TabLocationTop)
+		CUWorldApp.torusMenu.SetTabLocation(container.TabLocationTop)
 
-		CUWorldApp.mainWin.SetContent(torusMenu)
+		CUWorldApp.mainWin.SetContent(CUWorldApp.torusMenu)
 		CUWorldApp.mainWin.SetCloseIntercept(func() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
@@ -380,14 +379,18 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		for _, clickedElement := range CUWorldApp.ClickedElements {
 			if _, ok := ClickedElements[clickedElement.GetId()]; !ok {
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
+				// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
+				// Remove the formerly clicked elements..
+				CUWorldApp.torusMenu.Remove(CUWorldApp.fyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
 			}
 		}
 
 		CUWorldApp.ClickedElements = CUWorldApp.ClickedElements[:0]
 
 		// Impossible to determine ordering of clicks from upsert at this time.
-		for _, g3nDetailedElement := range ClickedElements {
-			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, g3nDetailedElement)
+		for _, clickedElement := range ClickedElements {
+			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
+			CUWorldApp.torusMenu.Append(CUWorldApp.fyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
 		}
 	}
 
