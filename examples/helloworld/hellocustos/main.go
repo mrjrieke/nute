@@ -40,7 +40,9 @@ func main() {
 
 	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, nil)
 
-	custosWorld.InitServer(*callerCreds, *insecure)
+	if !custosWorld.Headless {
+		custosWorld.InitServer(*callerCreds, *insecure)
+	}
 
 	// Initialize the main window.
 	custosWorld.InitMainWindow()
