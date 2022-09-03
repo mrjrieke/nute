@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/mrjrieke/nute/custos/custosworld"
-	"github.com/mrjrieke/nute/g3nd/worldg3n/data"
+	"github.com/mrjrieke/nute/g3nd/data"
 	"github.com/mrjrieke/nute/mashupsdk"
 )
 
