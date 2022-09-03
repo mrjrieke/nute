@@ -31,9 +31,11 @@ func TorusParser(custosWorldApp *custosworld.CustosWorldApp, childId int64, conc
 	child := custosWorldApp.MashupDetailedElementLibrary[childId]
 	if child != nil && child.Alias != "" {
 		log.Printf("TorusParser lookup on: %s\n", child.Alias)
-		if custosWorldApp.FyneWidgetElements != nil && custosWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement != nil && custosWorldApp.FyneWidgetElements[child.Alias].GuiComponent != nil {
-			custosWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
-			custosWorldApp.FyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
+		if fwb, fwbOk := custosWorldApp.FyneWidgetElements[child.Alias]; fwbOk {
+			if fwb.MashupDetailedElement != nil && fwb.GuiComponent != nil {
+				fwb.MashupDetailedElement.Copy(child)
+				fwb.GuiComponent.(*container.TabItem).Text = child.Name
+			}
 		}
 	}
 
