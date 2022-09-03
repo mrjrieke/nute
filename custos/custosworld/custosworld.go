@@ -57,6 +57,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 }
 
 type CustosWorldApp struct {
+	Headless                     bool // Mode for troubleshooting.
 	mashupSdkApiHandler          *mashupSdkApiHandler
 	wClientInitHandler           *worldClientInitHandler
 	HeadsupFyneContext           *CustosContext
@@ -87,6 +88,7 @@ func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool) {
 
 func NewCustosWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedElement, renderer IG3nRenderer) *CustosWorldApp {
 	CUWorldApp = &CustosWorldApp{
+		Headless:                     headless,
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
 		HeadsupFyneContext:           &CustosContext{},
 		DetailedElements:             detailedElements,
@@ -176,14 +178,15 @@ func (w *CustosWorldApp) InitMainWindow() {
 			// Lookup by name instead and try to keep track of any name changes instead...
 			log.Printf("Selected: %s\n", tabItem.Text)
 			if mashupItemIndex, miOk := CUWorldApp.elementLoaderIndex[tabItem.Text]; miOk {
-				mashupDetailedElement := CUWorldApp.mashupDetailedElementLibrary[mashupItemIndex]
-				if mashupDetailedElement.Alias != "" {
-					if mashupDetailedElement.Genre != "Collection" {
-						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+				if mashupDetailedElement, mOk := CUWorldApp.mashupDetailedElementLibrary[mashupItemIndex]; mOk {
+					if mashupDetailedElement.Alias != "" {
+						if mashupDetailedElement.Genre != "Collection" {
+							mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+						}
+						CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
+						CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+						return
 					}
-					CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
-					CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
-					return
 				}
 			}
 			CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
@@ -202,11 +205,15 @@ func (w *CustosWorldApp) InitMainWindow() {
 	runtimeHandler := func() {
 		if w.mainWin != nil {
 			log.Printf("CustosWorld main win initialized\n")
-			if CUWorldApp.mashupDisplayContext != nil && (CUWorldApp.mashupDisplayContext.GetSettled()&mashupsdk.AppInitted) == mashupsdk.AppInitted {
+			if CUWorldApp.mashupDisplayContext != nil &&
+				(CUWorldApp.Headless ||
+					(CUWorldApp.mashupDisplayContext.GetSettled()&mashupsdk.AppInitted) == mashupsdk.AppInitted) {
 				log.Printf("CustosWorld app settled... starting up.\n")
 				w.mainWin.ShowAndRun()
 			} else {
-				w.mainWin.Hide()
+				if !CUWorldApp.Headless {
+					w.mainWin.Hide()
+				}
 			}
 		}
 	}
@@ -247,24 +254,28 @@ func (CustosWorldApp *CustosWorldApp) detailMappedFyneComponent(id, description 
 	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
 		widget.NewButton("Show", func() {
 			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
-			mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-			CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
+			if len(CUWorldApp.elementLoaderIndex) > 0 {
+				mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
 
-			CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
-			if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
+				if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
+					CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				}
+				CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 			}
-			CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		}), widget.NewButton("Hide", func() {
-			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
-			mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-			CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
+			if len(CUWorldApp.elementLoaderIndex) > 0 {
+				// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
+				mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
+				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
 
-			CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
-			if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
+				if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
+					CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				}
+				CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 			}
-			CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
 		})))),
 	)
 	return tabItem
@@ -387,9 +398,9 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	log.Printf("CustosWorld dispatching focus\n")
-	if CUWorldApp.mainWin != nil {
-		CUWorldApp.mainWin.Hide()
-	}
+	// if CUWorldApp.mainWin != nil {
+	// 	CUWorldApp.mainWin.Hide()
+	// }
 	log.Printf("CustosWorld End UpsertMashupElementsState called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
