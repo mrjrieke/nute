@@ -1,14 +1,11 @@
 package custosworld
 
 import (
-	"embed"
 	"log"
 	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
@@ -59,20 +56,22 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 type CustosWorldApp struct {
 	Headless                     bool // Mode for troubleshooting.
 	mashupSdkApiHandler          *mashupSdkApiHandler
+	Title                        string
+	Icon                         *fyne.StaticResource
+	MainWindowSize               fyne.Size
 	wClientInitHandler           *worldClientInitHandler
 	HeadsupFyneContext           *CustosContext
-	mainWin                      fyne.Window
+	MainWin                      fyne.Window
 	mashupDisplayContext         *mashupsdk.MashupDisplayContext
 	DetailedElements             []*mashupsdk.MashupDetailedElement
-	mashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
-	elementLoaderIndex           map[string]int64 // mashup indexes by Name
-	fyneWidgetElements           map[string]*FyneWidgetBundle
+	MashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
+	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
+	FyneWidgetElements           map[string]*FyneWidgetBundle
 	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
-	torusMenu                    *container.AppTabs
+	TorusMenu                    *container.AppTabs
+	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
+	CustomTabItemRenderer        map[string]func(custosWorlApp *CustosWorldApp, id int64, concreteElement *mashupsdk.MashupDetailedElement)
 }
-
-//go:embed gophericon.png
-var gopherIcon embed.FS
 
 var CUWorldApp *CustosWorldApp
 
@@ -93,42 +92,13 @@ func NewCustosWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetail
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
 		HeadsupFyneContext:           &CustosContext{},
 		DetailedElements:             detailedElements,
-		mainWin:                      nil,
+		MainWin:                      nil,
 		mashupDisplayContext:         &mashupsdk.MashupDisplayContext{MainWinDisplay: &mashupsdk.MashupDisplayHint{}},
-		mashupDetailedElementLibrary: map[int64]*mashupsdk.MashupDetailedElement{}, // mashupDetailedElementLibrary,
-		elementLoaderIndex:           map[string]int64{},                           // elementLoaderIndex
-		fyneWidgetElements: map[string]*FyneWidgetBundle{
-			"Inside": {
-				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent:          nil,
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, // mashupDetailedElementLibrary["{0}-AxialCircle"],
-				},
-			},
-			"Outside": {
-				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent:          nil,
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["Outside"],
-				},
-			},
-			"It": {
-				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent:          nil,
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["{0}-Torus"],
-				},
-			},
-			"Up-Side-Down": {
-				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent:          nil,
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
-				},
-			},
-			"All": {
-				GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
-					GuiComponent:          nil,
-					MashupDetailedElement: &mashupsdk.MashupDetailedElement{}, //mashupDetailedElementLibrary["{0}-SharedAttitude"],
-				},
-			},
-		},
+		MashupDetailedElementLibrary: map[int64]*mashupsdk.MashupDetailedElement{}, // mashupDetailedElementLibrary,
+		ElementLoaderIndex:           map[string]int64{},                           // elementLoaderIndex
+		FyneWidgetElements:           map[string]*FyneWidgetBundle{},
+		CustomTabItems:               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem{},
+		CustomTabItemRenderer:        map[string]func(custosWorlApp *CustosWorldApp, id int64, concreteElement *mashupsdk.MashupDetailedElement){},
 	}
 
 	return CUWorldApp
@@ -139,7 +109,7 @@ type InitEvent struct {
 
 func (w *CustosWorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 	changedElements := []*mashupsdk.MashupElementState{}
-	for _, g3nDetailedElement := range w.mashupDetailedElementLibrary {
+	for _, g3nDetailedElement := range w.MashupDetailedElementLibrary {
 		if mashupsdk.DisplayElementState(g3nDetailedElement.GetMashupElementState().State) != mashupsdk.Init {
 			g3nDetailedElement.ApplyState(mashupsdk.Clicked, false)
 			changedElements = append(changedElements, g3nDetailedElement.GetMashupElementState())
@@ -150,39 +120,32 @@ func (w *CustosWorldApp) ResetChangeStates() []*mashupsdk.MashupElementState {
 }
 
 func (w *CustosWorldApp) InitMainWindow() {
-	log.Printf("Initializing mainWin.")
+	log.Printf("Initializing MainWin.")
 
 	initHandler := func(a fyne.App) {
 		log.Printf("InitHandler.")
-		CUWorldApp.mainWin = a.NewWindow("Hello Custos")
-		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
+		CUWorldApp.MainWin = a.NewWindow(w.Title)
+		CUWorldApp.MainWin.SetIcon(w.Icon)
+		CUWorldApp.MainWin.Resize(CUWorldApp.MainWindowSize)
+		CUWorldApp.MainWin.SetFixedSize(false)
 
-		CUWorldApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
-		CUWorldApp.mainWin.Resize(fyne.NewSize(800, 100))
-		CUWorldApp.mainWin.SetFixedSize(false)
+		CUWorldApp.TorusMenu = container.NewAppTabs()
 
-		CUWorldApp.fyneWidgetElements["Inside"].GuiComponent = CUWorldApp.detailMappedFyneComponent("Inside", "The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.", CUWorldApp.fyneWidgetElements["Inside"].MashupDetailedElement)
-		CUWorldApp.fyneWidgetElements["Outside"].GuiComponent = CUWorldApp.detailMappedFyneComponent("Outside", "The magnetic field at any point outside the toroid is zero.", CUWorldApp.fyneWidgetElements["Outside"].MashupDetailedElement)
-		CUWorldApp.fyneWidgetElements["It"].GuiComponent = CUWorldApp.detailMappedFyneComponent("It", "The magnetic field inside the empty space surrounded by the toroid is zero.", CUWorldApp.fyneWidgetElements["It"].MashupDetailedElement)
-		CUWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent = CUWorldApp.detailMappedFyneComponent("Up-Side-Down", "Torus is up-side-down", CUWorldApp.fyneWidgetElements["Up-Side-Down"].MashupDetailedElement)
-		CUWorldApp.fyneWidgetElements["All"].GuiComponent = CUWorldApp.detailMappedFyneComponent("All", "A group of torus or a tori.", CUWorldApp.fyneWidgetElements["All"].MashupDetailedElement)
+		for id, tabItemFunc := range CUWorldApp.CustomTabItems {
+			CUWorldApp.TorusMenu.Append(tabItemFunc(CUWorldApp, id))
+		}
 
-		CUWorldApp.torusMenu = container.NewAppTabs(
-			CUWorldApp.fyneWidgetElements["Outside"].GuiComponent.(*container.TabItem),
-			CUWorldApp.fyneWidgetElements["Up-Side-Down"].GuiComponent.(*container.TabItem),
-			CUWorldApp.fyneWidgetElements["All"].GuiComponent.(*container.TabItem),
-		)
-		CUWorldApp.torusMenu.OnSelected = func(tabItem *container.TabItem) {
+		CUWorldApp.TorusMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
 			// Lookup by name instead and try to keep track of any name changes instead...
 			log.Printf("Selected: %s\n", tabItem.Text)
-			if mashupItemIndex, miOk := CUWorldApp.elementLoaderIndex[tabItem.Text]; miOk {
-				if mashupDetailedElement, mOk := CUWorldApp.mashupDetailedElementLibrary[mashupItemIndex]; mOk {
+			if mashupItemIndex, miOk := CUWorldApp.ElementLoaderIndex[tabItem.Text]; miOk {
+				if mashupDetailedElement, mOk := CUWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mOk {
 					if mashupDetailedElement.Alias != "" {
 						if mashupDetailedElement.Genre != "Collection" {
 							mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
 						}
-						if fyneWidget, fOk := CUWorldApp.fyneWidgetElements[mashupDetailedElement.Alias]; fOk {
+						if fyneWidget, fOk := CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias]; fOk {
 							fyneWidget.MashupDetailedElement = mashupDetailedElement
 							fyneWidget.OnStatusChanged()
 						} else {
@@ -195,10 +158,10 @@ func (w *CustosWorldApp) InitMainWindow() {
 			//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
 		}
 
-		CUWorldApp.torusMenu.SetTabLocation(container.TabLocationTop)
+		CUWorldApp.TorusMenu.SetTabLocation(container.TabLocationTop)
 
-		CUWorldApp.mainWin.SetContent(CUWorldApp.torusMenu)
-		CUWorldApp.mainWin.SetCloseIntercept(func() {
+		CUWorldApp.MainWin.SetContent(CUWorldApp.TorusMenu)
+		CUWorldApp.MainWin.SetCloseIntercept(func() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			}
@@ -206,16 +169,16 @@ func (w *CustosWorldApp) InitMainWindow() {
 		})
 	}
 	runtimeHandler := func() {
-		if w.mainWin != nil {
+		if w.MainWin != nil {
 			log.Printf("CustosWorld main win initialized\n")
 			if CUWorldApp.mashupDisplayContext != nil &&
 				(CUWorldApp.Headless ||
 					(CUWorldApp.mashupDisplayContext.GetSettled()&mashupsdk.AppInitted) == mashupsdk.AppInitted) {
 				log.Printf("CustosWorld app settled... starting up.\n")
-				w.mainWin.ShowAndRun()
+				w.MainWin.ShowAndRun()
 			} else {
 				if !CUWorldApp.Headless {
-					w.mainWin.Hide()
+					w.MainWin.Hide()
 				}
 			}
 		}
@@ -231,7 +194,7 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 // Sets all elements to a "Rest state."
 func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 	log.Printf("CustosWorld Received ResetG3NDetailedElementStates\n")
-	for _, wes := range CUWorldApp.mashupDetailedElementLibrary {
+	for _, wes := range CUWorldApp.MashupDetailedElementLibrary {
 		wes.SetElementState(mashupsdk.Init)
 	}
 	log.Printf("CustosWorld finished ResetG3NDetailedElementStates handle.\n")
@@ -239,58 +202,36 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 	log.Printf("CustosWorld OnResize - not implemented yet..\n")
-	if CUWorldApp.mainWin != nil && CUWorldApp.mashupDisplayContext != nil && CUWorldApp.mashupDisplayContext.MainWinDisplay != nil {
+	if CUWorldApp.MainWin != nil && CUWorldApp.mashupDisplayContext != nil && CUWorldApp.mashupDisplayContext.MainWinDisplay != nil {
 		CUWorldApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
 		// Which then wants to resize fyne ad-infinitum
-		//CUWorldApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
+		//CUWorldApp.MainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
 		log.Printf("CustosWorld Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("CustosWorld Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	}
 }
 
-func (CustosWorldApp *CustosWorldApp) detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetailedElement) *container.TabItem {
-	tabLabel := widget.NewLabel(description)
-	tabLabel.Wrapping = fyne.TextWrapWord
-	tabItem := container.NewTabItem(id, container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewVBox(tabLabel, container.NewAdaptiveGrid(2,
-		widget.NewButton("Show", func() {
-			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
-			if len(CUWorldApp.elementLoaderIndex) > 0 {
-				mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
-
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
-				if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-					CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
-				}
-				CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
-			}
-		}), widget.NewButton("Hide", func() {
-			if len(CUWorldApp.elementLoaderIndex) > 0 {
-				// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
-				mashupIndex := CUWorldApp.elementLoaderIndex[CUWorldApp.fyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement = CUWorldApp.mashupDetailedElementLibrary[mashupIndex]
-
-				CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
-				if CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-					CUWorldApp.fyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
-				}
-				CUWorldApp.fyneWidgetElements[de.Alias].OnStatusChanged()
-			}
-		})))),
-	)
-	return tabItem
+func (custosWorldApp *CustosWorldApp) DetailMappedFyneComponent(id, description string, genre string, tabItemFunc func(custosWorlApp *CustosWorldApp, id string) *container.TabItem) {
+	de := &mashupsdk.MashupDetailedElement{Alias: id, Description: description, Genre: genre}
+	custosWorldApp.FyneWidgetElements[id] = &FyneWidgetBundle{
+		GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+			GuiComponent:          nil,
+			MashupDetailedElement: de,
+		},
+	}
+	custosWorldApp.CustomTabItems[id] = tabItemFunc
 }
 
 func (CustosWorldApp *CustosWorldApp) TorusParser(childId int64) {
-	child := CUWorldApp.mashupDetailedElementLibrary[childId]
+	child := CUWorldApp.MashupDetailedElementLibrary[childId]
 	if child != nil && child.Alias != "" {
 		log.Printf("TorusParser lookup on: %s\n", child.Alias)
-		if CUWorldApp.fyneWidgetElements != nil && CUWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement != nil && CUWorldApp.fyneWidgetElements[child.Alias].GuiComponent != nil {
-			CUWorldApp.fyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
-			CUWorldApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
+		if CUWorldApp.FyneWidgetElements != nil && CUWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement != nil && CUWorldApp.FyneWidgetElements[child.Alias].GuiComponent != nil {
+			CUWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
+			CUWorldApp.FyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
 		}
 	}
 
@@ -315,18 +256,14 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
 		//helloApp.fyneComponentCache[generatedComponent.Basisid]
-		CUWorldApp.mashupDetailedElementLibrary[concreteElement.Id] = concreteElement
-		CUWorldApp.elementLoaderIndex[concreteElement.Name] = concreteElement.Id
-
-		if concreteElement.GetName() == "Outside" {
-			CUWorldApp.fyneWidgetElements["Outside"].MashupDetailedElement.Copy(concreteElement)
-		}
+		CUWorldApp.MashupDetailedElementLibrary[concreteElement.Id] = concreteElement
+		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
 	log.Printf("CustosWorld parsing tori.\n")
 
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
-		if concreteElement.GetSubgenre() == "Torus" {
-			CUWorldApp.TorusParser(concreteElement.Id)
+		if tabItemFunc, tabItemFuncOk := CUWorldApp.CustomTabItemRenderer[concreteElement.GetSubgenre()]; tabItemFuncOk {
+			tabItemFunc(CUWorldApp, concreteElement.Id, nil)
 		}
 	}
 
@@ -342,7 +279,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 }
 func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
 
-	child := CUWorldApp.mashupDetailedElementLibrary[g3nId]
+	child := CUWorldApp.MashupDetailedElementLibrary[g3nId]
 	if child.Genre != "Attitude" {
 		child.SetElementState(mashupsdk.DisplayElementState(x))
 	}
@@ -361,7 +298,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
 	for _, es := range elementStateBundle.ElementStates {
-		if g3nDetailedElement, ok := CUWorldApp.mashupDetailedElementLibrary[es.GetId()]; ok {
+		if g3nDetailedElement, ok := CUWorldApp.MashupDetailedElementLibrary[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
 			if g3nDetailedElement.IsStateSet(mashupsdk.Recursive) {
 				recursiveElements[es.GetId()] = g3nDetailedElement
@@ -381,7 +318,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
 				// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
 				// Remove the formerly clicked elements..
-				CUWorldApp.torusMenu.Remove(CUWorldApp.fyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
+				CUWorldApp.TorusMenu.Remove(CUWorldApp.FyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
 			}
 		}
 
@@ -390,7 +327,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		// Impossible to determine ordering of clicks from upsert at this time.
 		for _, clickedElement := range ClickedElements {
 			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
-			CUWorldApp.torusMenu.Append(CUWorldApp.fyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
+			CUWorldApp.TorusMenu.Append(CUWorldApp.FyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
 		}
 	}
 
@@ -405,8 +342,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	log.Printf("CustosWorld dispatching focus\n")
-	// if CUWorldApp.mainWin != nil {
-	// 	CUWorldApp.mainWin.Hide()
+	// if CUWorldApp.MainWin != nil {
+	// 	CUWorldApp.MainWin.Hide()
 	// }
 	log.Printf("CustosWorld End UpsertMashupElementsState called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
