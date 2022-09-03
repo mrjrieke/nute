@@ -33,7 +33,6 @@ func main() {
 	headless := flag.Bool("headless", false, "Run headless")
 	torusLayout := flag.Bool("toruslayout", false, "Use torus layout insead.")
 	flag.Parse()
-	*custos = true
 
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
