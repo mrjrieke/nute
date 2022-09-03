@@ -1,41 +1,9 @@
-//go:build darwin || linux
-// +build darwin linux
+package data
 
-package main
+import "github.com/mrjrieke/nute/mashupsdk"
 
-// World is a basic gomobile app.
-import (
-	"embed"
-	"flag"
-	"log"
-	"os"
-
-	"github.com/mrjrieke/nute/examples/helloworld/hfhud/hfworld"
-	"github.com/mrjrieke/nute/mashupsdk"
-)
-
-var worldCompleteChan chan bool
-
-//go:embed tls/mashup.crt
-var mashupCert embed.FS
-
-//go:embed tls/mashup.key
-var mashupKey embed.FS
-
-func main() {
-	callerCreds := flag.String("CREDS", "", "Credentials of caller")
-	insecure := flag.Bool("insecure", false, "Skip server validation")
-	headless := flag.Bool("headless", false, "Run headless")
-	flag.Parse()
-	worldLog, err := os.OpenFile("hfworld.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetOutput(worldLog)
-
-	mashupsdk.InitCertKeyPair(mashupCert, mashupKey)
-
-	detailedElements := []*mashupsdk.MashupDetailedElement{
+func GetExampleLibrary() []*mashupsdk.MashupDetailedElement {
+	return []*mashupsdk.MashupDetailedElement{
 		{
 			Basisid:     -1,
 			State:       &mashupsdk.MashupElementState{Id: -1, State: int64(mashupsdk.Mutable)},
@@ -143,12 +111,4 @@ func main() {
 		},
 	}
 
-	hfWorld := hfworld.NewHFWorldApp(*headless, detailedElements, nil)
-
-	hfWorld.InitServer(*callerCreds, *insecure)
-
-	// Initialize the main window.
-	hfWorld.InitMainWindow()
-
-	<-worldCompleteChan
 }
