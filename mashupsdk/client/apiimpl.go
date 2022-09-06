@@ -120,6 +120,7 @@ func (c *MashupClient) GetMashupElements(ctx context.Context, in *sdk.MashupEmpt
 func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	log.Printf("UpsertMashupElementsState called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("Auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {

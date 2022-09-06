@@ -557,8 +557,13 @@ func (w *WorldApp) InitMainWindow() {
 					changedElements = append(changedElements, w.backgroundG3n.GetMashupElementState())
 				}
 
+				authToken := server.GetServerAuthToken()
+				if w.custos {
+					authToken = client.GetServerAuthToken()
+				}
+
 				elementStateBundle := mashupsdk.MashupElementStateBundle{
-					AuthToken:     client.GetServerAuthToken(),
+					AuthToken:     authToken,
 					ElementStates: changedElements,
 				}
 
