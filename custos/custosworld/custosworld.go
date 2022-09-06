@@ -312,26 +312,34 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	if len(ClickedElements) > 0 {
+		log.Printf("CustosWorld UpsertMashupElementsState apply clicked elements\n")
 		// Remove existing clicks.
 		for _, clickedElement := range CUWorldApp.ClickedElements {
 			if _, ok := ClickedElements[clickedElement.GetId()]; !ok {
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
 				// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
 				// Remove the formerly clicked elements..
-				CUWorldApp.TorusMenu.Remove(CUWorldApp.FyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
+				if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
+					CUWorldApp.TorusMenu.Remove(fyneWidgetElement.GuiComponent.(*container.TabItem))
+				}
 			}
 		}
+		log.Printf("CustosWorld UpsertMashupElementsState cleanup clicked elements\n")
 
 		CUWorldApp.ClickedElements = CUWorldApp.ClickedElements[:0]
 
 		// Impossible to determine ordering of clicks from upsert at this time.
 		for _, clickedElement := range ClickedElements {
 			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
-			CUWorldApp.TorusMenu.Append(CUWorldApp.FyneWidgetElements[clickedElement.Alias].GuiComponent.(*container.TabItem))
+			if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
+				CUWorldApp.TorusMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+			}
 		}
 	}
 
 	if len(recursiveElements) > 0 {
+		log.Printf("CustosWorld UpsertMashupElementsState apply recursive elements\n")
+
 		for _, recursiveElement := range recursiveElements {
 			stateBits := recursiveElement.State.State
 			// Unset recursive for child elements
