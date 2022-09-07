@@ -22,7 +22,7 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
-	"github.com/mrjrieke/nute/g3nd/worldg3n/g3nfilter"
+	"github.com/mrjrieke/nute/g3nd/worldg3n/g3ndisplay"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
@@ -44,19 +44,19 @@ type IG3nRenderer interface {
 }
 
 type WorldApp struct {
-	custos                bool // Run in guardian mode
-	headless              bool // Mode for troubleshooting.
-	MSdkApiHandler        *mashupSdkApiHandler
-	wClientInitHandler    *worldClientInitHandler
-	displaySetupChan      chan *mashupsdk.MashupDisplayHint
-	displayPositionChan   chan *mashupsdk.MashupDisplayHint
-	mainWin               *app.Application
-	frameRater            *util.FrameRater // Render loop frame rater
-	scene                 *core.Node
-	cam                   *camera.Camera
-	oc                    *camera.OrbitControl
-	IG3nRenderer          IG3nRenderer
-	IG3nDisplayHintFilter g3nfilter.IG3nDisplayHintFilter
+	custos              bool // Run in guardian mode
+	headless            bool // Mode for troubleshooting.
+	MSdkApiHandler      *mashupSdkApiHandler
+	wClientInitHandler  *worldClientInitHandler
+	displaySetupChan    chan *mashupsdk.MashupDisplayHint
+	displayPositionChan chan *mashupsdk.MashupDisplayHint
+	mainWin             *app.Application
+	frameRater          *util.FrameRater // Render loop frame rater
+	scene               *core.Node
+	cam                 *camera.Camera
+	oc                  *camera.OrbitControl
+	IG3nRenderer        IG3nRenderer
+	IG3nDisplayRenderer g3ndisplay.IG3nDisplayRenderer
 
 	MashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 
@@ -77,7 +77,7 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayHintFilter g3nfilter.IG3nDisplayHintFilter) *WorldApp {
+func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayRenderer g3ndisplay.IG3nDisplayRenderer) *WorldApp {
 	worldApp = WorldApp{
 		custos:                   custos,
 		headless:                 headless,
@@ -89,7 +89,7 @@ func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayHintF
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
 		IG3nRenderer:             renderer,
-		IG3nDisplayHintFilter:    displayHintFilter,
+		IG3nDisplayRenderer:      displayRenderer,
 	}
 	return &worldApp
 }
@@ -600,19 +600,23 @@ func (w *WorldApp) InitMainWindow() {
 				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 				if !w.headless {
 					if (w.mainWin != nil) && (w.mainWin.IWindow != nil) && ((*w.mainWin).IWindow.(*window.GlfwWindow).Window != nil) {
-						if !w.custos {
-							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
-						}
-						if x, y := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
-							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
-							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
-						}
-						if !w.Focused && displayHint.Focused {
-							log.Printf("G3n setting focus.")
-							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
-							(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
-							displayHint.Focused = false
-							w.Focused = true
+						if worldApp.IG3nDisplayRenderer != nil {
+							displayHint = worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
+						} else {
+							if !w.custos {
+								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
+							}
+							if x, y := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
+								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+							}
+							if !w.Focused && displayHint.Focused {
+								log.Printf("G3n setting focus.")
+								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
+								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
+								displayHint.Focused = false
+								w.Focused = true
+							}
 						}
 					}
 				}
@@ -653,10 +657,6 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 }
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	if worldApp.IG3nDisplayHintFilter != nil {
-		displayHint = worldApp.IG3nDisplayHintFilter.OnResize(displayHint)
-	}
-
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
