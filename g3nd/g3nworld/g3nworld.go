@@ -22,6 +22,7 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
+	"github.com/mrjrieke/nute/g3nd/worldg3n/g3nfilter"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
@@ -34,6 +35,8 @@ type mashupSdkApiHandler struct {
 type worldClientInitHandler struct {
 }
 
+// TODO: Can I get rid of this definition?
+// -- duplicated in genericrenderer.go.
 type IG3nRenderer interface {
 	Layout(worldApp *WorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
 	InitRenderLoop(worldApp *WorldApp) bool
@@ -41,18 +44,19 @@ type IG3nRenderer interface {
 }
 
 type WorldApp struct {
-	custos              bool // Run in guardian mode
-	headless            bool // Mode for troubleshooting.
-	MSdkApiHandler      *mashupSdkApiHandler
-	wClientInitHandler  *worldClientInitHandler
-	displaySetupChan    chan *mashupsdk.MashupDisplayHint
-	displayPositionChan chan *mashupsdk.MashupDisplayHint
-	mainWin             *app.Application
-	frameRater          *util.FrameRater // Render loop frame rater
-	scene               *core.Node
-	cam                 *camera.Camera
-	oc                  *camera.OrbitControl
-	IG3nRenderer        IG3nRenderer
+	custos                bool // Run in guardian mode
+	headless              bool // Mode for troubleshooting.
+	MSdkApiHandler        *mashupSdkApiHandler
+	wClientInitHandler    *worldClientInitHandler
+	displaySetupChan      chan *mashupsdk.MashupDisplayHint
+	displayPositionChan   chan *mashupsdk.MashupDisplayHint
+	mainWin               *app.Application
+	frameRater            *util.FrameRater // Render loop frame rater
+	scene                 *core.Node
+	cam                   *camera.Camera
+	oc                    *camera.OrbitControl
+	IG3nRenderer          IG3nRenderer
+	IG3nDisplayHintFilter g3nfilter.IG3nDisplayHintFilter
 
 	MashupContext *mashupsdk.MashupContext // Needed for callbacks to other mashups
 
@@ -73,7 +77,7 @@ type WorldApp struct {
 
 var worldApp WorldApp
 
-func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer) *WorldApp {
+func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayHintFilter g3nfilter.IG3nDisplayHintFilter) *WorldApp {
 	worldApp = WorldApp{
 		custos:                   custos,
 		headless:                 headless,
@@ -85,6 +89,7 @@ func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer) *WorldApp {
 		displaySetupChan:         make(chan *mashupsdk.MashupDisplayHint, 1),
 		displayPositionChan:      make(chan *mashupsdk.MashupDisplayHint, 1),
 		IG3nRenderer:             renderer,
+		IG3nDisplayHintFilter:    displayHintFilter,
 	}
 	return &worldApp
 }
@@ -648,6 +653,10 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 }
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+	if worldApp.IG3nDisplayHintFilter != nil {
+		displayHint = worldApp.IG3nDisplayHintFilter.OnResize(displayHint)
+	}
+
 	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint

@@ -54,7 +54,7 @@ func main() {
 	mashupRenderer.AddRenderer("Torus", backgroundRenderer.CollaboratingRenderer)
 	mashupRenderer.AddRenderer("Background", backgroundRenderer)
 
-	worldApp := g3nworld.NewWorldApp(*headless, *custos, mashupRenderer)
+	worldApp := g3nworld.NewWorldApp(*headless, *custos, mashupRenderer, nil)
 	DetailedElements := []*mashupsdk.MashupDetailedElement{}
 
 	if *custos {
