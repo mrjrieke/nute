@@ -86,7 +86,9 @@ func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool) {
 	}
 }
 
-func NewCustosWorldApp(headless bool, detailedElements []*mashupsdk.MashupDetailedElement, renderer IG3nRenderer) *CustosWorldApp {
+func NewCustosWorldApp(headless bool,
+	detailedElements []*mashupsdk.MashupDetailedElement,
+	renderer IG3nRenderer) *CustosWorldApp {
 	CUWorldApp = &CustosWorldApp{
 		Headless:                     headless,
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
@@ -132,7 +134,9 @@ func (w *CustosWorldApp) InitMainWindow() {
 		CUWorldApp.TorusMenu = container.NewAppTabs()
 
 		for id, tabItemFunc := range CUWorldApp.CustomTabItems {
-			CUWorldApp.TorusMenu.Append(tabItemFunc(CUWorldApp, id))
+			tabItem := tabItemFunc(CUWorldApp, id)
+			CUWorldApp.FyneWidgetElements[id].GuiComponent = tabItem
+			CUWorldApp.TorusMenu.Append(tabItem)
 		}
 
 		CUWorldApp.TorusMenu.OnSelected = func(tabItem *container.TabItem) {
