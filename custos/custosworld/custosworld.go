@@ -68,7 +68,7 @@ type CustosWorldApp struct {
 	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
 	FyneWidgetElements           map[string]*FyneWidgetBundle
 	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
-	TorusMenu                    *container.AppTabs
+	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
 	CustomTabItemRenderer        map[string]func(custosWorlApp *CustosWorldApp, id int64, concreteElement *mashupsdk.MashupDetailedElement)
 }
@@ -131,15 +131,15 @@ func (w *CustosWorldApp) InitMainWindow() {
 		CUWorldApp.MainWin.Resize(CUWorldApp.MainWindowSize)
 		CUWorldApp.MainWin.SetFixedSize(false)
 
-		CUWorldApp.TorusMenu = container.NewAppTabs()
+		CUWorldApp.TabItemMenu = container.NewAppTabs()
 
 		for id, tabItemFunc := range CUWorldApp.CustomTabItems {
 			tabItem := tabItemFunc(CUWorldApp, id)
 			CUWorldApp.FyneWidgetElements[id].GuiComponent = tabItem
-			CUWorldApp.TorusMenu.Append(tabItem)
+			CUWorldApp.TabItemMenu.Append(tabItem)
 		}
 
-		CUWorldApp.TorusMenu.OnSelected = func(tabItem *container.TabItem) {
+		CUWorldApp.TabItemMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
 			// Lookup by name instead and try to keep track of any name changes instead...
 			log.Printf("Selected: %s\n", tabItem.Text)
@@ -162,9 +162,9 @@ func (w *CustosWorldApp) InitMainWindow() {
 			//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
 		}
 
-		CUWorldApp.TorusMenu.SetTabLocation(container.TabLocationTop)
+		CUWorldApp.TabItemMenu.SetTabLocation(container.TabLocationTop)
 
-		CUWorldApp.MainWin.SetContent(CUWorldApp.TorusMenu)
+		CUWorldApp.MainWin.SetContent(CUWorldApp.TabItemMenu)
 		CUWorldApp.MainWin.SetCloseIntercept(func() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
@@ -324,7 +324,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 				// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
 				// Remove the formerly clicked elements..
 				if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
-					CUWorldApp.TorusMenu.Remove(fyneWidgetElement.GuiComponent.(*container.TabItem))
+					CUWorldApp.TabItemMenu.Remove(fyneWidgetElement.GuiComponent.(*container.TabItem))
 				}
 			}
 		}
@@ -336,7 +336,21 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		for _, clickedElement := range ClickedElements {
 			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
 			if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
-				CUWorldApp.TorusMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+				CUWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+			} else {
+				// Clicked but GUI component not added yet.
+				log.Printf("Lookup on renderer: %s\n", clickedElement.Renderer)
+				if tabItemRendererFunc, tabItemRenderFuncOk := CUWorldApp.CustomTabItemRenderer[clickedElement.Renderer]; tabItemRenderFuncOk {
+					log.Printf("Found func for renderer: %s\n", clickedElement.Renderer)
+					// Call custom tab item renderer function
+					// provided by implementor.
+					tabItemRendererFunc(CUWorldApp, clickedElement.Id, clickedElement)
+					log.Printf("Widget lookup: %s\n", clickedElement.Alias)
+					if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
+						log.Printf("Widget lookup found: %s\n", clickedElement.Alias)
+						CUWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+					}
+				}
 			}
 		}
 	}

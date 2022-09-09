@@ -36,6 +36,12 @@ func TorusParser(custosWorldApp *custosworld.CustosWorldApp, childId int64, conc
 				fwb.MashupDetailedElement.Copy(child)
 				fwb.GuiComponent.(*container.TabItem).Text = child.Name
 			}
+		} else {
+			// No widget made yet for this alias...
+			custosWorldApp.DetailMappedFyneComponent(child.Alias,
+				child.Description,
+				child.Genre,
+				DetailMappedTabItemFyneComponent)
 		}
 	}
 
@@ -104,6 +110,9 @@ func main() {
 	detailedElements := data.GetExampleLibrary()
 
 	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, nil)
+	// Initialize a tab item renderer
+	// This will be called during upsert elements phase.
+	// indexed by subgenre
 	custosWorld.CustomTabItemRenderer["Torus"] = TorusParser
 
 	custosWorld.Title = "Hello Custos"
