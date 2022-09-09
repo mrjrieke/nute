@@ -39,7 +39,7 @@ func forkMashup(mashupGoodies map[string]interface{}) error {
 
 	var procAttr = syscall.ProcAttr{
 		Dir:   ".",
-		Env:   []string{"DISPLAY=:0.0"},
+		Env:   append([]string{"DISPLAY=:0.0"}, mashupGoodies["ENV"].([]string)...),
 		Files: nil,
 		Sys: &syscall.SysProcAttr{
 			Setsid:     true,
@@ -146,6 +146,9 @@ func BootstrapInit(mashupPath string,
 
 	mashupGoodies := map[string]interface{}{}
 	mashupGoodies["MASHUP_PATH"] = mashupPath
+	if envParams == nil {
+		envParams = []string{}
+	}
 	mashupGoodies["ENV"] = envParams
 	mashupGoodies["PARAMS"] = params
 	mashupGoodies["insecure"] = insecure
