@@ -27,36 +27,104 @@ var mashupCert embed.FS
 //go:embed tls/mashup.key
 var mashupKey embed.FS
 
-func TorusParser(custosWorldApp *custosworld.CustosWorldApp, childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
-	child := custosWorldApp.MashupDetailedElementLibrary[childId]
+type ControllerRenderer struct {
+	custosWorldApp *custosworld.CustosWorldApp
+}
+
+func (cr *ControllerRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
+	child := cr.custosWorldApp.MashupDetailedElementLibrary[childId]
 	if child != nil && child.Alias != "" {
-		log.Printf("TorusParser lookup on: %s\n", child.Alias)
-		if fwb, fwbOk := custosWorldApp.FyneWidgetElements[child.Alias]; fwbOk {
+		log.Printf("Controller lookup on: %s name: %s\n", child.Alias, child.Name)
+		if fwb, fwbOk := cr.custosWorldApp.FyneWidgetElements[child.Name]; fwbOk {
 			if fwb.MashupDetailedElement != nil && fwb.GuiComponent != nil {
 				fwb.MashupDetailedElement.Copy(child)
 				fwb.GuiComponent.(*container.TabItem).Text = child.Name
 			}
 		} else {
 			// No widget made yet for this alias...
-			custosWorldApp.DetailMappedFyneComponent(child.Alias,
-				child.Description,
-				child.Genre,
-				DetailMappedTabItemFyneComponent)
+			cr.custosWorldApp.DetailFyneComponent(child,
+				BuildDetailMappedTabItemFyneComponent)
 		}
 	}
 
 	if child != nil && len(child.GetChildids()) > 0 {
 		for _, cId := range child.GetChildids() {
-			TorusParser(custosWorldApp, cId, concreteElement)
+			cr.BuildTabItem(cId, concreteElement)
 		}
 	}
+}
+
+func (cr *ControllerRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement) {
+	log.Printf("Controller Widget lookup: %s\n", concreteElement.Alias)
+
+	if fyneWidgetElement, fyneOk := cr.custosWorldApp.FyneWidgetElements[concreteElement.Name]; fyneOk {
+		log.Printf("ControllerRenderer lookup found: %s\n", concreteElement.Alias)
+		if fyneWidgetElement.GuiComponent == nil {
+			fyneWidgetElement.GuiComponent = cr.custosWorldApp.CustomTabItems[concreteElement.Name](cr.custosWorldApp, concreteElement.Name)
+		}
+		cr.custosWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+	}
+}
+
+type TorusRenderer struct {
+	custosWorldApp *custosworld.CustosWorldApp
+}
+
+func (tr *TorusRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
+	child := tr.custosWorldApp.MashupDetailedElementLibrary[childId]
+	if child != nil && child.Alias != "" {
+		log.Printf("TorusRenderer.BuildTabItem lookup on: %s name: %s\n", child.Alias, child.Name)
+		if fwb, fwbOk := tr.custosWorldApp.FyneWidgetElements[child.Name]; fwbOk {
+			if fwb.MashupDetailedElement != nil && fwb.GuiComponent != nil {
+				fwb.MashupDetailedElement.Copy(child)
+				fwb.GuiComponent.(*container.TabItem).Text = child.Name
+			}
+		} else {
+			// No widget made yet for this alias...
+			tr.custosWorldApp.DetailFyneComponent(child,
+				BuildDetailMappedTabItemFyneComponent)
+		}
+	}
+
+	if child != nil && len(child.GetChildids()) > 0 {
+		for _, cId := range child.GetChildids() {
+			tr.BuildTabItem(cId, concreteElement)
+		}
+	}
+}
+
+func (tr *TorusRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement) {
+	log.Printf("TorusRender Widget lookup: %s\n", concreteElement.Alias)
+
+	if concreteElement.IsStateSet(mashupsdk.Clicked) {
+		log.Printf("TorusRender Widget looking up: %s\n", concreteElement.Alias)
+		if fyneWidgetElement, fyneOk := tr.custosWorldApp.FyneWidgetElements[concreteElement.Name]; fyneOk {
+			log.Printf("TorusRender Widget lookup found: %s\n", concreteElement.Alias)
+			if fyneWidgetElement.GuiComponent == nil {
+				fyneWidgetElement.GuiComponent = tr.custosWorldApp.CustomTabItems[concreteElement.Name](tr.custosWorldApp, concreteElement.Name)
+			}
+			tr.custosWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+		}
+	} else {
+		// Remove it if torus.
+		// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
+		// Remove the formerly clicked elements..
+		log.Printf("TorusRender Widget lookingup for remove: %s\n", concreteElement.Alias)
+		if fyneWidgetElement, fyneOk := tr.custosWorldApp.FyneWidgetElements[concreteElement.Name]; fyneOk {
+			log.Printf("TorusRender Widget lookup found for remove: %s %v\n", concreteElement.Alias, fyneWidgetElement)
+			if fyneWidgetElement.GuiComponent != nil {
+				tr.custosWorldApp.TabItemMenu.Remove(fyneWidgetElement.GuiComponent.(*container.TabItem))
+			}
+		}
+	}
+	log.Printf("End TorusRender Widget lookup: %s\n", concreteElement.Alias)
 }
 
 func OutsideClone(custosWorldApp *custosworld.CustosWorldApp, childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
 	custosWorldApp.FyneWidgetElements["Outside"].MashupDetailedElement.Copy(concreteElement)
 }
 
-func DetailMappedTabItemFyneComponent(custosWorldApp *custosworld.CustosWorldApp, id string) *container.TabItem {
+func BuildDetailMappedTabItemFyneComponent(custosWorldApp *custosworld.CustosWorldApp, id string) *container.TabItem {
 	de := custosWorldApp.FyneWidgetElements[id].MashupDetailedElement
 
 	tabLabel := widget.NewLabel(de.Description)
@@ -95,6 +163,7 @@ func DetailMappedTabItemFyneComponent(custosWorldApp *custosworld.CustosWorldApp
 var gopherIcon embed.FS
 
 func main() {
+	//runtime.LockOSThread()
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
@@ -110,30 +179,17 @@ func main() {
 	detailedElements := data.GetExampleLibrary()
 
 	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, nil)
+
 	// Initialize a tab item renderer
 	// This will be called during upsert elements phase.
 	// indexed by subgenre
-	custosWorld.CustomTabItemRenderer["Torus"] = TorusParser
+	custosWorld.CustomTabItemRenderer["TabItemRenderer"] = &TorusRenderer{custosWorldApp: custosWorld}
+	custosWorld.CustomTabItemRenderer["ControllerTabItemRenderer"] = &ControllerRenderer{custosWorldApp: custosWorld}
 
 	custosWorld.Title = "Hello Custos"
 	custosWorld.MainWindowSize = fyne.NewSize(800, 100)
 	gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
 	custosWorld.Icon = fyne.NewStaticResource("Gopher", gopherIconBytes)
-
-	custosWorld.DetailMappedFyneComponent("Outside",
-		"The magnetic field at any point outside the toroid is zero.",
-		"Outside",
-		DetailMappedTabItemFyneComponent)
-
-	custosWorld.DetailMappedFyneComponent("Up-Side-Down",
-		"Torus is up-side-down",
-		"",
-		DetailMappedTabItemFyneComponent)
-
-	custosWorld.DetailMappedFyneComponent("All",
-		"A group of torus or a tori.",
-		"",
-		DetailMappedTabItemFyneComponent)
 
 	if !custosWorld.Headless {
 		custosWorld.InitServer(*callerCreds, *insecure)
