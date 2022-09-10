@@ -62,7 +62,7 @@ func main() {
 
 		libraryElementBundle, upsertErr := worldApp.MashupContext.Client.GetMashupElements(
 			worldApp.MashupContext,
-			&mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()},
+			&mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()},
 		)
 		if upsertErr != nil {
 			log.Printf("G3n Element initialization failure: %s\n", upsertErr.Error())
@@ -93,7 +93,7 @@ func main() {
 			_, custosUpsertErr := worldApp.MashupContext.Client.UpsertMashupElements(
 				worldApp.MashupContext,
 				&mashupsdk.MashupDetailedElementBundle{
-					AuthToken:        client.GetServerAuthToken(),
+					AuthToken:        worldApp.GetAuthToken(),
 					DetailedElements: generatedElementsBundle.DetailedElements,
 				})
 
