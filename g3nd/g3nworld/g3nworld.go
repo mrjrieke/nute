@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -485,6 +486,7 @@ func (w *WorldApp) InitMainWindow() {
 			if w.MashupContext != nil {
 				w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
 			}
+			os.Exit(0)
 		})
 		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
