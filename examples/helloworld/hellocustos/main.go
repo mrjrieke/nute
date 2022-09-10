@@ -9,6 +9,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"sort"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -29,6 +31,10 @@ var mashupKey embed.FS
 
 type ControllerRenderer struct {
 	custosWorldApp *custosworld.CustosWorldApp
+}
+
+func (cr *ControllerRenderer) PreRender() {
+	// TODO: buffered sort if desired.
 }
 
 func (cr *ControllerRenderer) GetPriority() int64 {
@@ -70,8 +76,17 @@ func (cr *ControllerRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDet
 	}
 }
 
+func (cr *ControllerRenderer) Refresh() {
+	// TODO: buffered sort if desired.
+}
+
 type TorusRenderer struct {
-	custosWorldApp *custosworld.CustosWorldApp
+	custosWorldApp   *custosworld.CustosWorldApp
+	concreteElements []*mashupsdk.MashupDetailedElement
+}
+
+func (tr *TorusRenderer) PreRender() {
+	tr.concreteElements = []*mashupsdk.MashupDetailedElement{}
 }
 
 func (tr *TorusRenderer) GetPriority() int64 {
@@ -101,7 +116,7 @@ func (tr *TorusRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.
 	}
 }
 
-func (tr *TorusRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement) {
+func (tr *TorusRenderer) renderTabItemHelper(concreteElement *mashupsdk.MashupDetailedElement) {
 	log.Printf("TorusRender Widget lookup: %s\n", concreteElement.Alias)
 
 	if concreteElement.IsStateSet(mashupsdk.Clicked) {
@@ -126,6 +141,19 @@ func (tr *TorusRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDetailed
 		}
 	}
 	log.Printf("End TorusRender Widget lookup: %s\n", concreteElement.Alias)
+}
+
+func (tr *TorusRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement) {
+	tr.concreteElements = append(tr.concreteElements, concreteElement)
+}
+
+func (tr *TorusRenderer) Refresh() {
+	sort.Slice(tr.concreteElements, func(i, j int) bool {
+		return strings.Compare(tr.concreteElements[i].Name, tr.concreteElements[j].Name) == -1
+	})
+	for _, concreteElement := range tr.concreteElements {
+		tr.renderTabItemHelper(concreteElement)
+	}
 }
 
 func OutsideClone(custosWorldApp *custosworld.CustosWorldApp, childId int64, concreteElement *mashupsdk.MashupDetailedElement) {

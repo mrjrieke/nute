@@ -57,7 +57,9 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 type ITabItemRenderer interface {
 	GetPriority() int64
 	BuildTabItem(id int64, concreteElement *mashupsdk.MashupDetailedElement)
+	PreRender() // Called at end of all tab item renders.
 	RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement)
+	Refresh() // Called at end of all tab item renders.
 }
 
 type CustosWorldApp struct {
@@ -344,6 +346,11 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	orderedRenderingMap := map[int64][]*mashupsdk.MashupDetailedElement{}
 
+	// Get ready for new render cycle.
+	for _, tabItemRenderer := range CUWorldApp.CustomTabItemRenderer {
+		tabItemRenderer.PreRender()
+	}
+
 	// Impossible to determine ordering of clicks from upsert at this time.
 	for _, concreteElement := range CUWorldApp.MashupDetailedElementLibrary {
 		// Set all clicked elements...
@@ -362,11 +369,14 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	})
 
 	for _, k := range keys {
+		var tir ITabItemRenderer
 		for _, concreteElement := range orderedRenderingMap[k] {
 			if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.Custosrenderer]; tabItemRendererOk {
 				tabItemRenderer.RenderTabItem(concreteElement)
+				tir = tabItemRenderer
 			}
 		}
+		tir.Refresh()
 	}
 
 	log.Printf("CustosWorld dispatching focus\n")
