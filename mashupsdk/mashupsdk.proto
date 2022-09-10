@@ -58,12 +58,13 @@ message MashupDetailedElement {
   string alias = 5;
   string description = 6;
   string data = 7;
-  string renderer = 8;
-  string colabrenderer = 9;
-  string genre = 10;
-  string subgenre = 11;
-  repeated int64 parentids = 12;
-  repeated int64 childids = 13;
+  string custosrenderer = 8;
+  string renderer = 9;
+  string colabrenderer = 10;
+  string genre = 11;
+  string subgenre = 12;
+  repeated int64 parentids = 13;
+  repeated int64 childids = 14;
 }
 
 message MashupDetailedElementBundle {

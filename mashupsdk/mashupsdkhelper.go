@@ -11,6 +11,8 @@ func (m *MashupDetailedElement) Copy(source *MashupDetailedElement) {
 	m.Name = source.Name
 	m.Alias = source.Alias
 	m.Description = source.Description
+	m.Data = source.Data
+	m.Custosrenderer = source.Custosrenderer
 	m.Renderer = source.Renderer
 	m.Colabrenderer = source.Colabrenderer
 	m.Genre = source.Genre
@@ -20,6 +22,10 @@ func (m *MashupDetailedElement) Copy(source *MashupDetailedElement) {
 }
 
 func (m *MashupDetailedElement) IsStateSet(stateBit DisplayElementState) bool {
+	if m.State == nil {
+		return false
+	}
+
 	displayState := m.State.State
 	return (displayState & int64(stateBit)) == int64(stateBit)
 }

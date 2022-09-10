@@ -53,6 +53,11 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 
 }
 
+type ITabItemRenderer interface {
+	BuildTabItem(id int64, concreteElement *mashupsdk.MashupDetailedElement)
+	RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement)
+}
+
 type CustosWorldApp struct {
 	Headless                     bool // Mode for troubleshooting.
 	mashupSdkApiHandler          *mashupSdkApiHandler
@@ -70,7 +75,7 @@ type CustosWorldApp struct {
 	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
-	CustomTabItemRenderer        map[string]func(custosWorlApp *CustosWorldApp, id int64, concreteElement *mashupsdk.MashupDetailedElement)
+	CustomTabItemRenderer        map[string]ITabItemRenderer
 }
 
 var CUWorldApp *CustosWorldApp
@@ -100,7 +105,7 @@ func NewCustosWorldApp(headless bool,
 		ElementLoaderIndex:           map[string]int64{},                           // elementLoaderIndex
 		FyneWidgetElements:           map[string]*FyneWidgetBundle{},
 		CustomTabItems:               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem{},
-		CustomTabItemRenderer:        map[string]func(custosWorlApp *CustosWorldApp, id int64, concreteElement *mashupsdk.MashupDetailedElement){},
+		CustomTabItemRenderer:        map[string]ITabItemRenderer{},
 	}
 
 	return CUWorldApp
@@ -132,12 +137,6 @@ func (w *CustosWorldApp) InitMainWindow() {
 		CUWorldApp.MainWin.SetFixedSize(false)
 
 		CUWorldApp.TabItemMenu = container.NewAppTabs()
-
-		for id, tabItemFunc := range CUWorldApp.CustomTabItems {
-			tabItem := tabItemFunc(CUWorldApp, id)
-			CUWorldApp.FyneWidgetElements[id].GuiComponent = tabItem
-			CUWorldApp.TabItemMenu.Append(tabItem)
-		}
 
 		CUWorldApp.TabItemMenu.OnSelected = func(tabItem *container.TabItem) {
 			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
@@ -182,7 +181,7 @@ func (w *CustosWorldApp) InitMainWindow() {
 				w.MainWin.ShowAndRun()
 			} else {
 				if !CUWorldApp.Headless {
-					w.MainWin.Hide()
+					w.MainWin.ShowAndRun()
 				}
 			}
 		}
@@ -218,8 +217,8 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 	}
 }
 
-func (custosWorldApp *CustosWorldApp) DetailMappedFyneComponent(id, description string, genre string, tabItemFunc func(custosWorlApp *CustosWorldApp, id string) *container.TabItem) {
-	de := &mashupsdk.MashupDetailedElement{Alias: id, Description: description, Genre: genre}
+func (custosWorldApp *CustosWorldApp) DetailMappedFyneComponent(id, description string, genre string, renderer string, tabItemFunc func(custosWorlApp *CustosWorldApp, id string) *container.TabItem) {
+	de := &mashupsdk.MashupDetailedElement{Name: id, Description: description, Genre: genre, Renderer: renderer}
 	custosWorldApp.FyneWidgetElements[id] = &FyneWidgetBundle{
 		GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
 			GuiComponent:          nil,
@@ -227,6 +226,17 @@ func (custosWorldApp *CustosWorldApp) DetailMappedFyneComponent(id, description 
 		},
 	}
 	custosWorldApp.CustomTabItems[id] = tabItemFunc
+}
+
+func (custosWorldApp *CustosWorldApp) DetailFyneComponent(de *mashupsdk.MashupDetailedElement, tabItemFunc func(custosWorlApp *CustosWorldApp, id string) *container.TabItem) {
+	log.Printf("CustosWorldApp.DetailFyneComponent building on: %s name: %s\n", de.Alias, de.Name)
+	custosWorldApp.FyneWidgetElements[de.Name] = &FyneWidgetBundle{
+		GuiWidgetBundle: mashupsdk.GuiWidgetBundle{
+			GuiComponent:          nil,
+			MashupDetailedElement: de,
+		},
+	}
+	custosWorldApp.CustomTabItems[de.Name] = tabItemFunc
 }
 
 func (CustosWorldApp *CustosWorldApp) TorusParser(childId int64) {
@@ -264,10 +274,9 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
 	log.Printf("CustosWorld parsing tori.\n")
-
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
-		if tabItemFunc, tabItemFuncOk := CUWorldApp.CustomTabItemRenderer[concreteElement.GetSubgenre()]; tabItemFuncOk {
-			tabItemFunc(CUWorldApp, concreteElement.Id, nil)
+		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.GetCustosrenderer()]; tabItemRendererOk {
+			tabItemRenderer.BuildTabItem(concreteElement.Id, concreteElement)
 		}
 	}
 
@@ -299,8 +308,10 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	log.Printf("CustosWorld UpsertMashupElementsState called\n")
 
 	ClickedElements := map[int64]*mashupsdk.MashupDetailedElement{}
+	DeClickedElements := map[int64]*mashupsdk.MashupDetailedElement{}
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
+	// Separate clicked from declicked.
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := CUWorldApp.MashupDetailedElementLibrary[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
@@ -311,6 +322,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 				ClickedElements[es.GetId()] = g3nDetailedElement
+			} else {
+				DeClickedElements[es.GetId()] = g3nDetailedElement
 			}
 		}
 	}
@@ -321,38 +334,11 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		for _, clickedElement := range CUWorldApp.ClickedElements {
 			if _, ok := ClickedElements[clickedElement.GetId()]; !ok {
 				clickedElement.ApplyState(mashupsdk.Clicked, false)
-				// CUWorldApp.fyneWidgetElements["Inside"].GuiComponent.(*container.TabItem),
-				// Remove the formerly clicked elements..
-				if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
-					CUWorldApp.TabItemMenu.Remove(fyneWidgetElement.GuiComponent.(*container.TabItem))
-				}
 			}
 		}
 		log.Printf("CustosWorld UpsertMashupElementsState cleanup clicked elements\n")
 
 		CUWorldApp.ClickedElements = CUWorldApp.ClickedElements[:0]
-
-		// Impossible to determine ordering of clicks from upsert at this time.
-		for _, clickedElement := range ClickedElements {
-			CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
-			if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
-				CUWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
-			} else {
-				// Clicked but GUI component not added yet.
-				log.Printf("Lookup on renderer: %s\n", clickedElement.Renderer)
-				if tabItemRendererFunc, tabItemRenderFuncOk := CUWorldApp.CustomTabItemRenderer[clickedElement.Renderer]; tabItemRenderFuncOk {
-					log.Printf("Found func for renderer: %s\n", clickedElement.Renderer)
-					// Call custom tab item renderer function
-					// provided by implementor.
-					tabItemRendererFunc(CUWorldApp, clickedElement.Id, clickedElement)
-					log.Printf("Widget lookup: %s\n", clickedElement.Alias)
-					if fyneWidgetElement, fyneOk := CUWorldApp.FyneWidgetElements[clickedElement.Alias]; fyneOk {
-						log.Printf("Widget lookup found: %s\n", clickedElement.Alias)
-						CUWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
-					}
-				}
-			}
-		}
 	}
 
 	if len(recursiveElements) > 0 {
@@ -364,6 +350,25 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			stateBits &= ^int64(mashupsdk.Recursive)
 			// Apply this state change to all child elements.
 			mSdk.setStateHelper(recursiveElement.GetId(), mashupsdk.DisplayElementState(stateBits))
+		}
+	}
+	// Wipe anything there out.
+	CUWorldApp.TabItemMenu.SetItems([]*container.TabItem{})
+
+	// Impossible to determine ordering of clicks from upsert at this time.
+	for _, clickedElement := range ClickedElements {
+		// Set all clicked elements...
+		CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
+
+		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[clickedElement.Custosrenderer]; tabItemRendererOk {
+			tabItemRenderer.BuildTabItem(clickedElement.Id, clickedElement)
+			tabItemRenderer.RenderTabItem(clickedElement)
+		}
+	}
+
+	for _, deClickedElement := range DeClickedElements {
+		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[deClickedElement.Custosrenderer]; tabItemRendererOk {
+			tabItemRenderer.RenderTabItem(deClickedElement)
 		}
 	}
 
