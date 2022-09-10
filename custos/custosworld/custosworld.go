@@ -3,6 +3,7 @@ package custosworld
 import (
 	"log"
 	"os"
+	"sort"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -54,6 +55,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 }
 
 type ITabItemRenderer interface {
+	GetPriority() int64
 	BuildTabItem(id int64, concreteElement *mashupsdk.MashupDetailedElement)
 	RenderTabItem(concreteElement *mashupsdk.MashupDetailedElement)
 }
@@ -72,7 +74,6 @@ type CustosWorldApp struct {
 	MashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
 	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
 	FyneWidgetElements           map[string]*FyneWidgetBundle
-	ClickedElements              []*mashupsdk.MashupDetailedElement // g3n indexes by string...
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
 	CustomTabItemRenderer        map[string]ITabItemRenderer
@@ -307,8 +308,6 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("CustosWorld UpsertMashupElementsState called\n")
 
-	ClickedElements := map[int64]*mashupsdk.MashupDetailedElement{}
-	DeClickedElements := map[int64]*mashupsdk.MashupDetailedElement{}
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
 	// Separate clicked from declicked.
@@ -321,24 +320,11 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
-				ClickedElements[es.GetId()] = g3nDetailedElement
+				CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.Clicked, true)
 			} else {
-				DeClickedElements[es.GetId()] = g3nDetailedElement
+				CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.Clicked, false)
 			}
 		}
-	}
-
-	if len(ClickedElements) > 0 {
-		log.Printf("CustosWorld UpsertMashupElementsState apply clicked elements\n")
-		// Remove existing clicks.
-		for _, clickedElement := range CUWorldApp.ClickedElements {
-			if _, ok := ClickedElements[clickedElement.GetId()]; !ok {
-				clickedElement.ApplyState(mashupsdk.Clicked, false)
-			}
-		}
-		log.Printf("CustosWorld UpsertMashupElementsState cleanup clicked elements\n")
-
-		CUWorldApp.ClickedElements = CUWorldApp.ClickedElements[:0]
 	}
 
 	if len(recursiveElements) > 0 {
@@ -352,23 +338,34 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			mSdk.setStateHelper(recursiveElement.GetId(), mashupsdk.DisplayElementState(stateBits))
 		}
 	}
+
 	// Wipe anything there out.
 	CUWorldApp.TabItemMenu.SetItems([]*container.TabItem{})
 
-	// Impossible to determine ordering of clicks from upsert at this time.
-	for _, clickedElement := range ClickedElements {
-		// Set all clicked elements...
-		CUWorldApp.ClickedElements = append(CUWorldApp.ClickedElements, clickedElement)
+	orderedRenderingMap := map[int64][]*mashupsdk.MashupDetailedElement{}
 
-		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[clickedElement.Custosrenderer]; tabItemRendererOk {
-			tabItemRenderer.BuildTabItem(clickedElement.Id, clickedElement)
-			tabItemRenderer.RenderTabItem(clickedElement)
+	// Impossible to determine ordering of clicks from upsert at this time.
+	for _, concreteElement := range CUWorldApp.MashupDetailedElementLibrary {
+		// Set all clicked elements...
+		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.Custosrenderer]; tabItemRendererOk {
+			orderedRenderingMap[tabItemRenderer.GetPriority()] = append(orderedRenderingMap[tabItemRenderer.GetPriority()], concreteElement)
 		}
 	}
 
-	for _, deClickedElement := range DeClickedElements {
-		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[deClickedElement.Custosrenderer]; tabItemRendererOk {
-			tabItemRenderer.RenderTabItem(deClickedElement)
+	keys := make([]int64, 0, len(orderedRenderingMap))
+	for k := range orderedRenderingMap {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, k := range keys {
+		for _, concreteElement := range orderedRenderingMap[k] {
+			if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.Custosrenderer]; tabItemRendererOk {
+				tabItemRenderer.RenderTabItem(concreteElement)
+			}
 		}
 	}
 

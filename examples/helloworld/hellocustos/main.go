@@ -31,6 +31,10 @@ type ControllerRenderer struct {
 	custosWorldApp *custosworld.CustosWorldApp
 }
 
+func (cr *ControllerRenderer) GetPriority() int64 {
+	return 1
+}
+
 func (cr *ControllerRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
 	child := cr.custosWorldApp.MashupDetailedElementLibrary[childId]
 	if child != nil && child.Alias != "" {
@@ -68,6 +72,10 @@ func (cr *ControllerRenderer) RenderTabItem(concreteElement *mashupsdk.MashupDet
 
 type TorusRenderer struct {
 	custosWorldApp *custosworld.CustosWorldApp
+}
+
+func (tr *TorusRenderer) GetPriority() int64 {
+	return 2
 }
 
 func (tr *TorusRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
