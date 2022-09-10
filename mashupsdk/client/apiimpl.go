@@ -149,6 +149,7 @@ func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupD
 func (c *MashupClient) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
 	log.Printf("OnResize called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("OnResize auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	displayHint := in.MashupDisplayHint

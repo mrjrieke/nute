@@ -30,6 +30,7 @@ func NewG3nDetailedElement(detailedElement *mashupsdk.MashupDetailedElement, dee
 			Name:          detailedElement.Name,
 			Alias:         detailedElement.Alias,
 			Description:   detailedElement.Description,
+			Data:          detailedElement.Data,
 			Renderer:      detailedElement.Renderer,
 			Colabrenderer: detailedElement.Colabrenderer,
 			Genre:         detailedElement.Genre,

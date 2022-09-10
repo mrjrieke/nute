@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -95,6 +96,14 @@ func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayRende
 }
 
 type InitEvent struct {
+}
+
+func (w *WorldApp) GetAuthToken() string {
+	if w.custos {
+		return client.GetServerAuthToken()
+	} else {
+		return server.GetServerAuthToken()
+	}
 }
 
 func (w *WorldApp) G3nOnFocus(name string, ev interface{}) {
@@ -456,7 +465,7 @@ func (w *WorldApp) InitMainWindow() {
 			if w.MashupContext != nil {
 				w.MashupContext.Client.OnResize(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
-						AuthToken: server.GetServerAuthToken(),
+						AuthToken: worldApp.GetAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
 							Xpos:   int64(xpos),
 							Ypos:   int64(ypos),
@@ -475,8 +484,9 @@ func (w *WorldApp) InitMainWindow() {
 
 		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(glfwWindow *glfw.Window) {
 			if w.MashupContext != nil {
-				w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+				w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
 			}
+			os.Exit(0)
 		})
 		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
@@ -497,7 +507,7 @@ func (w *WorldApp) InitMainWindow() {
 			if w.MashupContext != nil && wev.Focused {
 				w.MashupContext.Client.OnResize(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
-						AuthToken: server.GetServerAuthToken(),
+						AuthToken: worldApp.GetAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
 							Focused: wev.Focused,
 						},
@@ -562,13 +572,8 @@ func (w *WorldApp) InitMainWindow() {
 					changedElements = append(changedElements, w.backgroundG3n.GetMashupElementState())
 				}
 
-				authToken := server.GetServerAuthToken()
-				if w.custos {
-					authToken = client.GetServerAuthToken()
-				}
-
 				elementStateBundle := mashupsdk.MashupElementStateBundle{
-					AuthToken:     authToken,
+					AuthToken:     worldApp.GetAuthToken(),
 					ElementStates: changedElements,
 				}
 

@@ -68,6 +68,7 @@ func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sd
 func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
 	log.Printf("OnResize called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("OnResize auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	displayHint := in.MashupDisplayHint
