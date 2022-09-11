@@ -41,7 +41,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	}
 
 	elementStateBundle := mashupsdk.MashupElementStateBundle{
-		AuthToken:     client.GetServerAuthToken(),
+		AuthToken:     server.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
 	CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
