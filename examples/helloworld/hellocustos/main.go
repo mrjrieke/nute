@@ -156,6 +156,29 @@ func (tr *TorusRenderer) Refresh() {
 	}
 }
 
+func (tr *TorusRenderer) OnSelected(tabItem *container.TabItem) {
+	// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
+	// Lookup by name instead and try to keep track of any name changes instead...
+	log.Printf("Selected: %s\n", tabItem.Text)
+	if mashupItemIndex, miOk := tr.custosWorldApp.ElementLoaderIndex[tabItem.Text]; miOk {
+		if mashupDetailedElement, mOk := tr.custosWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mOk {
+			if mashupDetailedElement.Name != "" {
+				if mashupDetailedElement.Genre != "Collection" {
+					mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+				}
+				if fyneWidget, fOk := tr.custosWorldApp.FyneWidgetElements[mashupDetailedElement.Name]; fOk {
+					fyneWidget.MashupDetailedElement = mashupDetailedElement
+					fyneWidget.OnStatusChanged()
+				} else {
+					log.Printf("Unexpected widget request: %s\n", mashupDetailedElement.Name)
+				}
+				return
+			}
+		}
+	}
+	//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
+}
+
 func OutsideClone(custosWorldApp *custosworld.CustosWorldApp, childId int64, concreteElement *mashupsdk.MashupDetailedElement) {
 	custosWorldApp.FyneWidgetElements["Outside"].MashupDetailedElement.Copy(concreteElement)
 }
@@ -169,26 +192,29 @@ func BuildDetailMappedTabItemFyneComponent(custosWorldApp *custosworld.CustosWor
 		widget.NewButton("Show", func() {
 			// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
 			if len(custosWorldApp.ElementLoaderIndex) > 0 {
-				mashupIndex := custosWorldApp.ElementLoaderIndex[custosWorldApp.FyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-				custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement = custosWorldApp.MashupDetailedElementLibrary[mashupIndex]
+				fyneWidgetBundle := custosWorldApp.FyneWidgetElements[de.Name]
 
-				custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
-				if custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-					custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				mashupIndex := custosWorldApp.ElementLoaderIndex[fyneWidgetBundle.GuiComponent.(*container.TabItem).Text]
+				fyneWidgetBundle.MashupDetailedElement = custosWorldApp.MashupDetailedElementLibrary[mashupIndex]
+
+				fyneWidgetBundle.MashupDetailedElement.ApplyState(mashupsdk.Hidden, false)
+				if fyneWidgetBundle.MashupDetailedElement.Genre == "Collection" {
+					fyneWidgetBundle.MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
 				}
-				custosWorldApp.FyneWidgetElements[de.Alias].OnStatusChanged()
+				fyneWidgetBundle.OnStatusChanged()
 			}
 		}), widget.NewButton("Hide", func() {
 			if len(custosWorldApp.ElementLoaderIndex) > 0 {
 				// Workaround... mashupdetailedelement points at wrong element sometimes, but shouldn't!
-				mashupIndex := custosWorldApp.ElementLoaderIndex[custosWorldApp.FyneWidgetElements[de.Alias].GuiComponent.(*container.TabItem).Text]
-				custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement = custosWorldApp.MashupDetailedElementLibrary[mashupIndex]
+				fyneWidgetBundle := custosWorldApp.FyneWidgetElements[de.Name]
+				mashupIndex := custosWorldApp.ElementLoaderIndex[fyneWidgetBundle.GuiComponent.(*container.TabItem).Text]
+				fyneWidgetBundle.MashupDetailedElement = custosWorldApp.MashupDetailedElementLibrary[mashupIndex]
 
-				custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
-				if custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.Genre == "Collection" {
-					custosWorldApp.FyneWidgetElements[de.Alias].MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
+				fyneWidgetBundle.MashupDetailedElement.ApplyState(mashupsdk.Hidden, true)
+				if fyneWidgetBundle.MashupDetailedElement.Genre == "Collection" {
+					fyneWidgetBundle.MashupDetailedElement.ApplyState(mashupsdk.Recursive, true)
 				}
-				custosWorldApp.FyneWidgetElements[de.Alias].OnStatusChanged()
+				fyneWidgetBundle.OnStatusChanged()
 			}
 		})))),
 	)
@@ -214,12 +240,14 @@ func main() {
 
 	detailedElements := data.GetExampleLibrary()
 
-	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, nil)
+	torusRenderer := &TorusRenderer{}
+	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, torusRenderer)
+	torusRenderer.custosWorldApp = custosWorld
 
 	// Initialize a tab item renderer
 	// This will be called during upsert elements phase.
 	// indexed by subgenre
-	custosWorld.CustomTabItemRenderer["TabItemRenderer"] = &TorusRenderer{custosWorldApp: custosWorld}
+	custosWorld.CustomTabItemRenderer["TabItemRenderer"] = torusRenderer
 	custosWorld.CustomTabItemRenderer["ControllerTabItemRenderer"] = &ControllerRenderer{custosWorldApp: custosWorld}
 
 	custosWorld.Title = "Hello Custos"

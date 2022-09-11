@@ -7,7 +7,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"github.com/mrjrieke/nute/g3nd/g3nmash"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
@@ -20,10 +19,8 @@ type mashupSdkApiHandler struct {
 type worldClientInitHandler struct {
 }
 
-type IG3nRenderer interface {
-	Layout(worldApp *CustosWorldApp, g3nRenderableElements []*g3nmash.G3nDetailedElement)
-	InitRenderLoop(worldApp *CustosWorldApp) bool
-	RenderElement(worldApp *CustosWorldApp, g3n *g3nmash.G3nDetailedElement) bool
+type ICustosRenderer interface {
+	OnSelected(tabItem *container.TabItem)
 }
 
 type fyneMashupApiHandler struct {
@@ -51,7 +48,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	CUWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
-
+	log.Printf("Finished status change.\n")
 }
 
 type ITabItemRenderer interface {
@@ -79,6 +76,7 @@ type CustosWorldApp struct {
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
 	CustomTabItemRenderer        map[string]ITabItemRenderer
+	CustosRenderer               ICustosRenderer
 }
 
 var CUWorldApp *CustosWorldApp
@@ -96,7 +94,7 @@ func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool) {
 
 func NewCustosWorldApp(headless bool,
 	detailedElements []*mashupsdk.MashupDetailedElement,
-	renderer IG3nRenderer) *CustosWorldApp {
+	renderer ICustosRenderer) *CustosWorldApp {
 	CUWorldApp = &CustosWorldApp{
 		Headless:                     headless,
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
@@ -109,6 +107,7 @@ func NewCustosWorldApp(headless bool,
 		FyneWidgetElements:           map[string]*FyneWidgetBundle{},
 		CustomTabItems:               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem{},
 		CustomTabItemRenderer:        map[string]ITabItemRenderer{},
+		CustosRenderer:               renderer,
 	}
 
 	return CUWorldApp
@@ -141,27 +140,8 @@ func (w *CustosWorldApp) InitMainWindow() {
 
 		CUWorldApp.TabItemMenu = container.NewAppTabs()
 
-		CUWorldApp.TabItemMenu.OnSelected = func(tabItem *container.TabItem) {
-			// Too bad fyne doesn't have the ability for user to assign an id to TabItem...
-			// Lookup by name instead and try to keep track of any name changes instead...
-			log.Printf("Selected: %s\n", tabItem.Text)
-			if mashupItemIndex, miOk := CUWorldApp.ElementLoaderIndex[tabItem.Text]; miOk {
-				if mashupDetailedElement, mOk := CUWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mOk {
-					if mashupDetailedElement.Alias != "" {
-						if mashupDetailedElement.Genre != "Collection" {
-							mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
-						}
-						if fyneWidget, fOk := CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias]; fOk {
-							fyneWidget.MashupDetailedElement = mashupDetailedElement
-							fyneWidget.OnStatusChanged()
-						} else {
-							log.Printf("Unexpected widget request: %s\n", mashupDetailedElement.Alias)
-						}
-						return
-					}
-				}
-			}
-			//CUWorldApp.fyneWidgetElements[tabItem.Text].OnStatusChanged()
+		if CUWorldApp.CustosRenderer != nil {
+			CUWorldApp.TabItemMenu.OnSelected = CUWorldApp.CustosRenderer.OnSelected
 		}
 
 		CUWorldApp.TabItemMenu.SetTabLocation(container.TabLocationTop)
