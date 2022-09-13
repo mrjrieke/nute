@@ -819,7 +819,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	log.Printf("G3n dispatching focus\n")
-	if worldApp.mainWin != nil {
+	// TODO: Feedback from Custos is broken...  Disable for now.
+	if !worldApp.custos && worldApp.mainWin != nil {
 		worldApp.mainWin.Dispatch(gui.OnFocus, nil)
 	}
 	log.Printf("G3n End UpsertMashupElementsState called\n")
