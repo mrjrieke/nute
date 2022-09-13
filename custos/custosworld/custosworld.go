@@ -44,7 +44,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 		AuthToken:     server.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
-	CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+	CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
 	CUWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
