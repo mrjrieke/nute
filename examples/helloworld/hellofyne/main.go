@@ -78,7 +78,7 @@ func (ha *HelloApp) TorusParser(childId int64) {
 		helloApp.fyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
 	}
 
-	if len(child.GetChildids()) > 0 {
+	if child != nil && len(child.GetChildids()) > 0 {
 		for _, cId := range child.GetChildids() {
 			ha.TorusParser(cId)
 		}
@@ -455,7 +455,7 @@ func (mSdk *fyneMashupApiHandler) ResetG3NDetailedElementStates() {
 }
 
 func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("Fyne UpsertMashupElementsState called\n")
+	log.Printf("Fyne UpsertMashupElementsState called for count: %d\n", len(elementStateBundle.ElementStates))
 	for _, es := range elementStateBundle.ElementStates {
 		detailedElement := helloApp.mashupDetailedElementLibrary[es.GetId()]
 
@@ -486,6 +486,8 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 				}
 			}
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
+			log.Printf("Fyne UpsertMashupElementsState Selecting: %s\n", detailedElement.GetAlias())
+
 			// Select the item.
 			helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem).Text = helloApp.fyneWidgetElements[detailedElement.GetAlias()].MashupDetailedElement.Name
 			torusMenu.Select(helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem))
