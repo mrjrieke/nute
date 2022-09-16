@@ -606,7 +606,7 @@ func (w *WorldApp) InitMainWindow() {
 				if !w.headless {
 					if (w.mainWin != nil) && (w.mainWin.IWindow != nil) && ((*w.mainWin).IWindow.(*window.GlfwWindow).Window != nil) {
 						if worldApp.IG3nDisplayRenderer != nil {
-							displayHint = worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
+							worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
 						} else {
 							if !w.custos {
 								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
@@ -785,7 +785,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 				recursiveElements[es.GetId()] = g3nDetailedElement
 			}
 
-			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
+			log.Printf("Display fields set to: %v", g3nDetailedElement.GetMashupElementState())
 			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 				ClickedElements[es.GetId()] = g3nDetailedElement
 			}
@@ -820,7 +820,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	log.Printf("G3n dispatching focus\n")
 	// TODO: Feedback from Custos is broken...  Disable for now.
-	if !worldApp.custos && worldApp.mainWin != nil {
+	if worldApp.mainWin != nil {
 		worldApp.mainWin.Dispatch(gui.OnFocus, nil)
 	}
 	log.Printf("G3n End UpsertMashupElementsState called\n")

@@ -36,7 +36,14 @@ type FyneWidgetBundle struct {
 
 func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	selectedDetailedElement := fwb.MashupDetailedElement
+
 	if CUWorldApp.HeadsupFyneContext.mashupContext == nil {
+		return
+	}
+
+	if selectedDetailedElement.IsStateSet(mashupsdk.SourceExternal) {
+		// Avoid infinite feedback...
+		CUWorldApp.MashupDetailedElementLibrary[selectedDetailedElement.Id].ApplyState(mashupsdk.SourceExternal, false)
 		return
 	}
 
@@ -222,23 +229,6 @@ func (custosWorldApp *CustosWorldApp) DetailFyneComponent(de *mashupsdk.MashupDe
 	custosWorldApp.CustomTabItems[de.Name] = tabItemFunc
 }
 
-func (CustosWorldApp *CustosWorldApp) TorusParser(childId int64) {
-	child := CUWorldApp.MashupDetailedElementLibrary[childId]
-	if child != nil && child.Alias != "" {
-		log.Printf("TorusParser lookup on: %s\n", child.Alias)
-		if CUWorldApp.FyneWidgetElements != nil && CUWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement != nil && CUWorldApp.FyneWidgetElements[child.Alias].GuiComponent != nil {
-			CUWorldApp.FyneWidgetElements[child.Alias].MashupDetailedElement.Copy(child)
-			CUWorldApp.FyneWidgetElements[child.Alias].GuiComponent.(*container.TabItem).Text = child.Name
-		}
-	}
-
-	if child != nil && len(child.GetChildids()) > 0 {
-		for _, cId := range child.GetChildids() {
-			CUWorldApp.TorusParser(cId)
-		}
-	}
-}
-
 func (mSdk *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
 	log.Printf("CustosWorld Received GetMashupElements\n")
 
@@ -273,6 +263,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 		DetailedElements: detailedElementBundle.DetailedElements,
 	}, nil
 }
+
 func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.DisplayElementState) {
 
 	child := CUWorldApp.MashupDetailedElementLibrary[g3nId]
@@ -306,6 +297,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			} else {
 				CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.Clicked, false)
 			}
+			CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.SourceExternal, true)
 		}
 	}
 
@@ -316,6 +308,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			stateBits := recursiveElement.State.State
 			// Unset recursive for child elements
 			stateBits &= ^int64(mashupsdk.Recursive)
+			stateBits |= int64(mashupsdk.SourceExternal)
 			// Apply this state change to all child elements.
 			mSdk.setStateHelper(recursiveElement.GetId(), mashupsdk.DisplayElementState(stateBits))
 		}
