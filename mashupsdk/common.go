@@ -3,13 +3,14 @@ package mashupsdk
 type DisplayElementState int64
 
 const (
-	Immutable DisplayElementState = 0 // For libraries
-	Mutable   DisplayElementState = 1 // For
-	Init      DisplayElementState = 2
-	Clicked   DisplayElementState = 4
-	Moved     DisplayElementState = 8
-	Hidden    DisplayElementState = 16 // Hidden objects are not clickable
-	Recursive DisplayElementState = 32 // Apply attributes recursively
+	Immutable      DisplayElementState = 0 // For libraries
+	Mutable        DisplayElementState = 1 // For
+	Init           DisplayElementState = 2
+	Clicked        DisplayElementState = 4
+	Moved          DisplayElementState = 8
+	Hidden         DisplayElementState = 16 // Hidden objects are not clickable
+	Recursive      DisplayElementState = 32 // Apply attributes recursively
+	SourceExternal DisplayElementState = 64 // Event source external
 )
 
 type MashupDisplayState int
