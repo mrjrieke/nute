@@ -52,6 +52,7 @@ type WorldApp struct {
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
 	mainWin             *app.Application
+	currentTargetFPS    uint             // Current target frame rate
 	frameRater          *util.FrameRater // Render loop frame rater
 	scene               *core.Node
 	cam                 *camera.Camera
@@ -96,6 +97,16 @@ func NewWorldApp(headless bool, custos bool, renderer IG3nRenderer, displayRende
 }
 
 type InitEvent struct {
+}
+
+func (w *WorldApp) SetFrameRate(targetFPS uint) {
+	if w.currentTargetFPS == targetFPS {
+		return
+	} else {
+		fmt.Printf("Setting framerate to: %d\n", targetFPS)
+		w.currentTargetFPS = targetFPS
+		w.frameRater = util.NewFrameRater(targetFPS)
+	}
 }
 
 func (w *WorldApp) GetAuthToken() string {
@@ -430,7 +441,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.mainWin = a
 		}
 		log.Printf("Frame rater setup.")
-		w.frameRater = util.NewFrameRater(3)
+		w.SetFrameRate(5)
 		log.Printf("Frame rater setup complete.")
 
 		displayHint := <-w.displaySetupChan
@@ -518,10 +529,10 @@ func (w *WorldApp) InitMainWindow() {
 			}
 		})
 		w.mainWin.Subscribe(gui.OnMouseDown, func(name string, ev interface{}) {
-			w.frameRater = util.NewFrameRater(30)
+			w.SetFrameRate(30)
 		})
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
-			w.frameRater = util.NewFrameRater(3)
+			w.SetFrameRate(5)
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
 				w.Sticky = true
@@ -617,6 +628,8 @@ func (w *WorldApp) InitMainWindow() {
 							} else {
 								if !w.custos {
 									iWindow.Window.SetAttrib(glfw.Decorated, 0)
+									iWindow.Window.SetAttrib(glfw.FocusOnShow, 1)
+									iWindow.Window.SetAttrib(glfw.Stereo, 1)
 								}
 								if x, y := iWindow.Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
 									iWindow.Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
@@ -639,6 +652,16 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
+		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+			if iWindow.Window.GetAttrib(glfw.Focused) != 1 {
+				w.SetFrameRate(1)
+			} else {
+				if w.currentTargetFPS == 1 {
+					w.SetFrameRate(5)
+				}
+			}
+		}
+
 		w.frameRater.Start()
 		if w.backgroundG3n != nil && w.backgroundG3n.GetColor() != nil {
 			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
@@ -650,6 +673,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.G3nOnFocus("", InitEvent{})
 			w.isInit = true
 		}
+
 		w.frameRater.Wait()
 	}
 
