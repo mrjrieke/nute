@@ -430,7 +430,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.mainWin = a
 		}
 		log.Printf("Frame rater setup.")
-		w.frameRater = util.NewFrameRater(10)
+		w.frameRater = util.NewFrameRater(3)
 		log.Printf("Frame rater setup complete.")
 
 		displayHint := <-w.displaySetupChan
@@ -479,15 +479,18 @@ func (w *WorldApp) InitMainWindow() {
 		onResize("", nil)
 
 		w.mainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
-		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Floating, 1)
-		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.FocusOnShow, 1)
+		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+			iWindow.Window.SetAttrib(glfw.Floating, 1)
+			iWindow.Window.SetAttrib(glfw.FocusOnShow, 1)
 
-		(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetCloseCallback(func(glfwWindow *glfw.Window) {
-			if w.MashupContext != nil {
-				w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
-			}
-			os.Exit(0)
-		})
+			iWindow.Window.SetCloseCallback(func(glfwWindow *glfw.Window) {
+				if w.MashupContext != nil {
+					w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
+				}
+				os.Exit(0)
+			})
+		}
+
 		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
 			if kev.Key == window.KeyLeftControl {
@@ -514,8 +517,11 @@ func (w *WorldApp) InitMainWindow() {
 					})
 			}
 		})
-
+		w.mainWin.Subscribe(gui.OnMouseDown, func(name string, ev interface{}) {
+			w.frameRater = util.NewFrameRater(30)
+		})
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
+			w.frameRater = util.NewFrameRater(3)
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
 				w.Sticky = true
@@ -604,23 +610,25 @@ func (w *WorldApp) InitMainWindow() {
 			for displayHint := range w.displayPositionChan {
 				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 				if !w.headless {
-					if (w.mainWin != nil) && (w.mainWin.IWindow != nil) && ((*w.mainWin).IWindow.(*window.GlfwWindow).Window != nil) {
-						if worldApp.IG3nDisplayRenderer != nil {
-							worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
-						} else {
-							if !w.custos {
-								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetAttrib(glfw.Decorated, 0)
-							}
-							if x, y := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
-								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
-								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.SetSize(int(displayHint.Width), int(displayHint.Height))
-							}
-							if !w.Focused && displayHint.Focused {
-								log.Printf("G3n setting focus.")
-								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Hide()
-								(*w.mainWin).IWindow.(*window.GlfwWindow).Window.Show()
-								displayHint.Focused = false
-								w.Focused = true
+					if w.mainWin != nil {
+						if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+							if worldApp.IG3nDisplayRenderer != nil {
+								worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
+							} else {
+								if !w.custos {
+									iWindow.Window.SetAttrib(glfw.Decorated, 0)
+								}
+								if x, y := iWindow.Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
+									iWindow.Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+									iWindow.Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+								}
+								if !w.Focused && displayHint.Focused {
+									log.Printf("G3n setting focus.")
+									iWindow.Window.Hide()
+									iWindow.Window.Show()
+									displayHint.Focused = false
+									w.Focused = true
+								}
 							}
 						}
 					}
