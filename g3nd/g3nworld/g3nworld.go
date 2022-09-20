@@ -491,6 +491,15 @@ func (w *WorldApp) InitMainWindow() {
 
 		w.mainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
 		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+
+			// TODO: OSX enable?
+			//iWindow.Window.SetAttrib(glfw.OpenGLForwardCompatible, glfw.True)
+			//iWindow.Window.SetAttrib(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+			//iWindow.Window.SetAttrib(glfw.CocoaGraphicsSwitching, 1)
+			//iWindow.Window.SetAttrib(glfw.Samples, 0)
+			//iWindow.Window.SetAttrib(glfw.Visible, glfw.False)
+			//iWindow.Window.SetAttrib(glfw.RefreshRate, glfw.DontCare)
+
 			iWindow.Window.SetAttrib(glfw.Floating, 1)
 			iWindow.Window.SetAttrib(glfw.FocusOnShow, 1)
 
@@ -653,6 +662,7 @@ func (w *WorldApp) InitMainWindow() {
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+
 			if iWindow.Window.GetAttrib(glfw.Focused) != 1 {
 				w.SetFrameRate(1)
 			} else {
