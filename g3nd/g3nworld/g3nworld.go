@@ -105,7 +105,11 @@ func (w *WorldApp) SetFrameRate(targetFPS uint) {
 	} else {
 		fmt.Printf("Setting framerate to: %d\n", targetFPS)
 		w.currentTargetFPS = targetFPS
-		w.frameRater = util.NewFrameRater(targetFPS)
+		if targetFPS > 0 {
+			w.frameRater = util.NewFrameRater(targetFPS)
+		} else {
+			w.frameRater = util.NewFrameRater(1)
+		}
 	}
 }
 
@@ -541,7 +545,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.SetFrameRate(30)
 		})
 		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
-			w.SetFrameRate(5)
+			w.SetFrameRate(0)
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
 				w.Sticky = true
@@ -664,24 +668,28 @@ func (w *WorldApp) InitMainWindow() {
 		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
 
 			if iWindow.Window.GetAttrib(glfw.Focused) != 1 {
-				w.SetFrameRate(1)
+				w.SetFrameRate(0)
 			} else {
-				if w.currentTargetFPS == 1 {
+				if w.currentTargetFPS == 0 {
 					w.SetFrameRate(5)
 				}
 			}
 		}
 
 		w.frameRater.Start()
-		if w.backgroundG3n != nil && w.backgroundG3n.GetColor() != nil {
-			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
-		}
-		w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
-		renderer.Render(w.scene, w.cam)
 
-		if !w.isInit {
-			w.G3nOnFocus("", InitEvent{})
-			w.isInit = true
+		if w.currentTargetFPS != 0 {
+			// Nothing to render.
+			if w.backgroundG3n != nil && w.backgroundG3n.GetColor() != nil {
+				g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
+			}
+			w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
+			renderer.Render(w.scene, w.cam)
+
+			if !w.isInit {
+				w.G3nOnFocus("", InitEvent{})
+				w.isInit = true
+			}
 		}
 
 		w.frameRater.Wait()
