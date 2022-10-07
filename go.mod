@@ -15,7 +15,6 @@ require (
 	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
 	gioui.org/shader v1.0.6 // indirect
 	github.com/benoitkugler/textlayout v0.0.10 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.0.0-20181227131451-3dcfdacbaaf3 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
@@ -51,7 +50,10 @@ require (
 	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
 )
 
-require github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
+require (
+	github.com/davecgh/go-spew v1.1.1
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
+)
 
 // Uncomment for local development
 // replace fyne.io/fyne/v2 v2.1.3 => ../../fyne // Use mashup_v1 branch
@@ -62,7 +64,7 @@ require github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
 
 // replace github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 => ../../glfw-js // Use mashup_v1 branch
 
-replace fyne.io/fyne/v2 v2.1.3 => github.com/mrjrieke/fyne/v2 v2.1.3-4
+replace fyne.io/fyne/v2 v2.1.3 => github.com/mrjrieke/fyne/v2 v2.1.3-6
 
 replace gioui.org v0.0.0-20220318070519-8833a6738a3b => github.com/mrjrieke/gio v0.0.0-20220406132257-ec1380c11ef0
 

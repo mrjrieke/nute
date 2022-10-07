@@ -7,6 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
@@ -35,27 +36,28 @@ type FyneWidgetBundle struct {
 }
 
 func (fwb *FyneWidgetBundle) OnStatusChanged() {
-	selectedDetailedElement := fwb.MashupDetailedElement
-
 	if CUWorldApp.HeadsupFyneContext.mashupContext == nil {
 		return
 	}
 
-	if selectedDetailedElement.IsStateSet(mashupsdk.SourceExternal) {
-		// Avoid infinite feedback...
-		CUWorldApp.MashupDetailedElementLibrary[selectedDetailedElement.Id].ApplyState(mashupsdk.SourceExternal, false)
-		return
-	}
+	selectedDetailedElement := fwb.MashupDetailedElement
+	if selectedDetailedElement != nil {
+		if selectedDetailedElement.IsStateSet(mashupsdk.SourceExternal) {
+			// Avoid infinite feedback...
+			CUWorldApp.MashupDetailedElementLibrary[selectedDetailedElement.Id].ApplyState(mashupsdk.SourceExternal, false)
+			return
+		}
 
-	elementStateBundle := mashupsdk.MashupElementStateBundle{
-		AuthToken:     server.GetServerAuthToken(),
-		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
-	}
-	CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+		elementStateBundle := mashupsdk.MashupElementStateBundle{
+			AuthToken:     server.GetServerAuthToken(),
+			ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
+		}
+		CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 
-	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
-	CUWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
-	log.Printf("Finished status change.\n")
+		log.Printf("Status Changed: display fields set to: %d", selectedDetailedElement.State.State)
+		CUWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
+		log.Printf("Finished status change.\n")
+	}
 }
 
 type ITabItemRenderer interface {
@@ -68,6 +70,7 @@ type ITabItemRenderer interface {
 
 type CustosWorldApp struct {
 	Headless                     bool // Mode for troubleshooting.
+	Titlebar                     bool // With a title bar
 	mashupSdkApiHandler          *mashupSdkApiHandler
 	Title                        string
 	Icon                         *fyne.StaticResource
@@ -100,10 +103,12 @@ func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool) {
 }
 
 func NewCustosWorldApp(headless bool,
+	titlebar bool,
 	detailedElements []*mashupsdk.MashupDetailedElement,
 	renderer ICustosRenderer) *CustosWorldApp {
 	CUWorldApp = &CustosWorldApp{
 		Headless:                     headless,
+		Titlebar:                     titlebar,
 		mashupSdkApiHandler:          &mashupSdkApiHandler{},
 		HeadsupFyneContext:           &CustosContext{},
 		DetailedElements:             detailedElements,
@@ -140,8 +145,14 @@ func (w *CustosWorldApp) InitMainWindow() {
 
 	initHandler := func(a fyne.App) {
 		log.Printf("InitHandler.")
-		CUWorldApp.MainWin = a.NewWindow(w.Title)
-		CUWorldApp.MainWin.SetIcon(w.Icon)
+		drv := a.Driver()
+		if drv, ok := drv.(desktop.Driver); ok && !fyne.CurrentDevice().IsMobile() && !w.Titlebar {
+			CUWorldApp.MainWin = drv.CreateSplashWindow(false)
+		} else {
+			CUWorldApp.MainWin = a.NewWindow(w.Title)
+			CUWorldApp.MainWin.SetIcon(w.Icon)
+		}
+
 		CUWorldApp.MainWin.Resize(CUWorldApp.MainWindowSize)
 		CUWorldApp.MainWin.SetFixedSize(false)
 
@@ -152,8 +163,8 @@ func (w *CustosWorldApp) InitMainWindow() {
 		}
 
 		CUWorldApp.TabItemMenu.SetTabLocation(container.TabLocationTop)
-
 		CUWorldApp.MainWin.SetContent(CUWorldApp.TabItemMenu)
+
 		CUWorldApp.MainWin.SetCloseIntercept(func() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
@@ -280,6 +291,8 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("CustosWorld UpsertMashupElementsState called\n")
+	CUWorldApp.MainWin.Hide()
+	CUWorldApp.MainWin.Show()
 
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
@@ -292,12 +305,14 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			}
 
 			log.Printf("Display fields set to: %d", g3nDetailedElement.GetMashupElementState())
-			if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
-				CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.Clicked, true)
-			} else {
-				CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.Clicked, false)
+			if libraryElement, libraryElementOk := CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id]; libraryElementOk {
+				if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
+					libraryElement.ApplyState(mashupsdk.Clicked, true)
+				} else {
+					libraryElement.ApplyState(mashupsdk.Clicked, false)
+				}
+				libraryElement.ApplyState(mashupsdk.SourceExternal, true)
 			}
-			CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id].ApplyState(mashupsdk.SourceExternal, true)
 		}
 	}
 
@@ -313,7 +328,9 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			mSdk.setStateHelper(recursiveElement.GetId(), mashupsdk.DisplayElementState(stateBits))
 		}
 	}
+	log.Printf("Clearing tab menu contents before reload")
 
+	CUWorldApp.TabItemMenu.Hide()
 	// Wipe anything there out.
 	CUWorldApp.TabItemMenu.SetItems([]*container.TabItem{})
 
@@ -351,6 +368,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		}
 		tir.Refresh()
 	}
+	CUWorldApp.TabItemMenu.Show()
 
 	log.Printf("CustosWorld dispatching focus\n")
 	// if CUWorldApp.MainWin != nil {

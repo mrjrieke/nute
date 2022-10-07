@@ -118,15 +118,19 @@ func (tr *TorusRenderer) BuildTabItem(childId int64, concreteElement *mashupsdk.
 
 func (tr *TorusRenderer) renderTabItemHelper(concreteElement *mashupsdk.MashupDetailedElement) {
 	log.Printf("TorusRender Widget lookup: %s\n", concreteElement.Alias)
-
+	tr.custosWorldApp.TabItemMenu.Hide()
 	if concreteElement.IsStateSet(mashupsdk.Clicked) {
 		log.Printf("TorusRender Widget looking up: %s\n", concreteElement.Alias)
 		if fyneWidgetElement, fyneOk := tr.custosWorldApp.FyneWidgetElements[concreteElement.Name]; fyneOk {
 			log.Printf("TorusRender Widget lookup found: %s\n", concreteElement.Alias)
 			if fyneWidgetElement.GuiComponent == nil {
-				fyneWidgetElement.GuiComponent = tr.custosWorldApp.CustomTabItems[concreteElement.Name](tr.custosWorldApp, concreteElement.Name)
+				if customTabFun, customTabFunOk := tr.custosWorldApp.CustomTabItems[concreteElement.Name]; customTabFunOk {
+					fyneWidgetElement.GuiComponent = customTabFun(tr.custosWorldApp, concreteElement.Name)
+				}
 			}
-			tr.custosWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+			if fyneWidgetElement.GuiComponent != nil {
+				tr.custosWorldApp.TabItemMenu.Append(fyneWidgetElement.GuiComponent.(*container.TabItem))
+			}
 		}
 	} else {
 		// Remove it if torus.
@@ -140,6 +144,7 @@ func (tr *TorusRenderer) renderTabItemHelper(concreteElement *mashupsdk.MashupDe
 			}
 		}
 	}
+	tr.custosWorldApp.TabItemMenu.Show()
 	log.Printf("End TorusRender Widget lookup: %s\n", concreteElement.Alias)
 }
 
@@ -229,6 +234,7 @@ func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
 	insecure := flag.Bool("insecure", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
+	titlebar := flag.Bool("titlebar", false, "Run with title bar")
 	flag.Parse()
 	worldLog, err := os.OpenFile("custos.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
@@ -241,7 +247,7 @@ func main() {
 	detailedElements := data.GetExampleLibrary()
 
 	torusRenderer := &TorusRenderer{}
-	custosWorld := custosworld.NewCustosWorldApp(*headless, detailedElements, torusRenderer)
+	custosWorld := custosworld.NewCustosWorldApp(*headless, *titlebar, detailedElements, torusRenderer)
 	torusRenderer.custosWorldApp = custosWorld
 
 	// Initialize a tab item renderer
