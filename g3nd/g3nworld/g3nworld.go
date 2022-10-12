@@ -66,6 +66,7 @@ type WorldApp struct {
 	elementLibraryDictionary map[int64]*g3nmash.G3nDetailedElement
 
 	maxElementId       int64
+	RootElements       []*g3nmash.G3nDetailedElement
 	ConcreteElements   map[int64]*g3nmash.G3nDetailedElement // g3n indexes by string...
 	elementLoaderIndex map[string]int64                      // g3n indexes by loader id...
 	ClickedElements    []*g3nmash.G3nDetailedElement         // g3n indexes by string...
@@ -255,12 +256,16 @@ func (w *WorldApp) GetG3nDetailedChildElements(g3n *g3nmash.G3nDetailedElement) 
 }
 
 func (w *WorldApp) GetG3nDetailedGenreFilteredElements(genre string) ([]*g3nmash.G3nDetailedElement, error) {
-	filteredElements := []*g3nmash.G3nDetailedElement{}
+	filteredElements := w.RootElements
+	if len(filteredElements) > 0 {
+		return filteredElements, nil
+	}
 	for _, element := range w.ConcreteElements {
 		if element.GetDetailedElement().GetGenre() == genre {
 			filteredElements = append(filteredElements, element)
 		}
 	}
+	w.RootElements = filteredElements
 
 	return filteredElements, nil
 }
@@ -791,6 +796,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 			result.DetailedElements = append(result.DetailedElements, generatedElement.(*mashupsdk.MashupDetailedElement))
 		}
 	}
+	// Reset cache so it'll be rebuilt.
+	worldApp.RootElements = []*g3nmash.G3nDetailedElement{}
 
 	log.Printf("G3n UpsertMashupElements updated\n")
 	return result, nil
