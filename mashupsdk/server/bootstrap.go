@@ -25,7 +25,7 @@ var clientConnectionConfigs *sdk.MashupConnectionConfigs
 var serverConnectionConfigs *sdk.MashupConnectionConfigs
 
 // InitServer -- bootstraps the server portion of the sdk for the mashup.
-func InitServer(creds string, insecure bool, mashupApiHandler mashupsdk.MashupApiHandler, mashupContextInitHandler mashupsdk.MashupContextInitHandler) {
+func InitServer(creds string, insecure bool, maxMessageLength int, mashupApiHandler mashupsdk.MashupApiHandler, mashupContextInitHandler mashupsdk.MashupContextInitHandler) {
 	// Perform handshake...
 	handshakeConfigs := &sdk.MashupConnectionConfigs{}
 	err := json.Unmarshal([]byte(creds), handshakeConfigs)
@@ -51,7 +51,14 @@ func InitServer(creds string, insecure bool, mashupApiHandler mashupsdk.MashupAp
 		}
 		creds := credentials.NewServerTLSFromCert(&cert)
 
-		s := grpc.NewServer(grpc.Creds(creds))
+		var s *grpc.Server
+
+		if maxMessageLength > 0 {
+			s = grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageLength), grpc.MaxSendMsgSize(maxMessageLength), grpc.Creds(creds))
+		} else {
+			s = grpc.NewServer(grpc.Creds(creds))
+		}
+
 		lis, err := net.Listen("tcp", "localhost:0")
 		if err != nil {
 			log.Fatalf("failed to serve: %v", err)

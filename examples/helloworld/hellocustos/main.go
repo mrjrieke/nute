@@ -262,7 +262,7 @@ func main() {
 	custosWorld.Icon = fyne.NewStaticResource("Gopher", gopherIconBytes)
 
 	if !custosWorld.Headless {
-		custosWorld.InitServer(*callerCreds, *insecure)
+		custosWorld.InitServer(*callerCreds, *insecure, 0)
 	}
 
 	// Initialize the main window.

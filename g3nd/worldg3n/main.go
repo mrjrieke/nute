@@ -73,7 +73,7 @@ func main() {
 		DetailedElements = data.GetExampleLibrary()
 	} else {
 		// Running in 'server' mode means mashup elements will be posted to this server.
-		worldApp.InitServer(*callerCreds, *insecure)
+		worldApp.InitServer(*callerCreds, *insecure, 0)
 	}
 
 	if *custos || *headless {

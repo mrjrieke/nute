@@ -91,9 +91,9 @@ type CustosWorldApp struct {
 
 var CUWorldApp *CustosWorldApp
 
-func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool) {
+func (w *CustosWorldApp) InitServer(callerCreds string, insecure bool, maxMessageLength int) {
 	if callerCreds != "" {
-		server.InitServer(callerCreds, insecure, w.mashupSdkApiHandler, w.wClientInitHandler)
+		server.InitServer(callerCreds, insecure, maxMessageLength, w.mashupSdkApiHandler, w.wClientInitHandler)
 	} else {
 		// TODO: These might not make sense in Custos.
 		// go func() {

@@ -381,9 +381,9 @@ func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INo
 	return nil, nil
 }
 
-func (w *WorldApp) InitServer(callerCreds string, insecure bool) {
+func (w *WorldApp) InitServer(callerCreds string, insecure bool, maxMessageLength int) {
 	if callerCreds != "" {
-		server.InitServer(callerCreds, insecure, w.MSdkApiHandler, w.wClientInitHandler)
+		server.InitServer(callerCreds, insecure, maxMessageLength, w.MSdkApiHandler, w.wClientInitHandler)
 	} else {
 		go func() {
 			w.displaySetupChan <- &mashupsdk.MashupDisplayHint{Xpos: 0, Ypos: 0, Width: 400, Height: 800}

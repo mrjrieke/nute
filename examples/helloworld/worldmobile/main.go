@@ -123,7 +123,7 @@ func main() {
 
 	worldApp = WorldApp{wApiHandler: &worldApiHandler{}}
 
-	server.InitServer(*callerCreds, *insecure, worldApp.wApiHandler, nil)
+	server.InitServer(*callerCreds, *insecure, 0, worldApp.wApiHandler, nil)
 
 	<-worldCompleteChan
 }
