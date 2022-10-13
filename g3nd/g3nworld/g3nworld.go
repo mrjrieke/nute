@@ -607,12 +607,24 @@ func (w *WorldApp) InitMainWindow() {
 					changedElements = append(changedElements, w.backgroundG3n.GetMashupElementState())
 				}
 
-				elementStateBundle := mashupsdk.MashupElementStateBundle{
-					AuthToken:     worldApp.GetAuthToken(),
-					ElementStates: changedElements,
-				}
-
 				if !w.headless {
+					if mev.Button == window.MouseButtonRight {
+						// Mark all changed elements as unclicked for
+						// mashup sake.
+						for _, changedElement := range changedElements {
+							if (mashupsdk.Clicked & mashupsdk.DisplayElementState(changedElement.State)) == mashupsdk.Clicked {
+								changedElement.State |= int64(mashupsdk.RightClick)
+							} else {
+								changedElement.State &= ^int64(mashupsdk.RightClick)
+							}
+						}
+					}
+
+					elementStateBundle := mashupsdk.MashupElementStateBundle{
+						AuthToken:     worldApp.GetAuthToken(),
+						ElementStates: changedElements,
+					}
+
 					w.MashupContext.Client.UpsertMashupElementsState(w.MashupContext, &elementStateBundle)
 				}
 			}

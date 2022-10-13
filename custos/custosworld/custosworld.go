@@ -291,8 +291,7 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 
 func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
 	log.Printf("CustosWorld UpsertMashupElementsState called\n")
-	CUWorldApp.MainWin.Hide()
-	CUWorldApp.MainWin.Show()
+	hasClick := false
 
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
@@ -308,12 +307,21 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			if libraryElement, libraryElementOk := CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id]; libraryElementOk {
 				if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 					libraryElement.ApplyState(mashupsdk.Clicked, true)
+					if (mashupsdk.DisplayElementState(es.State) & mashupsdk.RightClick) == mashupsdk.RightClick {
+						hasClick = true
+					}
 				} else {
 					libraryElement.ApplyState(mashupsdk.Clicked, false)
 				}
 				libraryElement.ApplyState(mashupsdk.SourceExternal, true)
 			}
 		}
+	}
+	if hasClick {
+		CUWorldApp.MainWin.Hide()
+		CUWorldApp.MainWin.Show()
+	} else {
+		CUWorldApp.MainWin.Hide()
 	}
 
 	if len(recursiveElements) > 0 {
