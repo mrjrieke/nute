@@ -71,6 +71,10 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 	var err error
 	mashupContext = &sdk.MashupContext{Context: context.Background(), MashupGoodies: mashupGoodies}
 	insecure = mashupGoodies["insecure"].(*bool)
+	var maxMessageLength int = -1
+	if mml, mmlOk := mashupGoodies["maxMessageLength"].(int); mmlOk {
+		maxMessageLength = mml
+	}
 
 	// Initialize local server.
 	mashupCertBytes, err = sdk.MashupCert.ReadFile("tls/mashup.crt")
@@ -89,7 +93,12 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 	}
 	creds := credentials.NewServerTLSFromCert(&serverCert)
 
-	handshakeServer := grpc.NewServer(grpc.Creds(creds))
+	var handshakeServer *grpc.Server
+	if maxMessageLength > 0 {
+		handshakeServer = grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageLength), grpc.MaxSendMsgSize(maxMessageLength), grpc.Creds(creds))
+	} else {
+		handshakeServer = grpc.NewServer(grpc.Creds(creds))
+	}
 	lis, err := net.Listen("tcp", "localhost:0")
 	data := make([]byte, 10)
 	for i := range data {
@@ -133,16 +142,23 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 
 	return mashupContext
 }
-
-// BootstrapInit - main entry point for bootstrapping the sdk.
-// This will fork a mashup, connect with it, and handshake with
-// it to establish shared set of credentials to be used in
-// future transactions.
 func BootstrapInit(mashupPath string,
 	mashupApiHandler mashupsdk.MashupApiHandler,
 	envParams []string,
 	params []string,
 	insecure *bool) *sdk.MashupContext {
+	return BootstrapInitWithMessageExt(mashupPath, mashupApiHandler, envParams, params, insecure, -1)
+}
+
+// BootstrapInitWithMessageExt - main entry point for bootstrapping the sdk.
+// This will fork a mashup, connect with it, and handshake with
+// it to establish shared set of credentials to be used in
+// future transactions.
+func BootstrapInitWithMessageExt(mashupPath string,
+	mashupApiHandler mashupsdk.MashupApiHandler,
+	envParams []string,
+	params []string,
+	insecure *bool, maxMessageLength int) *sdk.MashupContext {
 
 	mashupGoodies := map[string]interface{}{}
 	mashupGoodies["MASHUP_PATH"] = mashupPath
@@ -152,6 +168,7 @@ func BootstrapInit(mashupPath string,
 	mashupGoodies["ENV"] = envParams
 	mashupGoodies["PARAMS"] = params
 	mashupGoodies["insecure"] = insecure
+	mashupGoodies["maxMessageLength"] = maxMessageLength
 
 	return initContext(mashupApiHandler, mashupGoodies)
 }
