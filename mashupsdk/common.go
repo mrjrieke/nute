@@ -12,6 +12,7 @@ const (
 	Recursive      DisplayElementState = 32  // Apply attributes recursively
 	SourceExternal DisplayElementState = 64  // Event source external
 	RightClick     DisplayElementState = 128 // Click was a right mouse click
+	ControlClicked DisplayElementState = 256 // Click was a Ctrl mouse click
 )
 
 type MashupDisplayState int

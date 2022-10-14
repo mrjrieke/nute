@@ -608,7 +608,7 @@ func (w *WorldApp) InitMainWindow() {
 				}
 
 				if !w.headless {
-					// Mark all changed elements as unclicked for
+					// Mark all changed elements as right clicked for
 					// mashup sake.
 					for _, changedElement := range changedElements {
 						if (mev.Button == window.MouseButtonRight) &&
@@ -616,6 +616,12 @@ func (w *WorldApp) InitMainWindow() {
 							changedElement.State |= int64(mashupsdk.RightClick)
 						} else {
 							changedElement.State &= ^int64(mashupsdk.RightClick)
+						}
+
+						if w.Sticky {
+							changedElement.State |= int64(mashupsdk.ControlClicked)
+						} else {
+							changedElement.State &= ^int64(mashupsdk.ControlClicked)
 						}
 					}
 
