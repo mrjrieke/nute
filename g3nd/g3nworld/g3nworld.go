@@ -51,7 +51,7 @@ type WorldApp struct {
 	wClientInitHandler  *worldClientInitHandler
 	displaySetupChan    chan *mashupsdk.MashupDisplayHint
 	displayPositionChan chan *mashupsdk.MashupDisplayHint
-	mainWin             *app.Application
+	MainWin             *app.Application
 	currentTargetFPS    uint             // Current target frame rate
 	frameRater          *util.FrameRater // Render loop frame rater
 	scene               *core.Node
@@ -445,9 +445,9 @@ func (w *WorldApp) InitMainWindow() {
 	initHandler := func(a *app.Application) {
 		log.Printf("InitHandler.")
 
-		if w.mainWin == nil {
+		if w.MainWin == nil {
 			log.Printf("Main app handle initialized.")
-			w.mainWin = a
+			w.MainWin = a
 		}
 		log.Printf("Frame rater setup.")
 		w.SetFrameRate(5)
@@ -480,7 +480,7 @@ func (w *WorldApp) InitMainWindow() {
 			// Update the camera's aspect ratio
 			w.cam.SetAspect(float32(width) / float32(height))
 
-			xpos, ypos := (*w.mainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
+			xpos, ypos := (*w.MainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
 
 			if w.MashupContext != nil {
 				w.MashupContext.Client.OnResize(w.MashupContext,
@@ -498,8 +498,8 @@ func (w *WorldApp) InitMainWindow() {
 		a.Subscribe(window.OnWindowSize, onResize)
 		onResize("", nil)
 
-		w.mainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
-		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+		w.MainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
+		if iWindow, iWindowOk := (*w.MainWin).IWindow.(*window.GlfwWindow); iWindowOk {
 
 			// TODO: OSX enable?
 			//iWindow.Window.SetAttrib(glfw.OpenGLForwardCompatible, glfw.True)
@@ -520,19 +520,19 @@ func (w *WorldApp) InitMainWindow() {
 			})
 		}
 
-		w.mainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
+		w.MainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = true
 			}
 		})
-		w.mainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
+		w.MainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = false
 			}
 		})
-		w.mainWin.Subscribe(window.OnWindowFocus, func(name string, ev interface{}) {
+		w.MainWin.Subscribe(window.OnWindowFocus, func(name string, ev interface{}) {
 			wev := ev.(*window.FocusEvent)
 			w.Focused = wev.Focused
 			// Tell fyne not to try to regain focus.
@@ -546,10 +546,10 @@ func (w *WorldApp) InitMainWindow() {
 					})
 			}
 		})
-		w.mainWin.Subscribe(gui.OnMouseDown, func(name string, ev interface{}) {
+		w.MainWin.Subscribe(gui.OnMouseDown, func(name string, ev interface{}) {
 			w.SetFrameRate(30)
 		})
-		w.mainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
+		w.MainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
 			w.SetFrameRate(0)
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
@@ -558,7 +558,7 @@ func (w *WorldApp) InitMainWindow() {
 				w.Sticky = false
 			}
 
-			g3Width, g3Height := w.mainWin.GetSize()
+			g3Width, g3Height := w.MainWin.GetSize()
 
 			xPosNdc := 2*(mev.Xpos/float32(g3Width)) - 1
 			yPosNdc := -2*(mev.Ypos/float32(g3Height)) + 1
@@ -649,17 +649,17 @@ func (w *WorldApp) InitMainWindow() {
 		// Set background color to gray
 		if w.backgroundG3n != nil {
 			w.IG3nRenderer.RenderElement(w, w.backgroundG3n)
-			g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
+			g3ndpalette.RefreshBackgroundColor(w.MainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
 		}
 		go func() {
 			log.Println("Watching position events.")
 			for displayHint := range w.displayPositionChan {
 				log.Printf("G3n applying xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 				if !w.headless {
-					if w.mainWin != nil {
-						if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+					if w.MainWin != nil {
+						if iWindow, iWindowOk := (*w.MainWin).IWindow.(*window.GlfwWindow); iWindowOk {
 							if worldApp.IG3nDisplayRenderer != nil {
-								worldApp.IG3nDisplayRenderer.Render((*w.mainWin).IWindow.(*window.GlfwWindow), displayHint)
+								worldApp.IG3nDisplayRenderer.Render((*w.MainWin).IWindow.(*window.GlfwWindow), displayHint)
 							} else {
 								if !w.custos {
 									iWindow.Window.SetAttrib(glfw.Decorated, 0)
@@ -687,7 +687,7 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("InitHandler complete.")
 	}
 	runtimeHandler := func(renderer *renderer.Renderer, deltaTime time.Duration) {
-		if iWindow, iWindowOk := (*w.mainWin).IWindow.(*window.GlfwWindow); iWindowOk {
+		if iWindow, iWindowOk := (*w.MainWin).IWindow.(*window.GlfwWindow); iWindowOk {
 
 			if iWindow.Window.GetAttrib(glfw.Focused) != 1 {
 				w.SetFrameRate(0)
@@ -703,9 +703,9 @@ func (w *WorldApp) InitMainWindow() {
 		if w.currentTargetFPS != 0 {
 			// Nothing to render.
 			if w.backgroundG3n != nil && w.backgroundG3n.GetColor() != nil {
-				g3ndpalette.RefreshBackgroundColor(w.mainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
+				g3ndpalette.RefreshBackgroundColor(w.MainWin.Gls(), w.backgroundG3n.GetColor(), 1.0)
 			}
-			w.mainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
+			w.MainWin.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
 			renderer.Render(w.scene, w.cam)
 
 			if !w.isInit {
@@ -734,7 +734,7 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 }
 
 func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	if worldApp.mainWin != nil && (*worldApp.mainWin).IWindow != nil {
+	if worldApp.MainWin != nil && (*worldApp.MainWin).IWindow != nil {
 		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
 	} else {
@@ -894,8 +894,8 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 
 	log.Printf("G3n dispatching focus\n")
 	// TODO: Feedback from Custos is broken...  Disable for now.
-	if worldApp.mainWin != nil {
-		worldApp.mainWin.Dispatch(gui.OnFocus, nil)
+	if worldApp.MainWin != nil {
+		worldApp.MainWin.Dispatch(gui.OnFocus, nil)
 	}
 	log.Printf("G3n End UpsertMashupElementsState called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
