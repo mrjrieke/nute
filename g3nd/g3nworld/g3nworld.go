@@ -608,15 +608,14 @@ func (w *WorldApp) InitMainWindow() {
 				}
 
 				if !w.headless {
-					if mev.Button == window.MouseButtonRight {
-						// Mark all changed elements as unclicked for
-						// mashup sake.
-						for _, changedElement := range changedElements {
-							if (mashupsdk.Clicked & mashupsdk.DisplayElementState(changedElement.State)) == mashupsdk.Clicked {
-								changedElement.State |= int64(mashupsdk.RightClick)
-							} else {
-								changedElement.State &= ^int64(mashupsdk.RightClick)
-							}
+					// Mark all changed elements as unclicked for
+					// mashup sake.
+					for _, changedElement := range changedElements {
+						if (mev.Button == window.MouseButtonRight) &&
+							(mashupsdk.Clicked&mashupsdk.DisplayElementState(changedElement.State)) == mashupsdk.Clicked {
+							changedElement.State |= int64(mashupsdk.RightClick)
+						} else {
+							changedElement.State &= ^int64(mashupsdk.RightClick)
 						}
 					}
 

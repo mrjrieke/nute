@@ -17,9 +17,15 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+var clientDialOptions grpc.DialOption = grpc.EmptyDialOption{}
+
 type MashupClient struct {
 	sdk.UnimplementedMashupServerServer
 	mashupApiHandler mashupsdk.MashupApiHandler
+}
+
+func InitDialOptions(dialOption grpc.DialOption) {
+	clientDialOptions = dialOption
 }
 
 func GetServerAuthToken() string {
@@ -72,7 +78,7 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 
 	log.Printf("Initiating connection to server with insecure: %t\n", *insecure)
 	// Connect to it.
-	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(serverConnectionConfigs.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: *insecure})))
+	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(serverConnectionConfigs.Port)), clientDialOptions, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: *insecure})))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

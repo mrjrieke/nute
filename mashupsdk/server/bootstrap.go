@@ -80,8 +80,13 @@ func InitServer(creds string, insecure bool, maxMessageLength int, mashupApiHand
 		}
 		mashupCertPool.AddCert(mashupClientCert)
 
+		var defaultDialOpt grpc.DialOption = grpc.EmptyDialOption{}
+
+		if maxMessageLength > 0 {
+			defaultDialOpt = grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMessageLength), grpc.MaxCallSendMsgSize(maxMessageLength))
+		}
 		// Send credentials back to client....
-		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(handshakeConfigs.Port)), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: insecure})))
+		conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(handshakeConfigs.Port)), defaultDialOpt, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{ServerName: "", RootCAs: mashupCertPool, InsecureSkipVerify: insecure})))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}

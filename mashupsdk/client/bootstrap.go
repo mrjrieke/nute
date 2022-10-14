@@ -119,6 +119,9 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 		log.Fatalf("Failed to serve: %v", err)
 	}
 	go func() {
+		if maxMessageLength > 0 {
+			InitDialOptions(grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMessageLength), grpc.MaxCallSendMsgSize(maxMessageLength)))
+		}
 		sdk.RegisterMashupServerServer(handshakeServer, &MashupClient{mashupApiHandler: mashupApiHandler})
 		handshakeServer.Serve(lis)
 	}()
