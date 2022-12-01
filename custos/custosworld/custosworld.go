@@ -307,7 +307,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			if libraryElement, libraryElementOk := CUWorldApp.MashupDetailedElementLibrary[g3nDetailedElement.Id]; libraryElementOk {
 				if (mashupsdk.DisplayElementState(es.State) & mashupsdk.Clicked) == mashupsdk.Clicked {
 					libraryElement.ApplyState(mashupsdk.Clicked, true)
-					if (mashupsdk.DisplayElementState(es.State) & mashupsdk.RightClick) == mashupsdk.RightClick {
+					if (mashupsdk.DisplayElementState(es.State) & mashupsdk.ControlClicked) == mashupsdk.ControlClicked {
 						hasClick = true
 					}
 				} else {

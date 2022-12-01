@@ -72,6 +72,7 @@ type WorldApp struct {
 	ClickedElements    []*g3nmash.G3nDetailedElement         // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
+	ControlClicked     bool
 
 	Focused bool // Whether current window has focus.
 
@@ -554,7 +555,10 @@ func (w *WorldApp) InitMainWindow() {
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
 				w.Sticky = true
+			} else if (mev.Mods & window.ModControl) == window.ModControl {
+				w.ControlClicked = true
 			} else {
+				w.ControlClicked = false
 				w.Sticky = false
 			}
 
@@ -618,7 +622,7 @@ func (w *WorldApp) InitMainWindow() {
 							changedElement.State &= ^int64(mashupsdk.RightClick)
 						}
 
-						if w.Sticky {
+						if w.ControlClicked {
 							changedElement.State |= int64(mashupsdk.ControlClicked)
 						} else {
 							changedElement.State &= ^int64(mashupsdk.ControlClicked)
