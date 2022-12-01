@@ -195,7 +195,7 @@ func (g *G3nDetailedElement) IsItemClicked(itemClicked core.INode) bool {
 }
 
 func (g *G3nDetailedElement) GetChildElementIds() []int64 {
-	if g.detailedElement.Childids != nil {
+	if g.detailedElement != nil && g.detailedElement.Childids != nil {
 		return g.detailedElement.Childids
 	} else {
 		return []int64{}
