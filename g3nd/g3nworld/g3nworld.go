@@ -12,7 +12,6 @@ import (
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/experimental/collision"
 	"github.com/g3n/engine/gls"
-	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/math32"
@@ -363,22 +362,11 @@ func (w *WorldApp) Cast(inode core.INode, caster *collision.Raycaster) (core.INo
 
 	if _, ok := inode.(gui.IPanel); ok {
 		// TODO: Do we care about these types at all?
-	} else if igr, ok := inode.(graphic.IGraphic); ok {
-		if igr.Renderable() {
-			if _, meshOk := inode.(*graphic.Mesh); meshOk {
-				return inode, caster.IntersectObject(inode, false)
-			}
-		}
+	} else {
+		return inode, caster.IntersectObject(inode, true)
 		// Ignore everything else.
 	}
 
-	if inode.Children() != nil {
-		for _, ichild := range inode.Children() {
-			if n, intersections := w.Cast(ichild, caster); n != nil && len(intersections) > 0 {
-				return n, intersections
-			}
-		}
-	}
 	return nil, nil
 }
 
@@ -570,11 +558,11 @@ func (w *WorldApp) InitMainWindow() {
 			caster.SetFromCamera(w.cam, xPosNdc, yPosNdc)
 
 			if w.scene.Visible() {
-				itemClicked, _ := w.Cast(w.scene, caster)
+				_, intersections := w.Cast(w.scene, caster)
 
 				itemMatched := false
-				if itemClicked != nil {
-					if g3nDetailedIndex, ok := w.elementLoaderIndex[itemClicked.GetNode().LoaderID()]; ok {
+				if len(intersections) > 0 {
+					if g3nDetailedIndex, ok := w.elementLoaderIndex[intersections[0].Object.GetNode().LoaderID()]; ok {
 						if g3nDetailedElement, ok := w.ConcreteElements[g3nDetailedIndex]; ok {
 							g3nDetailedElement.ApplyState(mashupsdk.Clicked, true)
 							fmt.Printf("matched: %s\n", g3nDetailedElement.GetDisplayName())
