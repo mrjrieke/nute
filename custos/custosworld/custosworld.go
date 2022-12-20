@@ -318,10 +318,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 		}
 	}
 	if hasClick {
-		CUWorldApp.MainWin.Hide()
-		CUWorldApp.MainWin.Show()
-	} else {
-		CUWorldApp.MainWin.Hide()
+		CUWorldApp.MainWin.RequestFocus()
 	}
 
 	if len(recursiveElements) > 0 {
