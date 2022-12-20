@@ -664,8 +664,7 @@ func (w *WorldApp) InitMainWindow() {
 								}
 								if !w.Focused && displayHint.Focused {
 									log.Printf("G3n setting focus.")
-									iWindow.Window.Hide()
-									iWindow.Window.Show()
+									iWindow.Window.RequestAttention()
 									displayHint.Focused = false
 									w.Focused = true
 								}
