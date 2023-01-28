@@ -232,7 +232,7 @@ var gopherIcon embed.FS
 func main() {
 	//runtime.LockOSThread()
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
-	insecure := flag.Bool("insecure", false, "Skip server validation")
+	insecure := flag.Bool("tls-skip-validation", false, "Skip server validation")
 	headless := flag.Bool("headless", false, "Run headless")
 	titlebar := flag.Bool("titlebar", false, "Run with title bar")
 	flag.Parse()

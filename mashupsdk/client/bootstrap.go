@@ -70,7 +70,7 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 	handshakeCompleteChan = make(chan bool)
 	var err error
 	mashupContext = &sdk.MashupContext{Context: context.Background(), MashupGoodies: mashupGoodies}
-	insecure = mashupGoodies["insecure"].(*bool)
+	insecure = mashupGoodies["tls-skip-validation"].(*bool)
 	var maxMessageLength int = -1
 	if mml, mmlOk := mashupGoodies["maxMessageLength"].(int); mmlOk {
 		maxMessageLength = mml
@@ -132,7 +132,7 @@ func initContext(mashupApiHandler mashupsdk.MashupApiHandler,
 	}
 	// Setup the onetime use handshake token...
 	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "-CREDS="+string(jsonHandshakeCredentials))
-	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "-insecure=true")
+	mashupGoodies["PARAMS"] = append(mashupGoodies["PARAMS"].([]string), "-tls-skip-validation=true")
 
 	// Start mashup..
 	err = forkMashup(mashupGoodies)
@@ -170,7 +170,7 @@ func BootstrapInitWithMessageExt(mashupPath string,
 	}
 	mashupGoodies["ENV"] = envParams
 	mashupGoodies["PARAMS"] = params
-	mashupGoodies["insecure"] = insecure
+	mashupGoodies["tls-skip-validation"] = insecure
 	mashupGoodies["maxMessageLength"] = maxMessageLength
 
 	return initContext(mashupApiHandler, mashupGoodies)

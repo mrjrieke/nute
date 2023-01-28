@@ -127,7 +127,7 @@ func detailMappedFyneComponent(id, description string, de *mashupsdk.MashupDetai
 }
 
 func main() {
-	insecure := flag.Bool("insecure", false, "Skip server validation")
+	insecure := flag.Bool("tls-skip-validation", false, "Skip server validation")
 	flag.Parse()
 
 	helloLog, err := os.OpenFile("hellofyne.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
