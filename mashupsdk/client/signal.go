@@ -17,7 +17,7 @@ func initSignalProcessor(mshCtx *sdk.MashupContext) {
 		<-exitSignals
 		_, err := m.Client.Shutdown(m, &sdk.MashupEmpty{AuthToken: GetServerAuthToken()})
 		if err != nil {
-			log.Fatalf("Possibly using self signed cert.  Consider using -insecure flag for developing.  Client shutdown failure: %v", err)
+			log.Fatalf("Possibly using self signed cert.  Consider using -tls-skip-validation flag for developing.  Client shutdown failure: %v", err)
 		}
 		log.Printf("Client shutting down.")
 		os.Exit(0)

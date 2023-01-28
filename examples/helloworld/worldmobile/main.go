@@ -113,7 +113,7 @@ func (c *worldApiHandler) UpsertMashupElementsState(elementStateBundle *sdk.Mash
 
 func main() {
 	callerCreds := flag.String("CREDS", "", "Credentials of caller")
-	insecure := flag.Bool("insecure", false, "Skip server validation")
+	insecure := flag.Bool("tls-skip-validation", false, "Skip server validation")
 	flag.Parse()
 	worldLog, err := os.OpenFile("world.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
