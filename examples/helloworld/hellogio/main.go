@@ -46,8 +46,8 @@ type HelloApp struct {
 
 var helloApp HelloApp
 
-func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	resize := ha.mashupDisplayContext.OnResize(displayHint)
+func (ha *HelloApp) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
+	resize := ha.mashupDisplayContext.OnDisplayChange(displayHint)
 
 	if resize {
 		if ha.HelloContext.mashupContext == nil {
@@ -177,7 +177,7 @@ func main() {
 	go func() {
 		helloApp.HelloContext.mashupContext = client.BootstrapInit("worldg3n", helloApp.gioMashupApiHandler, nil, nil, insecure)
 		helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
-		helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+		helloApp.OnDisplayChange(helloApp.mashupDisplayContext.MainWinDisplay)
 
 		DetailedElements := []*mashupsdk.MashupDetailedElement{}
 		for _, fyneComponent := range helloApp.gioComponentCache {
@@ -222,7 +222,7 @@ func main() {
 						helloApp.mashupDisplayContext.SetYoffset(ce.YOffset + 3)
 					}
 					helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Configured, false)
-					helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+					helloApp.OnDisplayChange(&mashupsdk.MashupDisplayHint{
 						Xpos:   int64(ce.Position.X),
 						Ypos:   int64(ce.Position.Y),
 						Width:  int64(ce.Size.X),
@@ -234,7 +234,7 @@ func main() {
 					helloApp.mashupDisplayContext.SetYoffset(e.YOffset + 3)
 				}
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Position, false)
-				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+				helloApp.OnDisplayChange(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(e.X),
 					Ypos:   int64(e.Y),
 					Width:  int64(e.Width),
@@ -262,7 +262,7 @@ func main() {
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.Frame, false)
-				helloApp.OnResize(&mashupsdk.MashupDisplayHint{
+				helloApp.OnDisplayChange(&mashupsdk.MashupDisplayHint{
 					Xpos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Xpos),
 					Ypos:   int64(helloApp.mashupDisplayContext.MainWinDisplay.Ypos),
 					Width:  int64(e.Size.X),
@@ -284,26 +284,26 @@ func main() {
 	guiboot.InitMainWindow(guiboot.Gio, initHandler, runtimeHandler)
 }
 
-func (mSdk *gioMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+func (mSdk *gioMashupApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
 	if helloApp.mainWin != nil {
-		log.Printf("Gio Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+		log.Printf("Gio Received OnDisplayChange xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("Gio Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	}
 }
 
-func (mSdk *gioMashupApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("Gio GetMashupElements - not implemented\n")
+func (mSdk *gioMashupApiHandler) GetElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Gio GetElements - not implemented\n")
 	return &mashupsdk.MashupDetailedElementBundle{}, nil
 }
 
-func (mSdk *gioMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("Gio UpsertMashupElements - not implemented\n")
+func (mSdk *gioMashupApiHandler) UpsertElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Gio UpsertElements - not implemented\n")
 	return nil, nil
 }
 
-func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("Gio UpsertMashupElementsState called\n")
+func (mSdk *gioMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Gio TweakStates called\n")
 	for _, es := range elementStateBundle.ElementStates {
 		fyneComponent := helloApp.gioComponentCache[es.GetId()]
 		fyneComponent.MashupDetailedElement.State.State = es.State
@@ -311,7 +311,7 @@ func (mSdk *gioMashupApiHandler) UpsertMashupElementsState(elementStateBundle *m
 			// TODO: Select the item.
 		}
 	}
-	log.Printf("Gio UpsertMashupElementsState complete\n")
+	log.Printf("Gio TweakStates complete\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 

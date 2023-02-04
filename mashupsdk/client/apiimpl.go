@@ -51,10 +51,10 @@ func (s *MashupClient) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	return &sdk.MashupEmpty{}, nil
 }
 
-// Shake - Implementation of the handshake.  During the callback from
+// CollaborateInit - Implementation of the handshake.  During the callback from
 // the mashup, construct new more permanent set of credentials to be shared.
-func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfigs) (*sdk.MashupConnectionConfigs, error) {
-	log.Printf("Shake called")
+func (c *MashupClient) CollaborateInit(ctx context.Context, in *sdk.MashupConnectionConfigs) (*sdk.MashupConnectionConfigs, error) {
+	log.Printf("CollaborateInit called")
 	if in.GetAuthToken() != handshakeConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
@@ -103,66 +103,66 @@ func (c *MashupClient) Shake(ctx context.Context, in *sdk.MashupConnectionConfig
 		AuthToken: sdk.GenAuthToken(), // client token.
 		Port:      handshakeConnectionConfigs.Port,
 	}
-	log.Printf("Handshake complete.\n")
+	log.Printf("CollaborateInit complete.\n")
 
 	return clientConnectionConfigs, nil
 }
 
 // Shutdown -- handles request to shut down the mashup.
-func (c *MashupClient) GetMashupElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
-	log.Printf("GetMashupElements called")
+func (c *MashupClient) GetElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("GetElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		return c.mashupApiHandler.GetMashupElements()
+		return c.mashupApiHandler.GetElements()
 	} else {
 		log.Printf("No api handler provided.")
 	}
 	return nil, nil
 }
 
-func (c *MashupClient) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
-	log.Printf("UpsertMashupElementsState called")
+func (c *MashupClient) TweakStates(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
+	log.Printf("TweakStates called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		log.Printf("Auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		return c.mashupApiHandler.UpsertMashupElementsState(in)
+		return c.mashupApiHandler.TweakStates(in)
 	} else {
 		log.Printf("No api handler provided.")
 	}
 	return nil, nil
 }
 
-func (c *MashupClient) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
-	log.Printf("UpsertMashupElements called")
+func (c *MashupClient) UpsertElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("UpsertElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		return c.mashupApiHandler.UpsertMashupElements(in)
+		return c.mashupApiHandler.UpsertElements(in)
 	} else {
 		log.Printf("No api handler provided.")
 	}
 	return nil, nil
 }
 
-func (c *MashupClient) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
-	log.Printf("OnResize called")
+func (c *MashupClient) OnDisplayChange(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
+	log.Printf("OnDisplayChange called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf("OnResize auth failure.")
+		log.Printf("OnDisplayChange auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	displayHint := in.MashupDisplayHint
 	log.Printf("Received resize: %d %d %d %d\n", displayHint.Xpos, displayHint.Ypos, displayHint.Width, displayHint.Height)
 	if c.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		c.mashupApiHandler.OnResize(displayHint)
+		c.mashupApiHandler.OnDisplayChange(displayHint)
 	} else {
 		log.Printf("No api handler provided.")
 	}
