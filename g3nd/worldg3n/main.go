@@ -80,7 +80,7 @@ func main() {
 		//
 		// Generate concrete elements from library elements.
 		//
-		generatedElementsBundle, genErr := worldApp.MSdkApiHandler.UpsertMashupElements(
+		generatedElementsBundle, genErr := worldApp.MSdkApiHandler.UpsertElements(
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        "",
 				DetailedElements: DetailedElements,
@@ -116,9 +116,9 @@ func main() {
 				ElementStates: []*mashupsdk.MashupElementState{generatedElementsBundle.DetailedElements[3].State},
 			}
 
-			worldApp.MSdkApiHandler.UpsertMashupElementsState(&elementStateBundle)
+			worldApp.MSdkApiHandler.TweakStates(&elementStateBundle)
 		}
-		go worldApp.MSdkApiHandler.OnResize(&mashupsdk.MashupDisplayHint{Width: 1600, Height: 800})
+		go worldApp.MSdkApiHandler.OnDisplayChange(&mashupsdk.MashupDisplayHint{Width: 1600, Height: 800})
 	}
 
 	// Initialize the main window.

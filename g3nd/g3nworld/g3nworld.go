@@ -462,7 +462,7 @@ func (w *WorldApp) InitMainWindow() {
 		log.Printf("Finished Orbit Control setup.")
 
 		// Set up callback to update viewport and camera aspect ratio when the window is resized
-		onResize := func(evname string, ev interface{}) {
+		onDisplayChange := func(evname string, ev interface{}) {
 			// Get framebuffer size and update viewport accordingly
 			width, height := a.GetSize()
 			a.Gls().Viewport(0, 0, int32(width), int32(height))
@@ -484,8 +484,8 @@ func (w *WorldApp) InitMainWindow() {
 					})
 			}
 		}
-		a.Subscribe(window.OnWindowSize, onResize)
-		onResize("", nil)
+		a.Subscribe(window.OnWindowSize, onDisplayChange)
+		onDisplayChange("", nil)
 
 		w.MainWin.Subscribe(gui.OnFocus, w.G3nOnFocus)
 		if iWindow, iWindowOk := (*w.MainWin).IWindow.(*window.GlfwWindow); iWindowOk {
@@ -518,7 +518,11 @@ func (w *WorldApp) InitMainWindow() {
 			if (kev.Key >= window.Key0 && kev.Key <= window.Key9) ||
 				(kev.Key >= window.KeyA && kev.Key <= window.KeyZ) {
 
-				//w.MashupContext.Client.UpsertMashupElementsState(w.MashupContext, &elementStateBundle)
+				w.MashupContext.Client.TweakStatesByMotiv(w.MashupContext,
+					&mashupsdk.Motiv{
+						Code: int64(kev.Key),
+					},
+				)
 
 			}
 		})
@@ -731,9 +735,9 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
 }
 
-func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
+func (mSdk *mashupSdkApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
 	if worldApp.MainWin != nil && (*worldApp.MainWin).IWindow != nil {
-		log.Printf("G3n Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+		log.Printf("G3n Received OnDisplayChange xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		worldApp.displayPositionChan <- displayHint
 	} else {
 		if displayHint.Width != 0 && displayHint.Height != 0 {
@@ -743,18 +747,18 @@ func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHi
 		} else {
 			log.Printf("G3n Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 		}
-		log.Printf("G3n finished onResize handle.")
+		log.Printf("G3n finished OnDisplayChange handle.")
 	}
 }
 
-func (w *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("G3n Received GetMashupElements\n")
-	log.Printf("G3n finished GetMashupElements handle.\n")
+func (w *mashupSdkApiHandler) GetElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("G3n Received GetElements\n")
+	log.Printf("G3n finished GetElements handle.\n")
 	return nil, nil
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("G3n Received UpsertMashupElements\n")
+func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("G3n Received UpsertElements\n")
 	result := &mashupsdk.MashupDetailedElementBundle{DetailedElements: []*mashupsdk.MashupDetailedElement{}}
 	incompleteG3nElements := []*g3nmash.G3nDetailedElement{}
 
@@ -814,7 +818,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 	// Reset cache so it'll be rebuilt.
 	worldApp.RootElements = []*g3nmash.G3nDetailedElement{}
 
-	log.Printf("G3n UpsertMashupElements updated\n")
+	log.Printf("G3n UpsertElements updated\n")
 	return result, nil
 }
 
@@ -844,8 +848,8 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 	}
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("G3n UpsertMashupElementsState called\n")
+func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("G3n TweakStates called\n")
 
 	ClickedElements := map[int64]*g3nmash.G3nDetailedElement{}
 	recursiveElements := map[int64]*g3nmash.G3nDetailedElement{}
@@ -895,6 +899,6 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	if worldApp.MainWin != nil {
 		worldApp.MainWin.Dispatch(gui.OnFocus, nil)
 	}
-	log.Printf("G3n End UpsertMashupElementsState called\n")
+	log.Printf("G3n End TweakStates called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }

@@ -64,11 +64,11 @@ func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sd
 	return &sdk.MashupEmpty{}, nil
 }
 
-// OnResize -- handles a request from the client to resize.
-func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
-	log.Printf("OnResize called")
+// OnDisplayChange -- handles a request from the client to resize.
+func (s *MashupServer) OnDisplayChange(ctx context.Context, in *sdk.MashupDisplayBundle) (*sdk.MashupDisplayHint, error) {
+	log.Printf("OnDisplayChange called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf("OnResize auth failure.")
+		log.Printf("OnDisplayChange auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	displayHint := in.MashupDisplayHint
@@ -76,45 +76,45 @@ func (s *MashupServer) OnResize(ctx context.Context, in *sdk.MashupDisplayBundle
 
 	if s.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		s.mashupApiHandler.OnResize(displayHint)
+		s.mashupApiHandler.OnDisplayChange(displayHint)
 	}
 
 	return nil, nil
 }
 
-func (s *MashupServer) GetMashupElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
-	log.Printf("GetMashupElements called")
+func (s *MashupServer) GetElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("GetElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
-		log.Printf("GetMashupElements Delegate to api handler.")
-		return s.mashupApiHandler.GetMashupElements()
+		log.Printf("GetElements Delegate to api handler.")
+		return s.mashupApiHandler.GetElements()
 	}
 	return nil, status.Errorf(codes.Unimplemented, "method GetMashupElements not implemented")
 }
 
-func (s *MashupServer) UpsertMashupElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
-	log.Printf("UpsertMashupElements called")
+func (s *MashupServer) UpsertElements(ctx context.Context, in *sdk.MashupDetailedElementBundle) (*sdk.MashupDetailedElementBundle, error) {
+	log.Printf("UpsertElements called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
-		log.Printf("UpsertMashupElements Delegate to api handler.")
-		return s.mashupApiHandler.UpsertMashupElements(in)
+		log.Printf("UpsertElements Delegate to api handler.")
+		return s.mashupApiHandler.UpsertElements(in)
 	}
-	return nil, status.Errorf(codes.Unimplemented, "method UpsertMashupElements not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertElements not implemented")
 }
 
-func (s *MashupServer) UpsertMashupElementsState(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
-	log.Printf("UpsertMashupElementsState called")
+func (s *MashupServer) TweakStates(ctx context.Context, in *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
+	log.Printf("TweakStates called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
-		log.Printf("UpsertMashupElementsState Auth failure.")
+		log.Printf("TweakStates Auth failure.")
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
-		log.Printf("UpsertMashupElementsState Delegate to api handler.")
-		return s.mashupApiHandler.UpsertMashupElementsState(in)
+		log.Printf("TweakStates Delegate to api handler.")
+		return s.mashupApiHandler.TweakStates(in)
 	}
 	return nil, nil
 }

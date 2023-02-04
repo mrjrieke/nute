@@ -204,15 +204,15 @@ func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
 	log.Printf("CustosWorld finished ResetG3NDetailedElementStates handle.\n")
 }
 
-func (mSdk *mashupSdkApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	log.Printf("CustosWorld OnResize - not implemented yet..\n")
+func (mSdk *mashupSdkApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
+	log.Printf("CustosWorld OnDisplayChange - not implemented yet..\n")
 	if CUWorldApp.MainWin != nil && CUWorldApp.mashupDisplayContext != nil && CUWorldApp.mashupDisplayContext.MainWinDisplay != nil {
 		CUWorldApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
 		// Which then wants to resize fyne ad-infinitum
 		//CUWorldApp.MainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
-		log.Printf("CustosWorld Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+		log.Printf("CustosWorld Received OnDisplayChange xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("CustosWorld Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	}
@@ -240,8 +240,8 @@ func (custosWorldApp *CustosWorldApp) DetailFyneComponent(de *mashupsdk.MashupDe
 	custosWorldApp.CustomTabItems[de.Name] = tabItemFunc
 }
 
-func (mSdk *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("CustosWorld Received GetMashupElements\n")
+func (mSdk *mashupSdkApiHandler) GetElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("CustosWorld Received GetElements\n")
 
 	return &mashupsdk.MashupDetailedElementBundle{
 		AuthToken:        client.GetServerAuthToken(),
@@ -249,8 +249,8 @@ func (mSdk *mashupSdkApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedE
 	}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("CustosWorld Received UpsertMashupElements\n")
+func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("CustosWorld Received UpsertElements\n")
 
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
 		//helloApp.fyneComponentCache[generatedComponent.Basisid]
@@ -268,7 +268,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElements(detailedElementBundle *mas
 
 	CUWorldApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 
-	log.Printf("CustosWorld UpsertMashupElements updated\n")
+	log.Printf("CustosWorld UpsertElements updated\n")
 	return &mashupsdk.MashupDetailedElementBundle{
 		AuthToken:        client.GetServerAuthToken(),
 		DetailedElements: detailedElementBundle.DetailedElements,
@@ -289,8 +289,8 @@ func (mSdk *mashupSdkApiHandler) setStateHelper(g3nId int64, x mashupsdk.Display
 	}
 }
 
-func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("CustosWorld UpsertMashupElementsState called\n")
+func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("CustosWorld TweakStates called\n")
 	hasClick := false
 
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
@@ -322,7 +322,7 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	}
 
 	if len(recursiveElements) > 0 {
-		log.Printf("CustosWorld UpsertMashupElementsState apply recursive elements\n")
+		log.Printf("CustosWorld TweakStates apply recursive elements\n")
 
 		for _, recursiveElement := range recursiveElements {
 			stateBits := recursiveElement.State.State
@@ -379,6 +379,6 @@ func (mSdk *mashupSdkApiHandler) UpsertMashupElementsState(elementStateBundle *m
 	// if CUWorldApp.MainWin != nil {
 	// 	CUWorldApp.MainWin.Hide()
 	// }
-	log.Printf("CustosWorld End UpsertMashupElementsState called\n")
+	log.Printf("CustosWorld End TweakStates called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }

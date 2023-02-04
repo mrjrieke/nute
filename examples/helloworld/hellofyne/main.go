@@ -54,8 +54,8 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	helloApp.HelloContext.mashupContext.Client.TweakStates(helloApp.HelloContext.mashupContext, &elementStateBundle)
 }
 
-func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	resize := ha.mashupDisplayContext.OnResize(displayHint)
+func (ha *HelloApp) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
+	resize := ha.mashupDisplayContext.OnDisplayChange(displayHint)
 
 	if ha.HelloContext.mashupContext == nil {
 		return
@@ -343,7 +343,7 @@ func main() {
 				helloApp.mashupDisplayContext.ApplySettled(mashupsdk.AppInitted, false)
 			}
 			if helloApp.mashupDisplayContext.MainWinDisplay != nil {
-				helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+				helloApp.OnDisplayChange(helloApp.mashupDisplayContext.MainWinDisplay)
 				helloApp.mashupDisplayContext.MainWinDisplay.Focused = true
 			}
 		})
@@ -367,7 +367,7 @@ func main() {
 				Height:  int64(height),
 			}
 
-			helloApp.OnResize(helloApp.mashupDisplayContext.MainWinDisplay)
+			helloApp.OnDisplayChange(helloApp.mashupDisplayContext.MainWinDisplay)
 		})
 		helloApp.mainWin = a.NewWindow("Hello Fyne World")
 		gopherIconBytes, _ := gopherIcon.ReadFile("gophericon.png")
@@ -426,27 +426,27 @@ func main() {
 	guiboot.InitMainWindow(guiboot.Fyne, initHandler, runtimeHandler)
 }
 
-func (mSdk *fyneMashupApiHandler) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
-	log.Printf("Fyne OnResize - not implemented yet..\n")
+func (mSdk *fyneMashupApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
+	log.Printf("Fyne OnDisplayChange - not implemented yet..\n")
 	if helloApp.mainWin != nil {
 		helloApp.mashupDisplayContext.MainWinDisplay.Focused = displayHint.Focused
 		// TODO: Resize without infinite looping....
 		// The moment fyne is resized, it'll want to resize g3n...
 		// Which then wants to resize fyne ad-infinitum
 		//helloApp.mainWin.PosResize(int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height))
-		log.Printf("Fyne Received onResize xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
+		log.Printf("Fyne Received OnDisplayChange xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	} else {
 		log.Printf("Fyne Could not apply xpos: %d ypos: %d width: %d height: %d ytranslate: %d\n", int(displayHint.Xpos), int(displayHint.Ypos), int(displayHint.Width), int(displayHint.Height), int(displayHint.Ypos+displayHint.Height))
 	}
 }
 
-func (mSdk *fyneMashupApiHandler) GetMashupElements() (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("Fyne GetMashupElements - not implemented\n")
+func (mSdk *fyneMashupApiHandler) GetElements() (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Fyne GetElements - not implemented\n")
 	return &mashupsdk.MashupDetailedElementBundle{}, nil
 }
 
-func (mSdk *fyneMashupApiHandler) UpsertMashupElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
-	log.Printf("Fyne UpsertMashupElements - not implemented\n")
+func (mSdk *fyneMashupApiHandler) UpsertElements(detailedElementBundle *mashupsdk.MashupDetailedElementBundle) (*mashupsdk.MashupDetailedElementBundle, error) {
+	log.Printf("Fyne UpsertElements - not implemented\n")
 	return &mashupsdk.MashupDetailedElementBundle{}, nil
 }
 
@@ -454,8 +454,8 @@ func (mSdk *fyneMashupApiHandler) ResetG3NDetailedElementStates() {
 	log.Printf("Fyne ResetG3NDetailedElementStates - not implemented\n")
 }
 
-func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
-	log.Printf("Fyne UpsertMashupElementsState called for count: %d\n", len(elementStateBundle.ElementStates))
+func (mSdk *fyneMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {
+	log.Printf("Fyne TweakStates called for count: %d\n", len(elementStateBundle.ElementStates))
 	for _, es := range elementStateBundle.ElementStates {
 		detailedElement := helloApp.mashupDetailedElementLibrary[es.GetId()]
 
@@ -486,13 +486,13 @@ func (mSdk *fyneMashupApiHandler) UpsertMashupElementsState(elementStateBundle *
 				}
 			}
 			torusMenu := helloApp.mainWin.Content().(*container.AppTabs)
-			log.Printf("Fyne UpsertMashupElementsState Selecting: %s\n", detailedElement.GetAlias())
+			log.Printf("Fyne TweakStates Selecting: %s\n", detailedElement.GetAlias())
 
 			// Select the item.
 			helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem).Text = helloApp.fyneWidgetElements[detailedElement.GetAlias()].MashupDetailedElement.Name
 			torusMenu.Select(helloApp.fyneWidgetElements[detailedElement.GetAlias()].GuiComponent.(*container.TabItem))
 		}
 	}
-	log.Printf("Fyne UpsertMashupElementsState complete\n")
+	log.Printf("Fyne TweakStates complete\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }

@@ -53,7 +53,7 @@ func (m *MashupDisplayContext) ApplySettled(s MashupDisplayState, override bool)
 	return m.settled
 }
 
-func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
+func (m *MashupDisplayContext) OnDisplayChange(displayHint *MashupDisplayHint) bool {
 	resize := false
 
 	if m.MainWinDisplay == nil {
@@ -98,10 +98,10 @@ func (m *MashupDisplayContext) OnResize(displayHint *MashupDisplayHint) bool {
 // MashupApiHandler -- mashups implement this to handle all events sent from
 // other mashups.
 type MashupApiHandler interface {
-	OnResize(displayHint *MashupDisplayHint)
-	GetMashupElements() (*MashupDetailedElementBundle, error)
-	UpsertMashupElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
-	UpsertMashupElementsState(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
+	OnDisplayChange(displayHint *MashupDisplayHint)
+	GetElements() (*MashupDetailedElementBundle, error)
+	UpsertElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
+	TweakStates(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 	ResetG3NDetailedElementStates()
 }
 
