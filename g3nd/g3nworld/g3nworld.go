@@ -902,3 +902,8 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	log.Printf("G3n End TweakStates called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
+
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+	log.Printf("G3n Received TweakStatesByMotiv\n")
+	log.Printf("G3n finished TweakStatesByMotiv handle.\n")
+}

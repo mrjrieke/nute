@@ -382,3 +382,10 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	log.Printf("CustosWorld End TweakStates called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
+
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
+	// TODO: Find and TweakStates...
+
+	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
+}
