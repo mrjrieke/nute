@@ -11,6 +11,7 @@ import (
 	sdk "github.com/mrjrieke/nute/mashupsdk"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // server is used to implement server.MashupServer.
@@ -50,18 +51,18 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	return &sdk.MashupEmpty{}, nil
 }
 
-func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
-	log.Println("ResetG3NDetailedElementStates called")
+func (s *MashupServer) ResetStates(ctx context.Context, in *sdk.MashupEmpty) (*emptypb.Empty, error) {
+	log.Println("ResetStates called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		s.mashupApiHandler.ResetG3NDetailedElementStates()
+		s.mashupApiHandler.ResetStates()
 	}
 
-	log.Println("ResetG3NDetailedElementStates complete.")
-	return &sdk.MashupEmpty{}, nil
+	log.Println("ResetStates complete.")
+	return &emptypb.Empty{}, nil
 }
 
 // OnDisplayChange -- handles a request from the client to resize.

@@ -196,12 +196,12 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 }
 
 // Sets all elements to a "Rest state."
-func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
-	log.Printf("CustosWorld Received ResetG3NDetailedElementStates\n")
+func (w *mashupSdkApiHandler) ResetStates() {
+	log.Printf("CustosWorld Received ResetStates\n")
 	for _, wes := range CUWorldApp.MashupDetailedElementLibrary {
 		wes.SetElementState(mashupsdk.Init)
 	}
-	log.Printf("CustosWorld finished ResetG3NDetailedElementStates handle.\n")
+	log.Printf("CustosWorld finished ResetStates handle.\n")
 }
 
 func (mSdk *mashupSdkApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {
@@ -381,4 +381,11 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	// }
 	log.Printf("CustosWorld End TweakStates called\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
+}
+
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
+	// TODO: Find and TweakStates...
+
+	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
 }

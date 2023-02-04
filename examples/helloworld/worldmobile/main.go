@@ -92,7 +92,7 @@ func (w *worldApiHandler) OnDisplayChange(displayHint *sdk.MashupDisplayHint) {
 	}
 }
 
-func (c *worldApiHandler) ResetG3NDetailedElementStates() {
+func (c *worldApiHandler) ResetStates() {
 	// Not implemented.
 }
 
