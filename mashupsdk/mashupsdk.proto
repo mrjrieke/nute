@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/mrjrieke/nute/mashupsdk";
 option java_multiple_files = true;
 option java_package = "nute.mashupsdk";
@@ -10,12 +12,13 @@ package mashupsdk;
 // The mashup service definition.
 service MashupServer {
   // Indicates to mashup it is time to shutdown.
-  rpc Shake(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
-  rpc OnResize(MashupDisplayBundle) returns (MashupDisplayHint) {}
-  rpc GetMashupElements(MashupEmpty) returns (MashupDetailedElementBundle) {}
-  rpc UpsertMashupElements(MashupDetailedElementBundle) returns (MashupDetailedElementBundle) {}
-  rpc UpsertMashupElementsState(MashupElementStateBundle) returns (MashupElementStateBundle) {}
-  rpc ResetG3nDetailedElementStates(MashupEmpty) returns (MashupEmpty) {}
+  rpc CollaborateInit(MashupConnectionConfigs) returns (MashupConnectionConfigs) {}
+  rpc OnDisplayChange(MashupDisplayBundle) returns (MashupDisplayHint) {}
+  rpc GetElements(MashupEmpty) returns (MashupDetailedElementBundle) {}
+  rpc UpsertElements(MashupDetailedElementBundle) returns (MashupDetailedElementBundle) {}
+  rpc TweakStates(MashupElementStateBundle) returns (MashupElementStateBundle) {}
+  rpc ResetStates(MashupEmpty) returns (google.protobuf.Empty) {}
+  rpc TweakStatesByMotiv(Motiv) returns (google.protobuf.Empty) {}
 
   rpc Shutdown(MashupEmpty) returns (MashupEmpty) {}
 }
@@ -70,6 +73,10 @@ message MashupDetailedElement {
 message MashupDetailedElementBundle {
   string authToken = 1;
   repeated MashupDetailedElement detailedElements = 2;
+}
+
+message Motiv {
+  int64 code = 1;
 }
 
 message MashupElementState {

@@ -472,7 +472,7 @@ func (w *WorldApp) InitMainWindow() {
 			xpos, ypos := (*w.MainWin).IWindow.(*window.GlfwWindow).Window.GetPos()
 
 			if w.MashupContext != nil {
-				w.MashupContext.Client.OnResize(w.MashupContext,
+				w.MashupContext.Client.OnDisplayChange(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
 						AuthToken: worldApp.GetAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
@@ -514,6 +514,13 @@ func (w *WorldApp) InitMainWindow() {
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = true
 			}
+
+			if (kev.Key >= window.Key0 && kev.Key <= window.Key9) ||
+				(kev.Key >= window.KeyA && kev.Key <= window.KeyZ) {
+
+				//w.MashupContext.Client.UpsertMashupElementsState(w.MashupContext, &elementStateBundle)
+
+			}
 		})
 		w.MainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
@@ -526,7 +533,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.Focused = wev.Focused
 			// Tell fyne not to try to regain focus.
 			if w.MashupContext != nil && wev.Focused {
-				w.MashupContext.Client.OnResize(w.MashupContext,
+				w.MashupContext.Client.OnDisplayChange(w.MashupContext,
 					&mashupsdk.MashupDisplayBundle{
 						AuthToken: worldApp.GetAuthToken(),
 						MashupDisplayHint: &mashupsdk.MashupDisplayHint{
@@ -622,7 +629,7 @@ func (w *WorldApp) InitMainWindow() {
 						ElementStates: changedElements,
 					}
 
-					w.MashupContext.Client.UpsertMashupElementsState(w.MashupContext, &elementStateBundle)
+					w.MashupContext.Client.TweakStates(w.MashupContext, &elementStateBundle)
 				}
 			}
 

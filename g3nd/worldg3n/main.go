@@ -60,7 +60,7 @@ func main() {
 	if *custos {
 		worldApp.MashupContext = client.BootstrapInit("custos", worldApp.MSdkApiHandler, nil, nil, insecure)
 
-		libraryElementBundle, upsertErr := worldApp.MashupContext.Client.GetMashupElements(
+		libraryElementBundle, upsertErr := worldApp.MashupContext.Client.GetElements(
 			worldApp.MashupContext,
 			&mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()},
 		)
@@ -90,7 +90,7 @@ func main() {
 			//
 			// Upsert concrete elements to custos
 			//
-			_, custosUpsertErr := worldApp.MashupContext.Client.UpsertMashupElements(
+			_, custosUpsertErr := worldApp.MashupContext.Client.UpsertElements(
 				worldApp.MashupContext,
 				&mashupsdk.MashupDetailedElementBundle{
 					AuthToken:        worldApp.GetAuthToken(),

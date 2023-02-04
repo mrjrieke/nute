@@ -52,10 +52,10 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 			AuthToken:     server.GetServerAuthToken(),
 			ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 		}
-		CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetG3NDetailedElementStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
+		CUWorldApp.HeadsupFyneContext.mashupContext.Client.ResetStates(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: server.GetServerAuthToken()})
 
 		log.Printf("Status Changed: display fields set to: %d", selectedDetailedElement.State.State)
-		CUWorldApp.HeadsupFyneContext.mashupContext.Client.UpsertMashupElementsState(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
+		CUWorldApp.HeadsupFyneContext.mashupContext.Client.TweakStates(CUWorldApp.HeadsupFyneContext.mashupContext, &elementStateBundle)
 		log.Printf("Finished status change.\n")
 	}
 }

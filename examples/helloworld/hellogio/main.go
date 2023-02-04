@@ -55,7 +55,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 		}
 
 		if ha.HelloContext.mashupContext != nil {
-			ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
+			ha.HelloContext.mashupContext.Client.OnDisplayChange(ha.HelloContext.mashupContext,
 				&mashupsdk.MashupDisplayBundle{
 					AuthToken:         client.GetServerAuthToken(),
 					MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
@@ -188,7 +188,7 @@ func main() {
 		var upsertErr error
 
 		// Connection with mashup fully established.  Initialize mashup elements.
-		_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
+		_, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertElements(helloApp.HelloContext.mashupContext,
 			&mashupsdk.MashupDetailedElementBundle{
 				AuthToken:        client.GetServerAuthToken(),
 				DetailedElements: DetailedElements,
