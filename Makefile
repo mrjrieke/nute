@@ -12,7 +12,7 @@ GOBIN ?= ./bin
 help:
 	@echo "Please use \`make <ROOT>' where <ROOT> is one of"
 	@echo "  dependencies to go install the dependencies"
-	@echo "  nute   to build the main binary for current platform"
+	@echo "  hellocustosworld   to build best example of nute usage"
 	@echo "  test         to run unittests"
 
 depend:

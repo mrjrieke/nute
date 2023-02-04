@@ -122,7 +122,7 @@ func InitServer(creds string, insecure bool, maxMessageLength int, mashupApiHand
 		handshakeConfigs.CallerToken = serverConnectionConfigs.AuthToken
 		handshakeConfigs.Port = serverConnectionConfigs.Port
 
-		clientConnectionConfigs, err = mashupContext.Client.Shake(mashupContext.Context, handshakeConfigs)
+		clientConnectionConfigs, err = mashupContext.Client.CollaborateInit(mashupContext.Context, handshakeConfigs)
 		if err != nil {
 			log.Printf("handshake failure: %v\n", err)
 			panic(err)

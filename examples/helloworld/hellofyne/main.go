@@ -48,10 +48,10 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 		AuthToken:     client.GetServerAuthToken(),
 		ElementStates: []*mashupsdk.MashupElementState{selectedDetailedElement.State},
 	}
-	helloApp.HelloContext.mashupContext.Client.ResetG3NDetailedElementStates(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
+	helloApp.HelloContext.mashupContext.Client.ResetStates(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 
 	log.Printf("Display fields set to: %d", selectedDetailedElement.State.State)
-	helloApp.HelloContext.mashupContext.Client.UpsertMashupElementsState(helloApp.HelloContext.mashupContext, &elementStateBundle)
+	helloApp.HelloContext.mashupContext.Client.TweakStates(helloApp.HelloContext.mashupContext, &elementStateBundle)
 }
 
 func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
@@ -63,7 +63,7 @@ func (ha *HelloApp) OnResize(displayHint *mashupsdk.MashupDisplayHint) {
 
 	if resize || !ha.mashupDisplayContext.MainWinDisplay.Focused {
 		ha.mashupDisplayContext.MainWinDisplay.Focused = true
-		ha.HelloContext.mashupContext.Client.OnResize(ha.HelloContext.mashupContext,
+		ha.HelloContext.mashupContext.Client.OnDisplayChange(ha.HelloContext.mashupContext,
 			&mashupsdk.MashupDisplayBundle{
 				AuthToken:         client.GetServerAuthToken(),
 				MashupDisplayHint: ha.mashupDisplayContext.MainWinDisplay,
@@ -312,7 +312,7 @@ func main() {
 				log.Printf("Delivering mashup elements.\n")
 
 				// Connection with mashup fully established.  Initialize mashup elements.
-				concreteElementBundle, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertMashupElements(helloApp.HelloContext.mashupContext,
+				concreteElementBundle, upsertErr = helloApp.HelloContext.mashupContext.Client.UpsertElements(helloApp.HelloContext.mashupContext,
 					&mashupsdk.MashupDetailedElementBundle{
 						AuthToken:        client.GetServerAuthToken(),
 						DetailedElements: DetailedElements,
