@@ -50,17 +50,17 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	return &sdk.MashupEmpty{}, nil
 }
 
-func (s *MashupServer) ResetG3NDetailedElementStates(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
-	log.Println("ResetG3NDetailedElementStates called")
+func (s *MashupServer) ResetStates(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupEmpty, error) {
+	log.Println("ResetStates called")
 	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
 		return nil, errors.New("Auth failure")
 	}
 	if s.mashupApiHandler != nil {
 		log.Printf("Delegate to api handler.")
-		s.mashupApiHandler.ResetG3NDetailedElementStates()
+		s.mashupApiHandler.ResetStates()
 	}
 
-	log.Println("ResetG3NDetailedElementStates complete.")
+	log.Println("ResetStates complete.")
 	return &sdk.MashupEmpty{}, nil
 }
 

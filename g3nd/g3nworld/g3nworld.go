@@ -727,12 +727,12 @@ func (w *worldClientInitHandler) RegisterContext(context *mashupsdk.MashupContex
 }
 
 // Sets all elements to a "Rest state."
-func (w *mashupSdkApiHandler) ResetG3NDetailedElementStates() {
-	log.Printf("G3n Received ResetG3NDetailedElementStates\n")
+func (w *mashupSdkApiHandler) ResetStates() {
+	log.Printf("G3n Received ResetStates\n")
 	for _, wes := range worldApp.ConcreteElements {
 		wes.SetElementState(mashupsdk.Init)
 	}
-	log.Printf("G3n finished ResetG3NDetailedElementStates handle.\n")
+	log.Printf("G3n finished ResetStates handle.\n")
 }
 
 func (mSdk *mashupSdkApiHandler) OnDisplayChange(displayHint *mashupsdk.MashupDisplayHint) {

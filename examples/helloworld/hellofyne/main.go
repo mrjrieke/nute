@@ -450,8 +450,8 @@ func (mSdk *fyneMashupApiHandler) UpsertElements(detailedElementBundle *mashupsd
 	return &mashupsdk.MashupDetailedElementBundle{}, nil
 }
 
-func (mSdk *fyneMashupApiHandler) ResetG3NDetailedElementStates() {
-	log.Printf("Fyne ResetG3NDetailedElementStates - not implemented\n")
+func (mSdk *fyneMashupApiHandler) ResetStates() {
+	log.Printf("Fyne ResetStates - not implemented\n")
 }
 
 func (mSdk *fyneMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.MashupElementStateBundle) (*mashupsdk.MashupElementStateBundle, error) {

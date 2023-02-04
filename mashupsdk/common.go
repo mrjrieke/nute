@@ -102,7 +102,7 @@ type MashupApiHandler interface {
 	GetElements() (*MashupDetailedElementBundle, error)
 	UpsertElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	TweakStates(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
-	ResetG3NDetailedElementStates()
+	ResetStates()
 }
 
 type MashupContextInitHandler interface {

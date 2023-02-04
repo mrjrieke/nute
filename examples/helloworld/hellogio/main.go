@@ -315,6 +315,6 @@ func (mSdk *gioMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *gioMashupApiHandler) ResetG3NDetailedElementStates() {
+func (mSdk *gioMashupApiHandler) ResetStates() {
 	// Not implemented.
 }
