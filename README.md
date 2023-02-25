@@ -25,7 +25,14 @@ worldg3n -custos -insecure
 
 Mac users have indicated some problems here.  You'll need these if you don't have them yet.
 
-brew install libvorbis openal-soft
+brew install libvorbis 
+brew install openal-soft
+
+This works:
+worldg3n -toruslayout -headless
+
+This doesn't:
+worldg3n -custos -tls-skip-validation -toruslayout
 
 Run Hello world gio:
 make helloworldgio
