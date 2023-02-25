@@ -39,7 +39,7 @@ func (fwb *FyneWidgetBundle) OnStatusChanged() {
 	if CUWorldApp.HeadsupFyneContext.mashupContext == nil {
 		return
 	}
-
+	// Small change
 	selectedDetailedElement := fwb.MashupDetailedElement
 	if selectedDetailedElement != nil {
 		if selectedDetailedElement.IsStateSet(mashupsdk.SourceExternal) {
