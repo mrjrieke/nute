@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/faiface/mainthread"
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/camera"
 	"github.com/g3n/engine/core"
@@ -670,8 +671,10 @@ func (w *WorldApp) InitMainWindow() {
 									iWindow.Window.SetAttrib(glfw.Stereo, 1)
 								}
 								if x, y := iWindow.Window.GetPos(); x != int(displayHint.Xpos) || y != int(displayHint.Ypos+displayHint.Height) {
-									iWindow.Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
-									iWindow.Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+									mainthread.CallNonBlock(func() {
+										iWindow.Window.SetPos(int(displayHint.Xpos), int(displayHint.Ypos+displayHint.Height))
+										iWindow.Window.SetSize(int(displayHint.Width), int(displayHint.Height))
+									})
 								}
 								if !w.Focused && displayHint.Focused {
 									log.Printf("G3n setting focus.")
