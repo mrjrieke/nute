@@ -27,6 +27,7 @@ Mac users have indicated some problems here.  You'll need these if you don't hav
 
 brew install libvorbis 
 brew install openal-soft
+brew install glfw
 
 This works:
 worldg3n -toruslayout -headless

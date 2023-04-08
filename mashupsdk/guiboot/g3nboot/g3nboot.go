@@ -9,6 +9,8 @@ import (
 
 	"github.com/g3n/engine/app"
 	"github.com/g3n/engine/renderer"
+
+	"github.com/faiface/mainthread"
 )
 
 func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
@@ -16,9 +18,15 @@ func InitMainWindow(initHandler interface{}, runtimeHandler interface{}) {
 	a := new(app.Application)
 
 	g3nInit := initHandler.(func(a *app.Application))
-	g3nInit(a)
-	g3nRuntimeHandler := runtimeHandler.(func(renderer *renderer.Renderer, deltaTime time.Duration))
+	mainthread.Run(func() {
+		mainthread.Call(func() {
+			g3nInit(a)
+		})
+		g3nRuntimeHandler := runtimeHandler.(func(renderer *renderer.Renderer, deltaTime time.Duration))
 
-	// Run the application -- this will not return.
-	a.Run(g3nRuntimeHandler)
+		// Run the application -- this will not return.
+		mainthread.CallNonBlock(func() {
+			a.Run(g3nRuntimeHandler)
+		})
+	})
 }

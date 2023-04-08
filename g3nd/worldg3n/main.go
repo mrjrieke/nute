@@ -122,7 +122,7 @@ func main() {
 	}
 
 	// Initialize the main window.
-	go worldApp.InitMainWindow()
+	worldApp.InitMainWindow()
 
 	<-worldCompleteChan
 }
