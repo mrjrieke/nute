@@ -105,7 +105,7 @@ func (w *WorldApp) SetFrameRate(targetFPS uint) {
 	if w.currentTargetFPS == targetFPS {
 		return
 	} else {
-		fmt.Printf("Setting framerate to: %d\n", targetFPS)
+		//fmt.Printf("Setting framerate to: %d\n", targetFPS)
 		w.currentTargetFPS = targetFPS
 		if targetFPS > 0 {
 			w.frameRater = util.NewFrameRater(targetFPS)
@@ -551,7 +551,7 @@ func (w *WorldApp) InitMainWindow() {
 			w.SetFrameRate(30)
 		})
 		w.MainWin.Subscribe(gui.OnMouseUp, func(name string, ev interface{}) {
-			w.SetFrameRate(0)
+			w.SetFrameRate(5)
 			mev := ev.(*window.MouseEvent)
 			if mev.Mods == window.ModControl {
 				w.Sticky = true
@@ -678,7 +678,9 @@ func (w *WorldApp) InitMainWindow() {
 								}
 								if !w.Focused && displayHint.Focused {
 									log.Printf("G3n setting focus.")
-									iWindow.Window.RequestAttention()
+									mainthread.CallNonBlock(func() {
+										iWindow.Window.RequestAttention()
+									})
 									displayHint.Focused = false
 									w.Focused = true
 								}
@@ -695,7 +697,7 @@ func (w *WorldApp) InitMainWindow() {
 		if iWindow, iWindowOk := (*w.MainWin).IWindow.(*window.GlfwWindow); iWindowOk {
 
 			if iWindow.Window.GetAttrib(glfw.Focused) != 1 {
-				w.SetFrameRate(0)
+				w.SetFrameRate(5)
 			} else {
 				if w.currentTargetFPS == 0 {
 					w.SetFrameRate(5)
