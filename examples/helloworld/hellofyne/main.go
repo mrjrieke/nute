@@ -14,6 +14,7 @@ import (
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type HelloContext struct {
@@ -377,7 +378,7 @@ func main() {
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
 		helloApp.mainWin.SetFixedSize(false)
 		helloApp.mainWin.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-			elementTest := ""
+			elementText := ""
 			// TODO: finder's keepers...
 
 			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[elementText]; miOk {
@@ -431,6 +432,7 @@ func main() {
 			if helloApp.HelloContext.mashupContext != nil {
 				helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			}
+			log.Printf("Fyne shutting down.")
 			os.Exit(0)
 		})
 	}
@@ -514,10 +516,11 @@ func (mSdk *fyneMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.Mash
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+func (mSdk *fyneMashupApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("Fyne Received TweakStatesByMotiv\n")
 	// TODO: Find and TweakStates...
 	fmt.Println(motivIn.Code)
 
 	log.Printf("Fyne finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }

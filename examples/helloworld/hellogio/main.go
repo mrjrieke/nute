@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -241,7 +243,7 @@ func main() {
 					Height: int64(e.Height),
 				})
 
-			case app.X11ViewEvent:
+				//			case app.X11ViewEvent:
 				// display := e.Display
 
 			case system.StageEvent:
@@ -313,6 +315,15 @@ func (mSdk *gioMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	}
 	log.Printf("Gio TweakStates complete\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
+}
+
+func (mSdk *gioMashupApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
+	log.Printf("Gio Received TweakStatesByMotiv\n")
+	// TODO: Find and TweakStates...
+	fmt.Println(motivIn.Code)
+
+	log.Printf("Gio finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }
 
 func (mSdk *gioMashupApiHandler) ResetStates() {

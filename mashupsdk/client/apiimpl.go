@@ -15,6 +15,7 @@ import (
 	sdk "github.com/mrjrieke/nute/mashupsdk"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var clientDialOptions grpc.DialOption = grpc.EmptyDialOption{}
@@ -44,6 +45,7 @@ func (s *MashupClient) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	}
 	go func() {
 		time.Sleep(100 * time.Millisecond)
+		log.Printf("Client shutting down.")
 		os.Exit(-1)
 	}()
 
@@ -134,6 +136,21 @@ func (c *MashupClient) TweakStates(ctx context.Context, in *sdk.MashupElementSta
 		return c.mashupApiHandler.TweakStates(in)
 	} else {
 		log.Printf("No api handler provided.")
+	}
+	return nil, nil
+}
+
+func (c *MashupClient) TweakStatesByMotiv(ctx context.Context, in *mashupsdk.Motiv) (*emptypb.Empty, error) {
+	log.Printf("TweakStatesByMotiv called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("Auth failure.")
+		return nil, errors.New("Auth failure")
+	}
+	if c.mashupApiHandler != nil {
+		log.Printf("TweakStatesByMotiv Delegate to api handler.")
+		return c.mashupApiHandler.TweakStatesByMotiv(in)
+	} else {
+		log.Printf("TweakStatesByMotiv No api handler provided.")
 	}
 	return nil, nil
 }

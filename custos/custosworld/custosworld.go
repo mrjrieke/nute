@@ -1,7 +1,6 @@
 package custosworld
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -9,6 +8,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ftbe/dawg"
 	"golang.org/x/exp/maps"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -175,6 +175,7 @@ func (w *CustosWorldApp) InitMainWindow() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			}
+			log.Printf("Custos shutting down.")
 			os.Exit(0)
 		})
 	}
@@ -399,10 +400,11 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
 	// TODO: Find and TweakStates...
-	fmt.Println(motivIn.Code)
+	log.Println(motivIn.Code)
 
 	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }

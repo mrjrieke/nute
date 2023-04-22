@@ -28,6 +28,7 @@ import (
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
 	"github.com/mrjrieke/nute/mashupsdk/server"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type mashupSdkApiHandler struct {
@@ -506,26 +507,27 @@ func (w *WorldApp) InitMainWindow() {
 				if w.MashupContext != nil {
 					w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
 				}
+				log.Printf("G3nWorld shutting down.")
 				os.Exit(0)
 			})
 		}
 
 		w.MainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
+			log.Printf("Key event: %v\n", kev)
+
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = true
 			}
 
-			if (kev.Key >= window.Key0 && kev.Key <= window.Key9) ||
-				(kev.Key >= window.KeyA && kev.Key <= window.KeyZ) {
-
-				w.MashupContext.Client.TweakStatesByMotiv(w.MashupContext,
-					&mashupsdk.Motiv{
-						Code: int64(kev.Key),
-					},
-				)
-
-			}
+			_, err := w.MashupContext.Client.TweakStatesByMotiv(
+				w.MashupContext,
+				&mashupsdk.Motiv{
+					AuthToken: worldApp.GetAuthToken(),
+					Code:      int64(kev.Key),
+				},
+			)
+			log.Printf("Error %v\n", err)
 		})
 		w.MainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
@@ -908,7 +910,8 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("G3n Received TweakStatesByMotiv\n")
 	log.Printf("G3n finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }
