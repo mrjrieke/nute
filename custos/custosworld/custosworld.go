@@ -1,9 +1,14 @@
 package custosworld
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/ftbe/dawg"
+	"golang.org/x/exp/maps"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -82,6 +87,7 @@ type CustosWorldApp struct {
 	DetailedElements             []*mashupsdk.MashupDetailedElement
 	MashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
 	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
+	ElementFinder                *dawg.DAWG
 	FyneWidgetElements           map[string]*FyneWidgetBundle
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
@@ -257,6 +263,11 @@ func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk
 		CUWorldApp.MashupDetailedElementLibrary[concreteElement.Id] = concreteElement
 		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
+	dawgKeys := maps.Keys(CUWorldApp.ElementLoaderIndex)
+	log.Printf(spew.Sdump(dawgKeys))
+	CUWorldApp.ElementFinder = dawg.CreateDAWG(dawgKeys)
+	//log.Printf(spew.Sdump(CUWorldApp.ElementFinder))  !! Don't ever uncomment this!  Sdump can't handle it!
+
 	log.Printf("CustosWorld parsing tori.\n")
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
 		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.GetCustosrenderer()]; tabItemRendererOk {
@@ -296,6 +307,9 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
 	// Separate clicked from declicked.
+	// TODO: Update window refresh interval or the UI won't refresh very well.
+	// 1. Look up every element twerk states provided in the local World: MashupDetailedElementLibrary.
+	// 2. Append to the recursive elements.
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := CUWorldApp.MashupDetailedElementLibrary[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
@@ -334,6 +348,8 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 		}
 	}
 	log.Printf("Clearing tab menu contents before reload")
+	// 3. Given a list of elements from mashup detailed element library, update
+	//    the local GUI to match... recursively...
 
 	CUWorldApp.TabItemMenu.Hide()
 	// Wipe anything there out.
@@ -386,6 +402,7 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
 	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
 	// TODO: Find and TweakStates...
+	fmt.Println(motivIn.Code)
 
 	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
 }

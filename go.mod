@@ -4,11 +4,14 @@ go 1.20
 
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
+	github.com/ftbe/dawg v0.0.0-20131228112149-aadae8139481
 	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20220307220422-55113b94f09c
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.0
 )
+
+require golang.org/x/exp/shiny v0.0.0-20230420155640-133eef4313cb // indirect
 
 require (
 	fyne.io/systray v1.10.1-0.20220621085403-9a2652634e93 // indirect
@@ -46,7 +49,7 @@ require (
 
 require (
 	fyne.io/fyne/v2 v2.1.3
-	golang.org/x/exp v0.0.0-20210722180016-6781d3edade3 // indirect
+	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd // indirect
 	golang.org/x/sys v0.5.0 // indirect
 )
