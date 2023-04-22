@@ -88,6 +88,7 @@ type CustosWorldApp struct {
 	MashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
 	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
 	ElementFinder                *dawg.DAWG
+	FinderAccumulater            string
 	FyneWidgetElements           map[string]*FyneWidgetBundle
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
@@ -404,6 +405,35 @@ func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*
 	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
 	// TODO: Find and TweakStates...
 	log.Println(motivIn.Code)
+	if motivIn.Code == 257 {
+		CUWorldApp.FinderAccumulater = ""
+		return &emptypb.Empty{}, nil
+	}
+	CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater + string(motivIn.Code)
+
+	log.Printf("Looking for: %s\n", CUWorldApp.FinderAccumulater)
+	items, searchErr := CUWorldApp.ElementFinder.Search(CUWorldApp.FinderAccumulater, 1, 5, true, true)
+
+	if searchErr != nil {
+		log.Printf("Nothing found\n")
+		CUWorldApp.FinderAccumulater = ""
+		return &emptypb.Empty{}, nil
+	}
+	log.Printf("CustosWorld TweakStatesByMotiv found: %s\n", spew.Sdump(items))
+
+	for _, item := range items {
+		if mashupItemIndex, indexOk := CUWorldApp.ElementLoaderIndex[item]; indexOk {
+			if mashupDetailedElement, mashupOk := CUWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mashupOk {
+				if mashupDetailedElement.Alias != "" {
+					if mashupDetailedElement.Genre != "Collection" {
+						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					}
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+				}
+			}
+		}
+	}
 
 	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
 	return &emptypb.Empty{}, nil
