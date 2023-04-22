@@ -81,7 +81,8 @@ func (s *MashupServer) OnDisplayChange(ctx context.Context, in *sdk.MashupDispla
 		s.mashupApiHandler.OnDisplayChange(displayHint)
 	}
 
-	return nil, nil
+	log.Printf("Finished OnDisplayChange")
+	return displayHint, nil
 }
 
 func (s *MashupServer) GetElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
