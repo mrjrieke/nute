@@ -266,7 +266,6 @@ func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk
 		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
 	dawgKeys := maps.Keys(CUWorldApp.ElementLoaderIndex)
-	log.Printf(spew.Sdump(dawgKeys))
 	CUWorldApp.ElementFinder = dawg.CreateDAWG(dawgKeys)
 	//log.Printf(spew.Sdump(CUWorldApp.ElementFinder))  !! Don't ever uncomment this!  Sdump can't handle it!
 

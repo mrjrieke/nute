@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/faiface/mainthread"
@@ -518,6 +519,10 @@ func (w *WorldApp) InitMainWindow() {
 
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = true
+			}
+
+			if kev.Key != window.KeyLeftShift && kev.Key != window.KeyRightShift {
+				kev.Key = window.Key([]rune(strings.ToLower(string(kev.Key)))[0])
 			}
 
 			_, err := w.MashupContext.Client.TweakStatesByMotiv(
