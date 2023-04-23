@@ -412,7 +412,7 @@ func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*
 	CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater + string(motivIn.Code)
 
 	log.Printf("Looking for: %s\n", CUWorldApp.FinderAccumulater)
-	items, searchErr := CUWorldApp.ElementFinder.Search(CUWorldApp.FinderAccumulater, 1, 5, true, true)
+	items, searchErr := CUWorldApp.ElementFinder.Search(CUWorldApp.FinderAccumulater, 5, 5, true, true)
 
 	if searchErr != nil {
 		log.Printf("Nothing found\n")
@@ -424,12 +424,18 @@ func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*
 	for _, item := range items {
 		if mashupItemIndex, indexOk := CUWorldApp.ElementLoaderIndex[item]; indexOk {
 			if mashupDetailedElement, mashupOk := CUWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mashupOk {
+				log.Printf("CustosWorld TweakStatesByMotiv found: %s\n", spew.Sdump(mashupDetailedElement))
 				if mashupDetailedElement.Alias != "" {
+					log.Printf("CustosWorld TweakStatesByMotiv tweaking...\n")
+
 					if mashupDetailedElement.Genre != "Collection" {
 						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
 					}
-					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
-					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+					log.Printf("CustosWorld TweakStatesByMotiv Alias: %s\n", mashupDetailedElement.Alias)
+					log.Printf("CustosWorld TweakStatesByMotiv widgets: %s\n", spew.Sdump(CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name]))
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name].MashupDetailedElement = mashupDetailedElement
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name].OnStatusChanged()
+					log.Printf("CustosWorld TweakStatesByMotiv tweaked\n")
 				}
 			}
 		}
