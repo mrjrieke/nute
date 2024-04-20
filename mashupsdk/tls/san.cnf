@@ -10,7 +10,6 @@ C=PW # Country
 ST=Melekeok  # State
 L=Ngerulmud  # Locality
 O=Nute  # Organization
-CN=nute.tini.com  # Common Name (your server's hostname)
 
 [v3_req]
 subjectAltName = @alt_names
