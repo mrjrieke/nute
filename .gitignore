@@ -8,6 +8,7 @@ examples/helloworld/hellogio/*.log
 
 mashupsdk/tls/mashup.crt
 mashupsdk/tls/mashup.key
+mashupsdk/tls/mashup.csr
 
 g3nd/worldg3n/tls/*
 examples/helloworld/hellofyne/tls/*
