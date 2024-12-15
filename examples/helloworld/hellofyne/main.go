@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -318,8 +319,12 @@ func main() {
 						DetailedElements: DetailedElements,
 					})
 
-				if upsertErr != nil {
-					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+				if upsertErr != nil || concreteElementBundle == nil {
+					if upsertErr != nil {
+						log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+					}
+					fmt.Println("Couldn't obtain mashup elements")
+					os.Exit(-1)
 				}
 
 				for _, concreteElement := range concreteElementBundle.DetailedElements {
@@ -495,4 +500,11 @@ func (mSdk *fyneMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.Mash
 	}
 	log.Printf("Fyne TweakStates complete\n")
 	return &mashupsdk.MashupElementStateBundle{}, nil
+}
+
+func (mSdk *fyneMashupApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
+	// TODO: Find and TweakStates...
+
+	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
 }

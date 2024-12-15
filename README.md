@@ -40,11 +40,11 @@ worldg3n -custos -tls-skip-validation -toruslayout
 Run Hello world gio:
 make helloworldgio
 
-hellogio -insecure
+hellogio -tls-skip-validation
 
 Run Hello World fyne:
 make helloworldfyne
 
-hellofyne -insecure
+hellofyne -tls-skip-validation
 
 Run Hello World mobile (do not build...)
