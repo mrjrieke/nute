@@ -1,6 +1,8 @@
 module github.com/mrjrieke/nute
 
-go 1.20
+go 1.22.0
+
+toolchain go1.24.0
 
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
@@ -12,10 +14,16 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/ebitengine/gomobile v0.0.0-20240911145611-4856209ac325 // indirect
+	github.com/ebitengine/hideconsole v1.0.0 // indirect
+	github.com/ebitengine/purego v0.8.0 // indirect
 	github.com/go-text/render v0.2.0 // indirect
+	github.com/hajimehoshi/ebiten/v2 v2.8.6 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20240223122105-ce5225dcaa49 // indirect
+	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
 	github.com/rymdport/portal v0.2.6 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 )
 
 require (
@@ -43,7 +51,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
 	//golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto v0.0.0-20220714211235-042d03aeabc9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -52,8 +60,8 @@ require (
 require (
 	fyne.io/fyne/v2 v2.5.2
 	golang.org/x/exp v0.0.0-20210722180016-6781d3edade3 // indirect
-	golang.org/x/image v0.18.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/image v0.20.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 )
 
 //require github.com/go-gl/glfw/v3.3.2/glfw v0.0.0-20211213063430-748e38ca8aec
