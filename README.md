@@ -10,7 +10,9 @@ Install g3n support libraries:
 sudo apt-get install xorg-dev libgl1-mesa-dev libopenal1 libopenal-dev libvorbis0a libvorbis-dev libvorbisfile3
 
 Generate self signed certs:
-./mashupsdk/tls/certs_gen.sh
+cd ./mashupsdk/tls/
+./certs_gen.sh
+cd ../..
 mkdir examples/helloworld/hellocustos/tls
 mv mashupsdk.* examples/helloworld/hellocustos/tls
 
@@ -38,11 +40,11 @@ worldg3n -custos -tls-skip-validation -toruslayout
 Run Hello world gio:
 make helloworldgio
 
-hellogio -insecure
+hellogio -tls-skip-validation
 
 Run Hello World fyne:
 make helloworldfyne
 
-hellofyne -insecure
+hellofyne -tls-skip-validation
 
 Run Hello World mobile (do not build...)

@@ -320,8 +320,12 @@ func main() {
 						DetailedElements: DetailedElements,
 					})
 
-				if upsertErr != nil {
-					log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+				if upsertErr != nil || concreteElementBundle == nil {
+					if upsertErr != nil {
+						log.Printf("Element state initialization failure: %s\n", upsertErr.Error())
+					}
+					fmt.Println("Couldn't obtain mashup elements")
+					os.Exit(-1)
 				}
 
 				for _, concreteElement := range concreteElementBundle.DetailedElements {
