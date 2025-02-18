@@ -74,6 +74,7 @@ type WorldApp struct {
 	ClickedElements    []*g3nmash.G3nDetailedElement         // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
+	ShiftClicked       bool
 	ControlClicked     bool
 
 	Focused bool // Whether current window has focus.
@@ -522,7 +523,15 @@ func (w *WorldApp) InitMainWindow() {
 			}
 
 			if kev.Key != window.KeyLeftShift && kev.Key != window.KeyRightShift {
-				kev.Key = window.Key([]rune(strings.ToLower(string(kev.Key)))[0])
+				if w.ShiftClicked {
+					w.ShiftClicked = false
+					kev.Key = window.Key([]rune(strings.ToUpper(string(kev.Key)))[0])
+				} else {
+					kev.Key = window.Key([]rune(strings.ToLower(string(kev.Key)))[0])
+				}
+			} else {
+				w.ShiftClicked = true
+				return
 			}
 
 			_, err := w.MashupContext.Client.TweakStatesByMotiv(
