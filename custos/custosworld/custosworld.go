@@ -266,6 +266,7 @@ func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk
 		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
 	dawgKeys := maps.Keys(CUWorldApp.ElementLoaderIndex)
+	//log.Printf("Searchables: %s", spew.Sdump(dawgKeys))
 	CUWorldApp.ElementFinder = dawg.CreateDAWG(dawgKeys)
 	//log.Printf(spew.Sdump(CUWorldApp.ElementFinder))  !! Don't ever uncomment this!  Sdump can't handle it!
 
@@ -402,20 +403,26 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 
 func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
-	// TODO: Find and TweakStates...
 	log.Println(motivIn.Code)
-	if motivIn.Code == 257 {
-		CUWorldApp.FinderAccumulater = ""
+
+	if motivIn.Code != 257 {
+		if motivIn.Code == 259 {
+			// pop off last character.
+			if len(CUWorldApp.FinderAccumulater) > 0 {
+				CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater[0 : len(CUWorldApp.FinderAccumulater)-1]
+			}
+		} else {
+			CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater + string(motivIn.Code)
+		}
+		log.Printf("Accumulator: %s\n", CUWorldApp.FinderAccumulater)
 		return &emptypb.Empty{}, nil
 	}
-	CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater + string(motivIn.Code)
-
 	log.Printf("Looking for: %s\n", CUWorldApp.FinderAccumulater)
 	items, searchErr := CUWorldApp.ElementFinder.Search(CUWorldApp.FinderAccumulater, 5, 5, true, true)
+	CUWorldApp.FinderAccumulater = ""
 
-	if searchErr != nil {
+	if searchErr != nil || len(items) == 0 {
 		log.Printf("Nothing found\n")
-		CUWorldApp.FinderAccumulater = ""
 		return &emptypb.Empty{}, nil
 	}
 	log.Printf("CustosWorld TweakStatesByMotiv found: %s\n", spew.Sdump(items))
