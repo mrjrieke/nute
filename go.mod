@@ -1,11 +1,10 @@
 module github.com/mrjrieke/nute
 
-go 1.22.0
-
-toolchain go1.24.0
+go 1.23.0
 
 require (
 	gioui.org v0.0.0-20220318070519-8833a6738a3b
+	github.com/ftbe/dawg v0.0.0-20131228112149-aadae8139481
 	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a
 	google.golang.org/grpc v1.64.0
@@ -18,20 +17,22 @@ require (
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.8.0 // indirect
 	github.com/go-text/render v0.2.0 // indirect
-	github.com/hajimehoshi/ebiten/v2 v2.8.6 // indirect
+	github.com/hajimehoshi/ebiten/v2 v2.8.6
 	github.com/jeandeaual/go-locale v0.0.0-20240223122105-ce5225dcaa49 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
 	github.com/rymdport/portal v0.2.6 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 )
+
+require golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 // indirect
 
 require (
 	fyne.io/systray v1.11.0 // indirect
 	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
 	gioui.org/shader v1.0.6 // indirect
 	github.com/benoitkugler/textlayout v0.0.10 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
@@ -59,7 +60,7 @@ require (
 
 require (
 	fyne.io/fyne/v2 v2.5.2
-	golang.org/x/exp v0.0.0-20210722180016-6781d3edade3 // indirect
+	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f
 	golang.org/x/image v0.20.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 )

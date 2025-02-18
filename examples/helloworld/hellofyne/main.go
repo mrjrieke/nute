@@ -14,6 +14,7 @@ import (
 	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type HelloContext struct {
@@ -380,6 +381,22 @@ func main() {
 		helloApp.mainWin.SetIcon(fyne.NewStaticResource("Gopher", gopherIconBytes))
 		helloApp.mainWin.Resize(fyne.NewSize(800, 100))
 		helloApp.mainWin.SetFixedSize(false)
+		helloApp.mainWin.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+			elementText := ""
+			// TODO: finder's keepers...
+
+			if mashupItemIndex, miOk := helloApp.elementLoaderIndex[elementText]; miOk {
+				mashupDetailedElement := helloApp.mashupDetailedElementLibrary[mashupItemIndex]
+				if mashupDetailedElement.Alias != "" {
+					if mashupDetailedElement.Genre != "Collection" {
+						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					}
+					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].MashupDetailedElement = mashupDetailedElement
+					helloApp.fyneWidgetElements[mashupDetailedElement.Alias].OnStatusChanged()
+					return
+				}
+			}
+		})
 
 		helloApp.fyneWidgetElements["Inside"].GuiComponent = detailMappedFyneComponent("Inside", "The magnetic field inside a toroid is always tangential to the circular closed path.  These magnetic field lines are concentric circles.", helloApp.fyneWidgetElements["Inside"].MashupDetailedElement)
 		helloApp.fyneWidgetElements["Outside"].GuiComponent = detailMappedFyneComponent("Outside", "The magnetic field at any point outside the toroid is zero.", helloApp.fyneWidgetElements["Outside"].MashupDetailedElement)
@@ -419,6 +436,7 @@ func main() {
 			if helloApp.HelloContext.mashupContext != nil {
 				helloApp.HelloContext.mashupContext.Client.Shutdown(helloApp.HelloContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			}
+			log.Printf("Fyne shutting down.")
 			os.Exit(0)
 		})
 	}
@@ -502,9 +520,11 @@ func (mSdk *fyneMashupApiHandler) TweakStates(elementStateBundle *mashupsdk.Mash
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *fyneMashupApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
-	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
+func (mSdk *fyneMashupApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
+	log.Printf("Fyne Received TweakStatesByMotiv\n")
 	// TODO: Find and TweakStates...
+	fmt.Println(motivIn.Code)
 
-	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
+	log.Printf("Fyne finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }

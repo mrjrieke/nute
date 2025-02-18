@@ -24,6 +24,7 @@ import (
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/gl"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -109,6 +110,10 @@ func (c *worldApiHandler) UpsertElements(detailedElementBundle *sdk.MashupDetail
 func (c *worldApiHandler) TweakStates(elementStateBundle *sdk.MashupElementStateBundle) (*sdk.MashupElementStateBundle, error) {
 	// Not implemented.
 	return nil, errors.New("Could not capture items.")
+}
+
+func (c *worldApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, errors.New("Could not capture items.")
 }
 
 func main() {

@@ -1,5 +1,7 @@
 package mashupsdk
 
+import "google.golang.org/protobuf/types/known/emptypb"
+
 type DisplayElementState int64
 
 const (
@@ -103,7 +105,7 @@ type MashupApiHandler interface {
 	UpsertElements(detailedElementBundle *MashupDetailedElementBundle) (*MashupDetailedElementBundle, error)
 	TweakStates(elementStateBundle *MashupElementStateBundle) (*MashupElementStateBundle, error)
 	ResetStates()
-	TweakStatesByMotiv(Motiv)
+	TweakStatesByMotiv(*Motiv) (*emptypb.Empty, error)
 }
 
 type MashupContextInitHandler interface {

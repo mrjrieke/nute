@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/faiface/mainthread"
@@ -28,6 +29,7 @@ import (
 	"github.com/mrjrieke/nute/mashupsdk/client"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
 	"github.com/mrjrieke/nute/mashupsdk/server"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type mashupSdkApiHandler struct {
@@ -72,6 +74,7 @@ type WorldApp struct {
 	ClickedElements    []*g3nmash.G3nDetailedElement         // g3n indexes by string...
 	backgroundG3n      *g3nmash.G3nDetailedElement
 	Sticky             bool
+	ShiftClicked       bool
 	ControlClicked     bool
 
 	Focused bool // Whether current window has focus.
@@ -506,26 +509,39 @@ func (w *WorldApp) InitMainWindow() {
 				if w.MashupContext != nil {
 					w.MashupContext.Client.Shutdown(w.MashupContext, &mashupsdk.MashupEmpty{AuthToken: worldApp.GetAuthToken()})
 				}
+				log.Printf("G3nWorld shutting down.")
 				os.Exit(0)
 			})
 		}
 
 		w.MainWin.Subscribe(gui.OnKeyDown, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
+			log.Printf("Key event: %v\n", kev)
+
 			if kev.Key == window.KeyLeftControl {
 				w.Sticky = true
 			}
 
-			if (kev.Key >= window.Key0 && kev.Key <= window.Key9) ||
-				(kev.Key >= window.KeyA && kev.Key <= window.KeyZ) {
-
-				w.MashupContext.Client.TweakStatesByMotiv(w.MashupContext,
-					&mashupsdk.Motiv{
-						Code: int64(kev.Key),
-					},
-				)
-
+			if kev.Key != window.KeyLeftShift && kev.Key != window.KeyRightShift {
+				if w.ShiftClicked {
+					w.ShiftClicked = false
+					kev.Key = window.Key([]rune(strings.ToUpper(string(kev.Key)))[0])
+				} else {
+					kev.Key = window.Key([]rune(strings.ToLower(string(kev.Key)))[0])
+				}
+			} else {
+				w.ShiftClicked = true
+				return
 			}
+
+			_, err := w.MashupContext.Client.TweakStatesByMotiv(
+				w.MashupContext,
+				&mashupsdk.Motiv{
+					AuthToken: worldApp.GetAuthToken(),
+					Code:      int64(kev.Key),
+				},
+			)
+			log.Printf("Error %v\n", err)
 		})
 		w.MainWin.Subscribe(gui.OnKeyUp, func(name string, ev interface{}) {
 			kev := ev.(*window.KeyEvent)
@@ -908,7 +924,8 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("G3n Received TweakStatesByMotiv\n")
 	log.Printf("G3n finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }

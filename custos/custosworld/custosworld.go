@@ -5,6 +5,11 @@ import (
 	"os"
 	"sort"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/ftbe/dawg"
+	"golang.org/x/exp/maps"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -82,6 +87,8 @@ type CustosWorldApp struct {
 	DetailedElements             []*mashupsdk.MashupDetailedElement
 	MashupDetailedElementLibrary map[int64]*mashupsdk.MashupDetailedElement
 	ElementLoaderIndex           map[string]int64 // mashup indexes by Name
+	ElementFinder                *dawg.DAWG
+	FinderAccumulater            string
 	FyneWidgetElements           map[string]*FyneWidgetBundle
 	TabItemMenu                  *container.AppTabs
 	CustomTabItems               map[string]func(custosWorlApp *CustosWorldApp, id string) *container.TabItem
@@ -169,6 +176,7 @@ func (w *CustosWorldApp) InitMainWindow() {
 			if CUWorldApp.HeadsupFyneContext.mashupContext != nil {
 				CUWorldApp.HeadsupFyneContext.mashupContext.Client.Shutdown(CUWorldApp.HeadsupFyneContext.mashupContext, &mashupsdk.MashupEmpty{AuthToken: client.GetServerAuthToken()})
 			}
+			log.Printf("Custos shutting down.")
 			os.Exit(0)
 		})
 	}
@@ -257,6 +265,11 @@ func (mSdk *mashupSdkApiHandler) UpsertElements(detailedElementBundle *mashupsdk
 		CUWorldApp.MashupDetailedElementLibrary[concreteElement.Id] = concreteElement
 		CUWorldApp.ElementLoaderIndex[concreteElement.Name] = concreteElement.Id
 	}
+	dawgKeys := maps.Keys(CUWorldApp.ElementLoaderIndex)
+	//log.Printf("Searchables: %s", spew.Sdump(dawgKeys))
+	CUWorldApp.ElementFinder = dawg.CreateDAWG(dawgKeys)
+	//log.Printf(spew.Sdump(CUWorldApp.ElementFinder))  !! Don't ever uncomment this!  Sdump can't handle it!
+
 	log.Printf("CustosWorld parsing tori.\n")
 	for _, concreteElement := range detailedElementBundle.DetailedElements {
 		if tabItemRenderer, tabItemRendererOk := CUWorldApp.CustomTabItemRenderer[concreteElement.GetCustosrenderer()]; tabItemRendererOk {
@@ -296,6 +309,9 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	recursiveElements := map[int64]*mashupsdk.MashupDetailedElement{}
 
 	// Separate clicked from declicked.
+	// TODO: Update window refresh interval or the UI won't refresh very well.
+	// 1. Look up every element twerk states provided in the local World: MashupDetailedElementLibrary.
+	// 2. Append to the recursive elements.
 	for _, es := range elementStateBundle.ElementStates {
 		if g3nDetailedElement, ok := CUWorldApp.MashupDetailedElementLibrary[es.GetId()]; ok {
 			g3nDetailedElement.SetElementState(mashupsdk.DisplayElementState(es.State))
@@ -334,6 +350,8 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 		}
 	}
 	log.Printf("Clearing tab menu contents before reload")
+	// 3. Given a list of elements from mashup detailed element library, update
+	//    the local GUI to match... recursively...
 
 	CUWorldApp.TabItemMenu.Hide()
 	// Wipe anything there out.
@@ -383,9 +401,52 @@ func (mSdk *mashupSdkApiHandler) TweakStates(elementStateBundle *mashupsdk.Mashu
 	return &mashupsdk.MashupElementStateBundle{}, nil
 }
 
-func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn mashupsdk.Motiv) {
+func (mSdk *mashupSdkApiHandler) TweakStatesByMotiv(motivIn *mashupsdk.Motiv) (*emptypb.Empty, error) {
 	log.Printf("CustosWorld Received TweakStatesByMotiv\n")
-	// TODO: Find and TweakStates...
+	log.Println(motivIn.Code)
+
+	if motivIn.Code != 257 {
+		if motivIn.Code == 259 {
+			// pop off last character.
+			if len(CUWorldApp.FinderAccumulater) > 0 {
+				CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater[0 : len(CUWorldApp.FinderAccumulater)-1]
+			}
+		} else {
+			CUWorldApp.FinderAccumulater = CUWorldApp.FinderAccumulater + string(motivIn.Code)
+		}
+		log.Printf("Accumulator: %s\n", CUWorldApp.FinderAccumulater)
+		return &emptypb.Empty{}, nil
+	}
+	log.Printf("Looking for: %s\n", CUWorldApp.FinderAccumulater)
+	items, searchErr := CUWorldApp.ElementFinder.Search(CUWorldApp.FinderAccumulater, 5, 5, true, true)
+	CUWorldApp.FinderAccumulater = ""
+
+	if searchErr != nil || len(items) == 0 {
+		log.Printf("Nothing found\n")
+		return &emptypb.Empty{}, nil
+	}
+	log.Printf("CustosWorld TweakStatesByMotiv found: %s\n", spew.Sdump(items))
+
+	for _, item := range items {
+		if mashupItemIndex, indexOk := CUWorldApp.ElementLoaderIndex[item]; indexOk {
+			if mashupDetailedElement, mashupOk := CUWorldApp.MashupDetailedElementLibrary[mashupItemIndex]; mashupOk {
+				log.Printf("CustosWorld TweakStatesByMotiv found: %s\n", spew.Sdump(mashupDetailedElement))
+				if mashupDetailedElement.Alias != "" {
+					log.Printf("CustosWorld TweakStatesByMotiv tweaking...\n")
+
+					if mashupDetailedElement.Genre != "Collection" {
+						mashupDetailedElement.State.State |= int64(mashupsdk.Clicked)
+					}
+					log.Printf("CustosWorld TweakStatesByMotiv Alias: %s\n", mashupDetailedElement.Alias)
+					log.Printf("CustosWorld TweakStatesByMotiv widgets: %s\n", spew.Sdump(CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name]))
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name].MashupDetailedElement = mashupDetailedElement
+					CUWorldApp.FyneWidgetElements[mashupDetailedElement.Name].OnStatusChanged()
+					log.Printf("CustosWorld TweakStatesByMotiv tweaked\n")
+				}
+			}
+		}
+	}
 
 	log.Printf("CustosWorld finished TweakStatesByMotiv handle.\n")
+	return &emptypb.Empty{}, nil
 }

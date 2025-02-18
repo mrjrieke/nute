@@ -44,6 +44,7 @@ func (s *MashupServer) Shutdown(ctx context.Context, in *sdk.MashupEmpty) (*sdk.
 	}
 	go func() {
 		time.Sleep(100 * time.Millisecond)
+		log.Printf("Server shutting down.")
 		os.Exit(-1)
 	}()
 
@@ -80,7 +81,8 @@ func (s *MashupServer) OnDisplayChange(ctx context.Context, in *sdk.MashupDispla
 		s.mashupApiHandler.OnDisplayChange(displayHint)
 	}
 
-	return nil, nil
+	log.Printf("Finished OnDisplayChange")
+	return displayHint, nil
 }
 
 func (s *MashupServer) GetElements(ctx context.Context, in *sdk.MashupEmpty) (*sdk.MashupDetailedElementBundle, error) {
@@ -116,6 +118,21 @@ func (s *MashupServer) TweakStates(ctx context.Context, in *sdk.MashupElementSta
 	if s.mashupApiHandler != nil {
 		log.Printf("TweakStates Delegate to api handler.")
 		return s.mashupApiHandler.TweakStates(in)
+	}
+	return nil, nil
+}
+
+func (c *MashupServer) TweakStatesByMotiv(ctx context.Context, in *mashupsdk.Motiv) (*emptypb.Empty, error) {
+	log.Printf("TweakStatesByMotiv called")
+	if in.GetAuthToken() != serverConnectionConfigs.AuthToken {
+		log.Printf("Auth failure.")
+		return nil, errors.New("Auth failure")
+	}
+	if c.mashupApiHandler != nil {
+		log.Printf("TweakStatesByMotiv Delegate to api handler.")
+		return c.mashupApiHandler.TweakStatesByMotiv(in)
+	} else {
+		log.Printf("TweakStatesByMotiv No api handler provided.")
 	}
 	return nil, nil
 }
