@@ -8,13 +8,27 @@ import (
 	"math/rand"
 )
 
-var MashupCert embed.FS
+var MashupCertBytes []byte
 
-var MashupKey embed.FS
+var MashupKeyBytes []byte
 
-func InitCertKeyPair(mc embed.FS, mk embed.FS) {
-	MashupCert = mc
-	MashupKey = mk
+func InitCertKeyPair(mc embed.FS, mk embed.FS) error {
+	var err error
+	MashupCertBytes, err = mc.ReadFile("tls/mashup.crt")
+	if err != nil {
+		return err
+	}
+
+	MashupKeyBytes, err = mk.ReadFile("tls/mashup.key")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func InitCertKeyPairBytes(mashupCertBytes []byte, mashupKeyBytes []byte) {
+	MashupCertBytes = mashupCertBytes
+	MashupKeyBytes = mashupKeyBytes
 }
 
 type MashupContext struct {
