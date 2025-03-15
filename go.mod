@@ -74,7 +74,8 @@ require (
 )
 
 // Uncomment for local development
-replace fyne.io/fyne/v2 v2.5.2 => ../fyne // Use nute_integrate branch
+//replace fyne.io/fyne/v2 v2.5.2 => ../fyne // Use nute_integrate branch
+replace fyne.io/fyne/v2 v2.5.2 => github.com/mrjrieke/fyne/v2 v2.5.2-1
 
 // replace gioui.org v0.0.0-20220318070519-8833a6738a3b => ../../gio // Use mashup_v1 branch
 

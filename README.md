@@ -23,7 +23,7 @@ Add nute hello custos world example to your $PATH:
 examples/helloworld/bin
 
 Run worldg3n example:
-worldg3n -custos -insecure
+worldg3n -custos -tls-skip-validation
 
 Mac users have indicated some problems here.  You'll need these if you don't have them yet.
 
