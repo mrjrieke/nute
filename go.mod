@@ -7,7 +7,7 @@ require (
 	github.com/ftbe/dawg v0.0.0-20131228112149-aadae8139481
 	github.com/g3n/engine v0.2.0
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a
-	google.golang.org/grpc v1.64.0
+	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.33.0
 )
 
