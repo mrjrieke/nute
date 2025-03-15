@@ -52,7 +52,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
 	//golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/genproto v0.0.0-20220714211235-042d03aeabc9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -62,7 +62,7 @@ require (
 	fyne.io/fyne/v2 v2.5.2
 	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f
 	golang.org/x/image v0.20.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 )
 
 //require github.com/go-gl/glfw/v3.3.2/glfw v0.0.0-20211213063430-748e38ca8aec
@@ -70,7 +70,7 @@ require (
 require (
 	github.com/faiface/mainthread v0.0.0-20171120011319-8b78f0a41ae3
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a
-	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 )
 
 // Uncomment for local development
