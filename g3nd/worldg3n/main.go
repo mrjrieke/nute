@@ -10,11 +10,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/mrjrieke/nute-core/mashupsdk"
 	"github.com/mrjrieke/nute/g3nd/data"
 	"github.com/mrjrieke/nute/g3nd/g3nworld"
 	g3ndpalette "github.com/mrjrieke/nute/g3nd/palette"
 	"github.com/mrjrieke/nute/g3nd/worldg3n/g3nrender"
-	"github.com/mrjrieke/nute/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/client"
 )
 

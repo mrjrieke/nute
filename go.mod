@@ -25,7 +25,10 @@ require (
 	golang.org/x/sync v0.11.0 // indirect
 )
 
-require golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 // indirect
+require (
+	github.com/mrjrieke/nute-core v1.0.0 // indirect
+	golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 // indirect
+)
 
 require (
 	fyne.io/systray v1.11.0 // indirect

@@ -21,40 +21,31 @@ depend:
 clean:
 	rm -f bin
 
-helloworldgio: */*.go */*/*.go */*/*/*.go
+helloworldgio: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "gioboot" -o="$(ROOT)/examples/helloworld/bin/hellogio" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/g3nd/worldg3n/main.go
 
-hellofyne: */*.go */*/*.go */*/*/*.go
+hellofyne: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/hellofyne" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellofyne/main.go
 
-hellofyneworld: */*.go */*/*.go */*/*/*.go
+hellofyneworld: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/hellofyne" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellofyne/main.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/g3nd/worldg3n/main.go
 
-hellocustos: */*.go */*/*.go */*/*/*.go
+hellocustos: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/custos" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellocustos/main.go
 
-hellocustosworld: */*.go */*/*.go */*/*/*.go
+hellocustosworld: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "fyneboot" -o="$(ROOT)/examples/helloworld/bin/custos" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellocustos/main.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/g3nd/worldg3n/main.go
 
-worldg3n: */*.go */*/*.go */*/*/*.go
+worldg3n: */*/*.go */*/*/*.go
 	$(GO_VARS) $(GO) build -tags "g3nboot" -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/g3nd/worldg3n/main.go
 
 # In disrepair...
 # helloworldmobile: */*.go */*/*.go */*/*/*.go
 #	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/hellomobile" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/hellogio/main.go
 #	$(GO_VARS) $(GO) build -o="$(ROOT)/examples/helloworld/bin/worldg3n" -ldflags="$(LD_FLAGS)" $(ROOT)/examples/helloworld/worldmobile/main.go
-
-cleanmsdk:
-	rm mashupsdk/mashupsdk_grpc.pb.go; rm mashupsdk/mashupsdk.pb.go
-
-mashupsdk: */*.proto
-	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative mashupsdk/mashupsdk.proto
-
-nute: *.go */*.go */*/*.go
-	$(GO_VARS) $(GO) build -o="$(GOBIN)/nute" -ldflags="$(LD_FLAGS)" $(ROOT)/main.go
 
 test: *.go */*.go */*/*.go
 	$(GO_VARS) $(GO) test -v .
