@@ -11,8 +11,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/mrjrieke/nute/mashupsdk"
-	sdk "github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute-core/mashupsdk"
+	sdk "github.com/mrjrieke/nute-core/mashupsdk"
 	"github.com/mrjrieke/nute/mashupsdk/guiboot"
 	"github.com/mrjrieke/nute/mashupsdk/server"
 	"golang.org/x/mobile/app"

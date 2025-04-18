@@ -10,8 +10,8 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/mrjrieke/nute/mashupsdk"
-	sdk "github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute-core/mashupsdk"
+	sdk "github.com/mrjrieke/nute-core/mashupsdk"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

@@ -18,7 +18,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/mrjrieke/nute/custos/custosworld"
 	"github.com/mrjrieke/nute/g3nd/data"
-	"github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute-core/mashupsdk"
 )
 
 var worldCompleteChan chan bool

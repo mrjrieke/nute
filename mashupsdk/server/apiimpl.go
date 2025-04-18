@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mrjrieke/nute/mashupsdk"
-	sdk "github.com/mrjrieke/nute/mashupsdk"
+	"github.com/mrjrieke/nute-core/mashupsdk"
+	sdk "github.com/mrjrieke/nute-core/mashupsdk"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
